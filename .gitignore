@@ -1,0 +1,10 @@
+/node_modules
+/build
+/dist
+.env
+build.log
+tsconfig.tsbuildinfo
+yarn-error.log
+yarn.lock
+package-lock.json
+

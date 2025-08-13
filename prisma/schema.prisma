@@ -1,0 +1,200 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Admin {
+  id                String        @id @default(uuid())
+  name              String      
+  email             String        @unique
+  password          String 
+  address           String
+  phone_number      String        @unique @default("08080000000")
+  gender            String
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  apartments        Apartment[]   @relation("AdminApartments") // Admin creates apartments
+
+  @@map("admins")
+}
+
+model Agent {
+  id                String          @id @default(uuid())
+  name              String
+  email             String        @unique
+  address           String
+  password          String
+  phone_number      String        @unique
+  bank_name         String       
+  account_number    String        @unique
+  gender            String
+  profile_picture   String?
+  status            AgentStatus   @default(UNVERIFIED)
+  id_card           String?
+  apartment        Apartment[]     @relation("AgentApartments") // Agents list apartments
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  Transaction       Transaction[]
+
+  slug              String        @unique
+
+  @@map("agents")
+  AgentListing AgentListing[]
+  FailedTransaction FailedTransaction[]
+}
+
+model Apartment {
+  id          String      @id @default(uuid())
+  name        String  
+  address     String
+  type        String
+  servicing   String
+  bedroom     String
+  price       Int
+  images      String[]  @default([])
+  video_link  String?
+  createdBy   Admin     @relation("AdminApartments", fields: [adminId], references: [id]) // Admin ownership
+  adminId     String  
+
+  agents      Agent[]   @relation("AgentApartments") // Agents listing this apartment
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  Transaction Transaction[]
+  ApartmentLog ApartmentLog[]
+
+  @@map("apartment")
+  AgentListing AgentListing[]
+  FailedTransaction FailedTransaction[]
+}
+
+model Transaction {
+  id           String     @id @default(uuid()) 
+  email        String   
+  phone_number String?
+  status       String  
+  amount       Int     
+  channel      String  
+  charge       Int     // Fee charged by Paystack
+  metadata     Json?  // Optional metadata for additional data
+  reference    String  @unique   // Unique reference from paystack
+  date_paid    DateTime? // Set only when payment is successful
+  payment_month Decimal       // Extracted month of payment for filtering (1-12)
+  payment_year  Int     // Extracted year of payment for filtering 
+
+  apartment_id String
+  apartment    Apartment @relation(fields: [apartment_id], references: [id])
+
+  agent_id     String
+  agent        Agent   @relation(fields: [agent_id], references: [id])
+
+  booking_start_date  DateTime?
+  booking_end_date    DateTime?
+  duration_days       Int?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  TransactionLog TransactionLog[]
+
+  @@map("transactions")
+  @@index([status], name:"status_idx")
+  @@index([agent_id], name:"agent_idx")
+  @@index([apartment_id], name:"apartment_log_apartment_idx")
+  @@index([payment_month, payment_year], name:"date_idx")  // optimized for date-based queries
+  ApartmentLog ApartmentLog[]
+}
+
+model TransactionLog {
+  id              String    @id @default(uuid())
+  transaction_id  String 
+  transaction     Transaction  @relation(fields: [transaction_id], references: [id])
+
+  action          String     
+  changed_by      String?     
+  old_values      Json?     
+  new_values      Json?       
+
+  created_at      DateTime  @default(now())
+
+  @@map("transaction_logs")
+  @@index([transaction_id], name:"apartment_log_transaction_idx")
+}
+
+enum AgentStatus {
+  VERIFIED
+  UNVERIFIED
+}
+
+
+model ApartmentLog {
+  id              String    @id @default(uuid())
+  apartment_id    String
+  apartment       Apartment @relation(fields: [apartment_id], references: [id])
+  transaction_id  String
+  transaction     Transaction @relation(fields: [transaction_id], references: [id])
+  availability    Boolean
+  status          String
+  created_at      DateTime  @default(now())
+  booking_start_date DateTime?
+  booking_end_date   DateTime?
+  duration_days      Int?
+
+  @@map("apartment_logs")
+  @@index([apartment_id], name:"apartment_idx")
+  @@index([transaction_id], name:"transaction_idx")
+}
+
+model AgentListing {
+  id                 String    @id @default(uuid())
+  agent_id           String
+  apartment_id       String
+  agent              Agent     @relation(fields: [agent_id], references: [id])
+  apartment          Apartment @relation(fields: [apartment_id], references: [id])
+  base_price         Int         // The original aprtment price
+  markedup_price     Int?       // Proce set by the agent
+  price_changed_by   String?   // Id of the agent who last changed the price 
+  price_changed_at   DateTime   @default(now())
+  updated_at         DateTime   @updatedAt
+
+  @@unique([agent_id, apartment_id], name: "unique_Agent_apartment")
+  @@map("agent_listings")
+}
+
+model FailedTransaction {
+  id                  String      @id @default(uuid())
+  email               String
+  phone_number        String
+  amount              String
+  channel             String
+  charge              String
+  metadata            String
+  reference           String     @unique
+  failure_reason      String?
+  error_code          String?
+  attempted_at        DateTime   @default(now())
+  payment_month       Decimal
+  payment_year        Int
+
+  apartment_id        String
+  apartment           Apartment  @relation(fields: [apartment_id], references: [id])
+
+  agent_id        String
+  agent           Agent     @relation(fields: [agent_id], references: [id])
+
+  @@map("failed_transactions")
+  @@index([reference], name: "failed_tx_ref_idx")
+  @@index([agent_id], name: "failed_agent_idx")
+  @@index([apartment_id], name: "failed_apartment_idx")
+  @@index([payment_month, payment_year], name: "failed_date_idx")
+
+}
