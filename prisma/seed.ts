@@ -1,6 +1,6 @@
-import prisma from "../src/helpers/prisma";
-import { info, error as logError } from "../src/helpers/logger";
-import Helper from "../src/helpers";
+import prisma from "../src/core/utils/prisma";
+// import { info, error as logError } from "../src/core/helpers/logger";
+import Helper from "../src/core/helpers";
 
 async function main() {
   try {
@@ -23,31 +23,31 @@ async function main() {
         },
       });
   
-      info({
-        message: "Admin created",
-        params: { adminData },
-      });
+      // info({
+      //   message: "Admin created",
+      //   params: { adminData },
+      // });
 
       console.info("....seeding completed....")
 
     } else {
       console.log("Admin already exists");
-      info({
-        message:"Admin already exists, no creation needed",
-        params:{admin}
-      });
+      // info({
+      //   message:"Admin already exists, no creation needed",
+      //   params:{admin}
+      // });
     }
     
   } catch (error) {
     if(error instanceof Error){
-      logError({
-        message:"Error occurred during seeding",
-        params:{
-          name:error.name,
-          message:error.message,
-          stack:error.stack
-        }
-      })
+      // logError({
+      //   message:"Error occurred during seeding",
+      //   params:{
+      //     name:error.name,
+      //     message:error.message,
+      //     stack:error.stack
+      //   }
+      // })
     };
 
     throw error;

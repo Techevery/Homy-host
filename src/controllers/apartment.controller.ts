@@ -45,7 +45,7 @@ export const createApartment = async (req: Request, res: Response) => {
         });
 
         return;
-      }
+      } 
 
       const apartment = await adminService.createApartment(
         adminId,

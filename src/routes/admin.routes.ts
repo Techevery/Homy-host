@@ -10,7 +10,7 @@ router.post(
   "/upload-property",
   authenticateAdmin,
   apartmentController.createApartment
-);
+); 
 
 router.put("/verify-agent", authenticateAdmin, adminController.verifyAgent);
 
@@ -51,5 +51,5 @@ router.post(
   authenticateAdmin,
   adminController.getTransactionDetailsByYear
 );
-
+ 
 export default router;
