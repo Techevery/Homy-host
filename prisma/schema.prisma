@@ -38,8 +38,9 @@ model Agent {
   phone_number      String        @unique
   bank_name         String       
   account_number    String        @unique
-  gender            String
+  gender            String   
   profile_picture   String?
+  personalUrl       String   // Add this field
   status            AgentStatus   @default(UNVERIFIED)
   id_card           String?
   apartment        Apartment[]     @relation("AgentApartments") // Agents list apartments
@@ -112,6 +113,14 @@ model Transaction {
   @@index([apartment_id], name:"apartment_log_apartment_idx")
   @@index([payment_month, payment_year], name:"date_idx")  // optimized for date-based queries
   ApartmentLog ApartmentLog[]
+}
+
+model Banner{
+  id            String @id @default(uuid())
+  image_url     String
+  link          String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 }
 
 model TransactionLog {

@@ -10,7 +10,8 @@ const generateUniqueSlug = async (name: string) => {
   while (!isUnique) {
     const baseSlug = slugify(name, { lower: true, strict: true });
     const uniqueId = nanoid(6);
-    slug = `${baseSlug}-${uniqueId}`;
+    // slug = `${baseSlug}-${uniqueId}`;
+    slug = `${baseSlug}`;
 
     const exisitingAgent = await prisma.agent.findUnique({
       where: { slug },

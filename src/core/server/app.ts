@@ -1,4 +1,5 @@
 import express, { Express } from "express";
+import "express-async-errors";
 import cors from "cors";
 import BaseRouter from "../../routes";
 import { notFound } from "../../middlewares/error.middleware";
@@ -6,6 +7,7 @@ import prisma from "../utils/prisma";
 import morgan from "morgan";
 import helmet from "helmet";
 import { logger } from "../helpers/logger";
+import { errorHandler } from "../../middlewares/error";
 
 export const CreateServer = async (): Promise<Express> => {
   const app = express();
@@ -82,6 +84,8 @@ export const CreateServer = async (): Promise<Express> => {
       process.exit(1);
     }
   };
+
+  app.use(errorHandler);
 
   process.on("SIGTERM", () => shutdown("SIGTERM"));
   process.on("SIGINT", () => shutdown("SIGINT"));

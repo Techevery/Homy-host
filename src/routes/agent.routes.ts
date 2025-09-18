@@ -20,4 +20,4 @@ router.get("/:slug/properties", getPropertiesBySlug);
 
 router.get("/agent-listing", authenticateAgent, enlistedProperties);
 
-export default router;
+export default router;    

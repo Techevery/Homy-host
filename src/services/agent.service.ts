@@ -8,7 +8,7 @@ import { findBankByName } from "../core/functions/bank";
 // import * as validator from "../core/utils/validator";
 
 class AgentService {
-  async registerAgent(
+  async registerAgent( 
     agentData: {
       name: string;
       email: string;
@@ -25,7 +25,8 @@ class AgentService {
       id_card?: Express.Multer.File[];
     }
   ) {
-    if (!isEmail(agentData.email)) throw new Error("Invalid Email format");
+    try {
+          if (!isEmail(agentData.email)) throw new Error("Invalid Email format");
 
     const bank = findBankByName(agentData.bank_name);
 
@@ -40,7 +41,7 @@ class AgentService {
     const requiredFields = [
       "name",
       "email",
-      "password",
+      "password",      
       "address",
       "gender",
       "phone_number",
@@ -58,11 +59,11 @@ class AgentService {
     }
 
     const existingAgent = await prisma.agent.findUnique({
-      where: { email: agentData.email },
+      where: { email: agentData.email || agentData.personalUrl },
     });
 
     if (existingAgent) {
-      throw new Error("Account already in use");
+      throw new Error("Email or Personal URL already in use");
     }
 
     let imageUrl: string | undefined = undefined;
@@ -72,29 +73,39 @@ class AgentService {
       imageUrl = await uploadImageToSupabase(
         files.profile_picture[0],
         "agents"
-      );
+      ); 
     }
 
     if (files?.id_card?.[0]) {
       kycUrl = await uploadImageToSupabase(files.id_card[0], "kyc");
     }
 
-    const slug = await generateUniqueSlug(agentData.name);
+    const slug = await generateUniqueSlug(agentData.personalUrl);
+    // const agentUrl = slugify(agentData.personalUrl);
+
+    // use personal url to generate slug instead of slug 
 
     const agent = await prisma.agent.create({
-      data: {
+      data: {    
         ...agentData,
-        profile_picture: imageUrl,
+        personalUrl: `${process.env.AGENT_BASE_URL}/${slug}/properties`,
+        password: Helper.hash(agentData.password),
+        profile_picture: imageUrl, 
         id_card: kycUrl,
-        slug,
-      },
+        slug,      
+      }, 
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...agentWithoutPassword } = agent;
     return agentWithoutPassword;
-  }
 
+    } catch (error: any) {
+      throw new Error(`Something went wrong. ${error instanceof Error ? error.message : ''}`);
+    }
+
+  }
+                      
   async authenticateAgent(email: string, password: string) {
     if (!isEmail(email) || !password) {
       throw new Error("Email and password are required");
@@ -114,7 +125,9 @@ class AgentService {
 
     const token = Helper.signToken({ id: agent?.id, email: agent?.email });
 
-    return {
+    // verify personal url details and slugify them incase of spaces
+
+    return {    
       token,
       agent: {
         id: agent.id,
