@@ -9,21 +9,22 @@ export const enlistApartment = async (req: Request, res: Response) => {
 
     checkAgentAccess(res, agentId);
 
-    const { apartmentId, markedUpPrice } = req.body;
+    const { apartmentId, markedUpPrice, agentPercentage } = req.body;
 
     await agentService.addPropertyToListing(
       agentId,
       apartmentId,
-      markedUpPrice
-    );
+      markedUpPrice,
+      agentPercentage
+    );  
 
     res
       .status(200)
       .json({ message: "Apartment added to listing successfully" });
-
+   
     return;
   } catch (error) {
-    handleErrorResponse(res, error);
+    handleErrorResponse(res, error);     
 
     return;
   }

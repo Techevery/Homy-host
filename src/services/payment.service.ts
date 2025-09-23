@@ -57,7 +57,9 @@ class PaymentService {
 
     // Calculate amount
     const dailyPrice = agentListing.markedup_price || agentListing.base_price;
-    const totalAmount = dailyPrice * durationDays;
+    const totalAmount = dailyPrice * durationDays; 
+
+    // calculate percentage 
 
     const validChannel = this.validateChannels(channels);
     const validCurrency = this.validateCurrency(currency);

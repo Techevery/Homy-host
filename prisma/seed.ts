@@ -12,11 +12,11 @@ async function main() {
   
     const hashedPassword = Helper.hash("adminpassword", 10);
   
-    if (!admin) {
+    if (!admin) {    
       const adminData = await prisma.admin.create({
         data: {
           name: "Super Admin",
-          email: "admin@dev.com", 
+          email: "admin@dev.com",  
           password: hashedPassword,
           address: "Admin's office",
           gender: "Male",

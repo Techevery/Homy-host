@@ -10,7 +10,7 @@ class PropertyService {
       where: { id: agentId },
       select: { status: true },
     });
-
+    
     if (!agent) throw new Error("Agent not found");
 
     if (agent.status !== "VERIFIED")
@@ -184,3 +184,6 @@ class PropertyService {
 }
 
 export default new PropertyService()
+
+// if markup put amount when the use goess to see the propertty hhe sees the original price plus the markup price 
+// during uploading of an appartnent  by admin the should have agent fee wouuld bbe added

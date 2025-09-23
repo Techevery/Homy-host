@@ -47,6 +47,7 @@ model Agent {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   Transaction       Transaction[]
+  Wallet            Wallet[]
 
   slug              String        @unique
 
@@ -66,7 +67,8 @@ model Apartment {
   images      String[]  @default([])
   video_link  String?
   createdBy   Admin     @relation("AdminApartments", fields: [adminId], references: [id]) // Admin ownership
-  adminId     String  
+  adminId     String
+  agentPercentage Int?  
 
   agents      Agent[]   @relation("AgentApartments") // Agents listing this apartment
   createdAt   DateTime  @default(now())
@@ -171,6 +173,7 @@ model AgentListing {
   apartment          Apartment @relation(fields: [apartment_id], references: [id])
   base_price         Int         // The original aprtment price
   markedup_price     Int?       // Proce set by the agent
+  agent_commission_percent Int?
   price_changed_by   String?   // Id of the agent who last changed the price 
   price_changed_at   DateTime   @default(now())
   updated_at         DateTime   @updatedAt
@@ -206,4 +209,12 @@ model FailedTransaction {
   @@index([apartment_id], name: "failed_apartment_idx")
   @@index([payment_month, payment_year], name: "failed_date_idx")
 
+}
+
+
+model Wallet{
+  id            String @id @default(uuid())
+  agentId       String
+  agent         Agent @relation(fields: [agentId], references: [id])
+  balance       Int @default(0)
 }

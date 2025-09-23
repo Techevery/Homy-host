@@ -141,61 +141,146 @@ class AgentService {
     };
   }
 
-  async addPropertyToListing(
-    agentId: string,
-    apartmentId: string,
-    markedUpPrice?: number
-  ) {
-    const agent = await prisma.agent.findUnique({
-      where: { id: agentId },
-      select: { status: true },
-    });
+  // async addPropertyToListing(
+  //   agentId: string,
+  //   apartmentId: string,
+  //   markedUpPrice?: number,
+  //   agentPercentage?: number
+  // ) {
+  //   const agent = await prisma.agent.findUnique({
+  //     where: { id: agentId },
+  //     select: { status: true },
+  //   });
 
-    if (!agent) throw new Error("Agent not found");
+  //   if (!agent) throw new Error("Agent not found");
 
-    if (agent.status !== "VERIFIED")
-      throw new Error("Agent account is not verified");
+  //   if (agent.status !== "VERIFIED")
+  //     throw new Error("Agent account is not verified");
 
-    const apartment = await prisma.apartment.findUnique({
-      where: { id: apartmentId },
-    });
+  //   const apartment = await prisma.apartment.findUnique({
+  //     where: { id: apartmentId },
+  //   });
 
-    if (!apartment) throw new Error("Apartment not found");
+  //   if (!apartment) throw new Error("Apartment not found");
 
-    const existingListing = await prisma.agentListing.findUnique({
-      where: {
-        unique_Agent_apartment: {
-          agent_id: agentId,
-          apartment_id: apartmentId,
-        },
+  //   const existingListing = await prisma.agentListing.findUnique({
+  //     where: {
+  //       unique_Agent_apartment: {
+  //         agent_id: agentId,
+  //         apartment_id: apartmentId,
+  //       },
+  //     },
+  //   });
+
+  //   if (existingListing)
+  //     throw new Error("Apartment already listed by this agent");
+
+  //   const finalPrice =
+  //     markedUpPrice && markedUpPrice >= apartment.price
+  //       ? markedUpPrice
+  //       : apartment.price;
+
+  //     const agentfee = agentPercentage ? agentPercentage / apartment.price * 100 : agentPercentage
+
+  //   return await prisma.$transaction([
+  //     prisma.agent.update({
+  //       where: { id: agentId },
+  //       data: {
+  //         apartment: { connect: { id: apartmentId } },
+  //       },
+  //     }),
+  //     prisma.agentListing.create({
+  //       data: {
+  //         apartment_id: apartmentId,
+  //         agent_id: agentId,
+  //         base_price: apartment.price,
+  //         markedup_price: finalPrice,
+  //       },
+  //     }),
+  //   ]);
+  // }
+
+async addPropertyToListing(
+  agentId: string,
+  apartmentId: string,
+  markedUpPrice?: number,
+  agentPercentage?: number
+) {
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+    select: { status: true },
+  });
+
+  if (!agent) throw new Error("Agent not found");
+
+  if (agent.status !== "VERIFIED")
+    throw new Error("Agent account is not verified");
+
+  const apartment = await prisma.apartment.findUnique({
+    where: { id: apartmentId },
+  });
+
+  if (!apartment) throw new Error("Apartment not found");
+
+  const existingListing = await prisma.agentListing.findUnique({
+    where: {
+      unique_Agent_apartment: {
+        agent_id: agentId,
+        apartment_id: apartmentId,
       },
-    });
+    },
+  });
 
-    if (existingListing)
-      throw new Error("Apartment already listed by this agent");
+  if (existingListing)
+    throw new Error("Apartment already listed by this agent");
 
-    const finalPrice =
-      markedUpPrice && markedUpPrice >= apartment.price
-        ? markedUpPrice
-        : apartment.price;
-
-    return await prisma.$transaction([
-      prisma.agent.update({
-        where: { id: agentId },
-        data: {
-          apartment: { connect: { id: apartmentId } },
-        },
-      }),
-      prisma.agentListing.create({
-        data: {
-          apartment_id: apartmentId,
-          agent_id: agentId,
-          base_price: apartment.price,
-          markedup_price: finalPrice,
-        },
-      }),
-    ]);
+  // Prevent both inputs from being provided
+  if (markedUpPrice !== undefined && agentPercentage !== undefined) {
+    throw new Error("Cannot provide both markedUpPrice and agentPercentage");
   }
+
+  // Calculate the final marked-up price (selling price) and commission
+  let finalPrice: number;
+  let commissionPercentage: number | null = null;
+
+  if (agentPercentage !== undefined) {
+    if (agentPercentage <= 0 || agentPercentage > 100) {
+      throw new Error("Agent percentage must be between 0 and 100");
+    }
+    finalPrice = apartment.price;
+    commissionPercentage = agentPercentage;
+  } else if (markedUpPrice !== undefined) {
+    if (markedUpPrice < apartment.price) {
+      // throw new Error("Marked-up price cannot be less than the original apartment price");
+
+      // handle this latter
+    }
+    finalPrice = markedUpPrice;
+    commissionPercentage = null;
+  } else {
+    // finalPrice = apartment.price;
+    finalPrice = 0;
+    commissionPercentage = null;
+  }
+
+  return await prisma.$transaction([
+    prisma.agent.update({
+      where: { id: agentId },
+      data: {
+        apartment: { connect: { id: apartmentId } },
+      },
+    }),
+    prisma.agentListing.create({
+      data: {
+        apartment_id: apartmentId,
+        agent_id: agentId,
+        base_price: apartment.price,
+        markedup_price: finalPrice,
+        agent_commission_percent: commissionPercentage,  // Store the percentage if applicable
+      },
+    }),
+  ]);
+}
 
   async removePropertyFromListing(agentId: string, apartmentId: string) {
     const listing = await prisma.agentListing.findUnique({
