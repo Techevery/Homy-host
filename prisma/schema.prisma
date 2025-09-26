@@ -43,6 +43,7 @@ model Agent {
   personalUrl       String   // Add this field
   status            AgentStatus   @default(UNVERIFIED)
   id_card           String?
+  accountBalance    Int? @default(0)
   apartment        Apartment[]     @relation("AgentApartments") // Agents list apartments
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
@@ -87,20 +88,24 @@ model Transaction {
   phone_number String?
   status       String  
   amount       Int     
-  channel      String  
-  charge       Int     // Fee charged by Paystack
+  channel      String?  
+  charge       Int?     // Fee charged by Paystack
   metadata     Json?  // Optional metadata for additional data
   reference    String  @unique   // Unique reference from paystack
   date_paid    DateTime? // Set only when payment is successful
-  payment_month Decimal       // Extracted month of payment for filtering (1-12)
-  payment_year  Int     // Extracted year of payment for filtering 
+  payment_month Decimal?       // Extracted month of payment for filtering (1-12)
+  payment_year  Int?     // Extracted year of payment for filtering 
+  credited      Boolean @default(false)
+
+  agentPercentage Int?
+  mockupPrice     Int?
 
   apartment_id String
   apartment    Apartment @relation(fields: [apartment_id], references: [id])
 
   agent_id     String
   agent        Agent   @relation(fields: [agent_id], references: [id])
-
+    
   booking_start_date  DateTime?
   booking_end_date    DateTime?
   duration_days       Int?

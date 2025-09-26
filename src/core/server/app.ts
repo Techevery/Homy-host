@@ -8,6 +8,7 @@ import morgan from "morgan";
 import helmet from "helmet";
 import { logger } from "../helpers/logger";
 import { errorHandler } from "../../middlewares/error";
+import AgentCreditCron from "../../credeitAgetCron";
 
 export const CreateServer = async (): Promise<Express> => {
   const app = express();
@@ -21,6 +22,9 @@ export const CreateServer = async (): Promise<Express> => {
     logger.error("Failed to connect to database:", error);
     process.exit(1);
   }
+
+  AgentCreditCron.schedule();
+  logger.info("Agent crediting cron job scheduled");
 
   app.use(
     cors({

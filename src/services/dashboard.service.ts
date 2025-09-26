@@ -21,8 +21,8 @@ interface RecentTransaction {
 
 interface TransactionDetails {
   id: string;
-  year: number;
-  month: number;
+  year?: number;
+  month?: number;
   agentId: string;
   apartmentId: string;
   apartmentPrice: number;
@@ -107,7 +107,7 @@ class DashboardService {
 
       return transactions.map((transaction) => ({
         id: transaction.id,
-        year: transaction.payment_year,
+        year: transaction.payment_year ? transaction.payment_year : 0,
         month: Number(transaction.payment_month),
         agentId: transaction.agent.id,
         apartmentId: transaction.apartment_id,

@@ -147,7 +147,7 @@ class Paystack {
       }
       throw new Error("Payment verification failed with paystack");
     }
-  }
+  }      
 }
 
 export default new Paystack();

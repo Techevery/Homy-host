@@ -81,14 +81,16 @@ class AgentService {
     }
 
     const slug = await generateUniqueSlug(agentData.personalUrl);
+    // agent victor
+    // agent-victor
     // const agentUrl = slugify(agentData.personalUrl);
 
     // use personal url to generate slug instead of slug 
-
+// localhost:3000/proprty/agent-victor
     const agent = await prisma.agent.create({
       data: {    
         ...agentData,
-        personalUrl: `${process.env.AGENT_BASE_URL}/${slug}/properties`,
+        personalUrl: `${process.env.AGENT_BASE_URL}/${slug}/properties`, 
         password: Helper.hash(agentData.password),
         profile_picture: imageUrl, 
         id_card: kycUrl,
@@ -206,7 +208,8 @@ async addPropertyToListing(
   markedUpPrice?: number,
   agentPercentage?: number
 ) {
-  const agent = await prisma.agent.findUnique({
+  try {
+      const agent = await prisma.agent.findUnique({
     where: { id: agentId },
     select: { status: true },
   });
@@ -243,12 +246,12 @@ async addPropertyToListing(
   let finalPrice: number;
   let commissionPercentage: number | null = null;
 
-  if (agentPercentage !== undefined) {
+  if (agentPercentage !== undefined) {   
     if (agentPercentage <= 0 || agentPercentage > 100) {
       throw new Error("Agent percentage must be between 0 and 100");
     }
-    finalPrice = apartment.price;
-    commissionPercentage = agentPercentage;
+    finalPrice = 0; 
+    commissionPercentage = agentPercentage; 
   } else if (markedUpPrice !== undefined) {
     if (markedUpPrice < apartment.price) {
       // throw new Error("Marked-up price cannot be less than the original apartment price");
@@ -263,12 +266,12 @@ async addPropertyToListing(
     commissionPercentage = null;
   }
 
-  return await prisma.$transaction([
+  return await prisma.$transaction([  
     prisma.agent.update({
       where: { id: agentId },
       data: {
         apartment: { connect: { id: apartmentId } },
-      },
+      }, 
     }),
     prisma.agentListing.create({
       data: {
@@ -279,11 +282,14 @@ async addPropertyToListing(
         agent_commission_percent: commissionPercentage,  // Store the percentage if applicable
       },
     }),
-  ]);
+  ]); 
+  } catch (error: any) {
+    throw new Error(`${error.message}`)
+  }
 }
 
   async removePropertyFromListing(agentId: string, apartmentId: string) {
-    const listing = await prisma.agentListing.findUnique({
+    const listing = await prisma.agentListing.findUnique({   
       where: {
         unique_Agent_apartment: {
           agent_id: agentId,
@@ -305,6 +311,9 @@ async addPropertyToListing(
       },
     });
   }
+
+  //  cheking booking daily this can only happen with cron job  
+  // the agent would only get credited when the end time reach 
 
   async getAgentProperties(
     agentId: string,
