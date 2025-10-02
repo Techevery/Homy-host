@@ -3,7 +3,7 @@ import prisma from "../src/core/utils/prisma";
 import Helper from "../src/core/helpers";
 
 async function main() {
-  try {
+  try {   
     console.log("....Seeding Admin....")
 
     const admin = await prisma.admin.findFirst({
