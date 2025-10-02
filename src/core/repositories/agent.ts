@@ -13,6 +13,7 @@ interface CreateAgentInput {
   slug: string;
   profile_picture?: string;
   id_card?: string;
+  personalUrl: string
 }
 
 export const createAgent = async (input: CreateAgentInput) => {
@@ -51,6 +52,7 @@ export const createAgent = async (input: CreateAgentInput) => {
       profile_picture,
       id_card,
       slug,
+      personalUrl: "agent"
     },
   });
 

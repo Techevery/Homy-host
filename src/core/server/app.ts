@@ -61,7 +61,7 @@ export const CreateServer = async (): Promise<Express> => {
   app.get("/health", (_req, res) => {
     res.status(200).json({
       status: "healthy",
-    });
+    });    
   });
 
   app.use("/api/v1", BaseRouter);

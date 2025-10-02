@@ -4,7 +4,7 @@
   "description": "Backend service for Homeyhost apartment booking service",
   "main": "dist/src/index.js",
   "scripts": {
-    "build": "npx tsc",
+    "build": "tsc && tsc-alias",
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
     "dev:full": "concurrently \"npm run dev\" \"npm run prisma:studio\"",
@@ -81,6 +81,7 @@
     "globals": "^15.14.0",
     "nodemon": "^3.1.7",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.3.3",
     "typescript-eslint": "^8.20.0"
   }
