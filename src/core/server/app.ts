@@ -71,7 +71,7 @@ export const CreateServer = async (): Promise<Express> => {
   });
 
   app.use("/api/v1", BaseRouter);
-  app.use(notFound);
+  app.use(notFound);  
 
   const server = app.listen(PORT, () => {
     logger.info(`Homeyhost server serving on port http://localhost:${PORT}`);

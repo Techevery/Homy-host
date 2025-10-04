@@ -81,8 +81,6 @@ class AgentService {
     }
 
     const slug = await generateUniqueSlug(agentData.personalUrl);
-    // agent victor
-    // agent-victor
     // const agentUrl = slugify(agentData.personalUrl);
 
     // use personal url to generate slug instead of slug 
@@ -91,20 +89,21 @@ class AgentService {
       data: {    
         ...agentData,
         personalUrl: `${process.env.AGENT_BASE_URL}/${slug}/properties`, 
-        password: Helper.hash(agentData.password),
+        password: Helper.hash(agentData.password), 
         profile_picture: imageUrl, 
         id_card: kycUrl,
         slug,      
       }, 
-    });
+    }); 
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...agentWithoutPassword } = agent;
     return agentWithoutPassword;
 
-    } catch (error: any) {
+    } catch (error: any) {  
+      console.log(error)
       throw new Error(`Something went wrong. ${error instanceof Error ? error.message : ''}`);
-    }
+    } 
 
   }
                       
