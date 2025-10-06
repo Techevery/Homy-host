@@ -62,7 +62,7 @@ export const createAgent = async (req: Request, res: Response) => {
       } else if (err) {
         return res.status(500).json({ message: "Unknown file upload error" });
       }
-
+  
       const agent = await agentService.registerAgent(
         req.body,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

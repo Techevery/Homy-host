@@ -10,20 +10,21 @@ import { logger } from "../helpers/logger";
 import { errorHandler } from "../../middlewares/error";
 import AgentCreditCron from "../../credeitAgetCron";
 
-export const CreateServer = async (): Promise<Express> => {
+export const CreateServer = async (): Promise<Express> => {    
   const app = express();
-
+ 
   const PORT = process.env.PORT || 3000;
 
   try {
     await prisma.$connect();
     logger.info("Prisma connected to database");
   } catch (error) {
+    console.log(error)
     logger.error("Failed to connect to database:", error);
     process.exit(1);
   }
 
-  AgentCreditCron.schedule();
+  AgentCreditCron.schedule(); 
   logger.info("Agent crediting cron job scheduled");
 
   app.use(

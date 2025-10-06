@@ -19,6 +19,8 @@ const generateUniqueSlug = async (name: string) => {
 
     if (!exisitingAgent) {
       isUnique = true;
+    }else {
+      name = `${name}-${uniqueId}`; // Update name to ensure a different slug in the next iteration
     }
   }
 

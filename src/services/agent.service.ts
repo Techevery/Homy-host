@@ -7,7 +7,7 @@ import account_number from "validator/lib/isNumeric";
 import { findBankByName } from "../core/functions/bank";
 // import * as validator from "../core/utils/validator";
 
-class AgentService {
+class AgentService { 
   async registerAgent( 
     agentData: {
       name: string;
@@ -80,12 +80,9 @@ class AgentService {
       kycUrl = await uploadImageToSupabase(files.id_card[0], "kyc");
     }
 
-    const slug = await generateUniqueSlug(agentData.personalUrl);
-    // const agentUrl = slugify(agentData.personalUrl);
+    const slug = await generateUniqueSlug(agentData.personalUrl); 
 
-    // use personal url to generate slug instead of slug 
-// localhost:3000/proprty/agent-victor
-    const agent = await prisma.agent.create({
+    const agent = await prisma.agent.create({ 
       data: {    
         ...agentData,
         personalUrl: `${process.env.AGENT_BASE_URL}/${slug}/properties`, 
