@@ -45,6 +45,12 @@ model Agent {
   id_card           String?
   accountBalance    Int? @default(0)
   apartment        Apartment[]     @relation("AgentApartments") // Agents list apartments
+  nextOfKinName    String?
+  nextOfKinPhone   String?
+  nextOfKinAddress String?  
+  nextOfKinEmail   String?
+  nextOfKinStatus  String?
+  nextOfKinOccupation String?    
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   Transaction       Transaction[]
@@ -63,13 +69,13 @@ model Apartment {
   address     String
   type        String
   servicing   String
-  bedroom     String
+  bedroom     String  
   price       Int
   images      String[]  @default([])
   video_link  String?
   createdBy   Admin     @relation("AdminApartments", fields: [adminId], references: [id]) // Admin ownership
   adminId     String
-  agentPercentage Int?  
+  agentPercentage Int? 
 
   agents      Agent[]   @relation("AgentApartments") // Agents listing this apartment
   createdAt   DateTime  @default(now())

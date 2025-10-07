@@ -6,9 +6,13 @@ import {
   removeApartment,
   enlistedProperties,
   getPropertiesBySlug,
+  publicProperties,
 } from "../controllers/agent.controller";
 
 const router = express.Router();
+
+// all properties publicly available
+router.get("/public-properties", publicProperties);
 
 //enlist property
 router.post("/enlist-property", authenticateAgent, enlistApartment);

@@ -8,7 +8,7 @@ import { findBankByName } from "../core/functions/bank";
 // import * as validator from "../core/utils/validator";
 
 class AgentService { 
-  async registerAgent( 
+  async registerAgent(      
     agentData: {
       name: string;
       email: string;
@@ -18,7 +18,13 @@ class AgentService {
       phone_number: string;
       bank_name: string;
       account_number: string;
-      personalUrl: string
+      personalUrl: string;
+      nextOfKinName: string;
+      nextOfKinPhone: string;
+      nextOfKinAddress: string;
+      nextOfKinEmail: string;
+      nextOfKinStatus: string;
+      nextOfKinOccupation: string;
     },
     files?: {
       profile_picture?: Express.Multer.File[];
@@ -47,7 +53,13 @@ class AgentService {
       "phone_number",
       "bank_name",
       "account_number",
-      "personalUrl"
+      "personalUrl",
+      "nextOfKinName",
+      "nextOfKinPhone",
+      "nextOfKinAddress",
+      "nextOfKinEmail",
+      "nextOfKinStatus",
+      "nextOfKinOccupation"
     ];
 
     const missingFields = requiredFields.filter(
@@ -90,7 +102,7 @@ class AgentService {
         profile_picture: imageUrl, 
         id_card: kycUrl,
         slug,      
-      }, 
+      },  
     }); 
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -103,6 +115,22 @@ class AgentService {
     } 
 
   }
+
+  async getAllPublicProperties(page: number, limit: number) {
+    const properties = await prisma.apartment.findMany({
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    const totalCount = await prisma.apartment.count();
+
+    return {
+      properties,
+      totalCount,
+      currentPage: page,
+      totalPages: Math.ceil(totalCount / limit),
+    }; 
+    } 
                       
   async authenticateAgent(email: string, password: string) {
     if (!isEmail(email) || !password) {
@@ -138,65 +166,6 @@ class AgentService {
       },
     };
   }
-
-  // async addPropertyToListing(
-  //   agentId: string,
-  //   apartmentId: string,
-  //   markedUpPrice?: number,
-  //   agentPercentage?: number
-  // ) {
-  //   const agent = await prisma.agent.findUnique({
-  //     where: { id: agentId },
-  //     select: { status: true },
-  //   });
-
-  //   if (!agent) throw new Error("Agent not found");
-
-  //   if (agent.status !== "VERIFIED")
-  //     throw new Error("Agent account is not verified");
-
-  //   const apartment = await prisma.apartment.findUnique({
-  //     where: { id: apartmentId },
-  //   });
-
-  //   if (!apartment) throw new Error("Apartment not found");
-
-  //   const existingListing = await prisma.agentListing.findUnique({
-  //     where: {
-  //       unique_Agent_apartment: {
-  //         agent_id: agentId,
-  //         apartment_id: apartmentId,
-  //       },
-  //     },
-  //   });
-
-  //   if (existingListing)
-  //     throw new Error("Apartment already listed by this agent");
-
-  //   const finalPrice =
-  //     markedUpPrice && markedUpPrice >= apartment.price
-  //       ? markedUpPrice
-  //       : apartment.price;
-
-  //     const agentfee = agentPercentage ? agentPercentage / apartment.price * 100 : agentPercentage
-
-  //   return await prisma.$transaction([
-  //     prisma.agent.update({
-  //       where: { id: agentId },
-  //       data: {
-  //         apartment: { connect: { id: apartmentId } },
-  //       },
-  //     }),
-  //     prisma.agentListing.create({
-  //       data: {
-  //         apartment_id: apartmentId,
-  //         agent_id: agentId,
-  //         base_price: apartment.price,
-  //         markedup_price: finalPrice,
-  //       },
-  //     }),
-  //   ]);
-  // }
 
 async addPropertyToListing(
   agentId: string,

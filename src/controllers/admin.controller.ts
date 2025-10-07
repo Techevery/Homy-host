@@ -22,15 +22,15 @@ export const verifyAgent = async (req: Request, res: Response) => {
     const updatedAgent = await adminService.verifyAgent(
       adminId,
       agentId,
-      status as "VERIFIED" | "UNVERIFIED"
+      status as "VERIFIED" | "UNVERIFIED" 
     );
 
-    res.status(200).json({
-      message: "Agent Status Updated",
-      data: {
-        agentName: updatedAgent.name,
-        agentId: updatedAgent.id,
-        status: updatedAgent.status,
+    res.status(200).json({       
+      message: "Agent Status Updated",        
+      data: {            
+        agentName: updatedAgent.name,   
+        agentId: updatedAgent.id,               
+        status: updatedAgent.status,  
       },
     });
 
@@ -52,11 +52,11 @@ export const listProperties = async (req: Request, res: Response) => {
     const pageSize = parseInt(req.query.pageSize as string) || 10;
 
     const response = await adminService.listApartments(adminId, page, pageSize);
-
+             
     res.status(200).json({
       message: "Properties retrieved",
       data: response,
-    });
+    });      
 
     return;
   } catch (error) {
