@@ -68,7 +68,7 @@ export const CreateServer = async (): Promise<Express> => {
   app.get("/api/v1", (_req, res) => {
     res.status(200).json({
       message: "Homeyhost API v1 is running",
-    });
+    }); 
   });
 
   app.use("/api/v1", BaseRouter);
