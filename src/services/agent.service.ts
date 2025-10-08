@@ -14,7 +14,7 @@ class AgentService {
       email: string;
       password: string;
       address: string;
-      gender: string;
+      gender: string; 
       phone_number: string;
       bank_name: string;
       account_number: string;
@@ -124,15 +124,17 @@ class AgentService {
       phoneNumber: agent.phone_number,
       gender: agent.gender,
       avatar: agent.profile_picture,
-      personalUrl: agent.personalURL,
+      personalUrl: agent.personalUrl,
       nextOfKinName: agent.nextOfKinName,
       nextOfkinEmail: agent.nextOfKinEmail,
       address: agent.address,
       accountBalance: agent.accountBalance,
-      status: agent.status 
+      status: agent.status,
+      bankName: agent.bank_name,
+      accountNumber: agent.account_number    
     }   
     return data   
-  }
+  }  
 
   async getAllPublicProperties(page: number, limit: number) {
     const properties = await prisma.apartment.findMany({
