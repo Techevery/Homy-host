@@ -38,6 +38,6 @@ class BookingService{
             throw new Error("Could not fetch bookings");
         }
     }
-}
+}  
 
 export default new BookingService();

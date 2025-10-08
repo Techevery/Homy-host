@@ -30,6 +30,17 @@ export const enlistApartment = async (req: Request, res: Response) => {
   }
 };
 
+export const agentprofileDetails = async(req: Request, res: Response)=> {
+  try {
+      const {agent} = (req as any)
+      const result = await agentService.agetProfile(agent)
+      res.status(200).json({message: "Agent profile details", result})
+  } catch (error: any) {
+    res.status(500).json(`${error.message}`)
+  }
+
+}
+
 export const publicProperties = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;

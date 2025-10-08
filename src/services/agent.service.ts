@@ -116,6 +116,24 @@ class AgentService {
 
   }
 
+  async agetProfile(agent: any){
+    const data = {
+      id: agent.id,
+      name: agent.name,
+      email: agent.email,
+      phoneNumber: agent.phone_number,
+      gender: agent.gender,
+      avatar: agent.profile_picture,
+      personalUrl: agent.personalURL,
+      nextOfKinName: agent.nextOfKinName,
+      nextOfkinEmail: agent.nextOfKinEmail,
+      address: agent.address,
+      accountBalance: agent.accountBalance,
+      status: agent.status 
+    }   
+    return data   
+  }
+
   async getAllPublicProperties(page: number, limit: number) {
     const properties = await prisma.apartment.findMany({
       skip: (page - 1) * limit,
