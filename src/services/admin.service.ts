@@ -120,6 +120,8 @@ class AdminService {
       servicing: string;
       bedroom: string;
       price: number;
+      amenities: string,
+      agentPercentage: number
     },
     files?: Express.Multer.File[]
   ) {
@@ -130,6 +132,8 @@ class AdminService {
       "servicing",
       "bedroom",
       "price",
+      "amenities",
+      "agentPercentage"
     ];
 
     const missingFields = requiredFields.filter(

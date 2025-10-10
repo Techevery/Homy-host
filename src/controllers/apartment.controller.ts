@@ -35,9 +35,10 @@ export const createApartment = async (req: Request, res: Response) => {
       const adminId = (req as any).admin.id;
       checkAdminAccess(res, adminId);
 
-      const { name, address, type, servicing, bedroom, price } = req.body;
+      const { name, address, type, servicing, bedroom, price, amenities, agentPercentage } = req.body;
 
       const parsedPrice = parseInt(price, 10);
+      const parsedPercentage = parseInt(agentPercentage, 10)
 
       if (isNaN(parsedPrice)) {
         res.status(400).json({
@@ -56,13 +57,15 @@ export const createApartment = async (req: Request, res: Response) => {
           servicing,
           bedroom,
           price: parsedPrice,
+          amenities,
+          agentPercentage: parsedPercentage
         },
         req.files as Express.Multer.File[]
       );
-
+ 
       res.status(201).json({
         message: "Apartment created successfully",
-        data: apartment,
+        data: apartment, 
       });
 
       return;

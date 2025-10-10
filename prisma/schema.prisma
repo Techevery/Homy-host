@@ -69,6 +69,7 @@ model Apartment {
   address     String
   type        String
   servicing   String
+  amenities   String?
   bedroom     String  
   price       Int
   images      String[]  @default([])

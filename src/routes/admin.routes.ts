@@ -16,6 +16,7 @@ router.put("/verify-agent", authenticateAdmin, adminController.verifyAgent);
 
 router.get(
   "/list-apartments",
+  authenticateAdmin,
   adminController.listProperties
 );
 

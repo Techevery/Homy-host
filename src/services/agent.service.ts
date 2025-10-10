@@ -7,13 +7,13 @@ import account_number from "validator/lib/isNumeric";
 import { findBankByName } from "../core/functions/bank";
 // import * as validator from "../core/utils/validator";
 
-class AgentService { 
-  async registerAgent(      
+class AgentService {     
+  async registerAgent( 
     agentData: {
       name: string;
       email: string;
       password: string;
-      address: string;
+      address: string; 
       gender: string; 
       phone_number: string;
       bank_name: string;
@@ -24,7 +24,7 @@ class AgentService {
       nextOfKinAddress: string;
       nextOfKinEmail: string;
       nextOfKinStatus: string;
-      nextOfKinOccupation: string;
+      nextOfKinOccupation: string;  
     },
     files?: {
       profile_picture?: Express.Multer.File[];
@@ -132,7 +132,7 @@ class AgentService {
       status: agent.status,
       bankName: agent.bank_name,
       accountNumber: agent.account_number    
-    }   
+    }       
     return data   
   }  
 
