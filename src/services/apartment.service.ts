@@ -134,7 +134,7 @@ class PropertyService {
   async getAgentPropertiesBySlug(
     slug: string,
     page: number = 1,
-    limit: number = 10
+    limit: number = 10 
   ) {
     const skip = (page - 1) * limit;
 
@@ -166,7 +166,7 @@ class PropertyService {
       where: { agents: { some: { id: agent.id } } },
     });
 
-    return {
+    return { 
       agent: {
         name: agent.name,
         email: agent.email,

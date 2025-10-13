@@ -9,7 +9,7 @@ import { deleteImageFromBucket } from "../core/functions";
 class AdminService {
   async createAdmin(adminData: {
     name: string;
-    email: string;
+    email: string; 
     password: string;
     address: string;
     gender: string;
@@ -95,7 +95,7 @@ class AdminService {
       address?: string;
       password?: string;
       confirmPassword?: string;
-    }
+    } 
   ) {
     const { password, confirmPassword, ...restData } = updateData;
 
@@ -153,7 +153,7 @@ class AdminService {
         : [];
 
     return await prisma.apartment.create({
-      data: {
+      data: { 
         ...apartmentData,
         images: imageUrls,
         adminId,
@@ -163,21 +163,27 @@ class AdminService {
 
   async deleteApartment(apartmentId: string) {
     try {
-      return await prisma.apartment.delete({
+      const booking = await prisma.apartmentLog.findFirst({
+        where: {apartment_id: apartmentId} 
+      })
+      if(booking) throw new Error("You can not delete appartment that has been booked!")
+      const appartment = await prisma.apartment.delete({
         where: { id: apartmentId },
       });
-    } catch (error) {
-      if ((error as any).code === "P2025") {
-        throw new Error("Apartment no found");
-      }
 
+      return 
+    } catch (error: any) {
+      if ((error as any).code === "P2025") {
+        throw new Error("Apartment no found"); 
+      }
+  
       throw error;
     }
   }
 
   async updateApartment(
     apartmentId: string,
-    updateData: {
+    updateData: { 
       name?: string;
       address?: string;
       type?: string;
@@ -188,7 +194,8 @@ class AdminService {
     files?: Express.Multer.File[],
     deleteExistingImages: boolean = false
   ) {
-    const existingApartment = await prisma.apartment.findUnique({
+    try {
+          const existingApartment = await prisma.apartment.findUnique({
       where: { id: apartmentId },
     });
 
@@ -196,12 +203,13 @@ class AdminService {
       throw new Error("Apartment not found");
     }
 
-    // Handle images updated if files are provided
+    // Handle images updated if files are provided 
     const updatedImages = await this.handleImageUpdates(
       existingApartment.images || [],
       files,
       deleteExistingImages
     );
+
 
     // Perform the update
     return await prisma.apartment.update({
@@ -212,6 +220,9 @@ class AdminService {
         updatedAt: new Date(),
       },
     });
+    } catch (error) {
+      throw error 
+    }
   }
 
   async listApartments(
@@ -398,7 +409,7 @@ class AdminService {
       await Promise.all(images.map((url) => deleteImageFromBucket(url)));
 
       images = [];
-    }
+    } 
 
     // Add new images if provided
     if (newFiles?.length) {

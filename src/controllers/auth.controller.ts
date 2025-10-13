@@ -50,7 +50,7 @@ export const adminLogin = async (req: Request, res: Response) => {
 
     return;
   }
-};
+}; 
 
 export const createAgent = async (req: Request, res: Response) => {
   upload(req, res, async (err) => {
@@ -75,7 +75,7 @@ export const createAgent = async (req: Request, res: Response) => {
       });
     } catch (error) {
       handleErrorReponse(res, error);
-    }
+    }  
   });
 };
 

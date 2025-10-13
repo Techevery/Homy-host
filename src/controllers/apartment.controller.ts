@@ -56,7 +56,7 @@ export const createApartment = async (req: Request, res: Response) => {
           type,
           servicing,
           bedroom,
-          price: parsedPrice,
+          price: parsedPrice,   
           amenities,
           agentPercentage: parsedPercentage
         },
@@ -69,55 +69,74 @@ export const createApartment = async (req: Request, res: Response) => {
       });
 
       return;
-    } catch (error) {
+    } catch (error) { 
       handleErrorReponse(res, error);
 
       return;
     }
-  });
-};
+  }); 
+}; 
+
 
 export const updateApartment = async (req: Request, res: Response) => {
-  try {
-    const adminId = (req as any).admin.id;
+  // Define Multer locally, matching createApartment config
+  const upload = multer({
+    storage: multer.memoryStorage(),
+  }).array("images", 10);
 
-    checkAdminAccess(res, adminId);
+  upload(req, res, async (err) => {
+    try {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({
+          message: `File upload error: ${err.message}`,
+        });
+      } else if (err) {
+        return res.status(500).json({
+          message: "Unknown file upload error",
+        });
+      }
 
-    const apartmentId = req.params.apartmentId;
+      const adminId = (req as any).admin.id;
+      checkAdminAccess(res, adminId);
 
-    const body: UpdateApartmentInput = updateApartmentSchema.parse(req.body);
+      const apartmentId = req.params.apartmentId;
+      if (!apartmentId) {
+        return res.status(400).json({
+          message: "Apartment ID is required",
+        });
+      }
 
-    const files = req.files as Express.Multer.File[] | undefined;
-    const deleteExistingImages = body.deleteExistingImages ?? false;
+      // Schema now transforms price to number and deleteExistingImages to boolean
+      const body: UpdateApartmentInput = updateApartmentSchema.parse(req.body);
+      const files = req.files as Express.Multer.File[] | undefined; // Now correctly an array
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { deleteExistingImages: _, ...updateData } = body;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { deleteExistingImages: _, ...updateData } = body;
 
-    const updatedApartment = await adminService.updateApartment(
-      apartmentId,
-      updateData,
-      files,
-      deleteExistingImages
-    );
+      const updatedApartment = await adminService.updateApartment( 
+        apartmentId,
+        updateData,
+        files,
+        body.deleteExistingImages // Use the transformed boolean from body
+      );
 
-    successResponse(
-      res,
-      200,
-      "Apartment Updated Successfully",
-      updatedApartment
-    );
-
-    return;
-  } catch (error) {
-    handleErrorReponse(res, error);
-  }
+      successResponse(
+        res,
+        200,
+        "Apartment Updated Successfully",
+        updatedApartment
+      );
+    } catch (error) {
+      handleErrorReponse(res, error);
+    }
+  });
 };
 
 export const searchApartment = async (req: Request, res: Response) => {
   try {
     const adminId = (req as any).admin.id;
 
-    checkAdminAccess(res, adminId);
+    checkAdminAccess(res, adminId);  
 
     const { searchTerm } = req.query;
     if (!searchTerm) throw new Error("Search term is required");
@@ -150,10 +169,10 @@ export const deleteApartment = async (req: Request, res: Response) => {
 
     checkAdminAccess(res, adminId);
 
-    const apartmentId = req.body.apartmentId;
+    const {apartmentId} = req.params;
 
     if (!apartmentId) {
-      res.status(400).json({ message: "Bad Request" });
+      res.status(400).json({ message: "AppartmentId is required!" });
 
       return;
     }

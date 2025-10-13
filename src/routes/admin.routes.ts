@@ -41,15 +41,17 @@ router.get(
 router.get("/stats", authenticateAdmin, adminController.getDashboardStats);
 
 router.delete(
-  "/:apartmentId",
+  "/:apartmentId", 
   authenticateAdmin,
   apartmentController.deleteApartment
-);
+);   
 
 router.post(
   "/get-transaction-details",
   authenticateAdmin,
   adminController.getTransactionDetailsByYear
-);
+);  
+
+router.patch("/update-apartment/:apartmentId", authenticateAdmin, apartmentController.updateApartment)
  
 export default router;

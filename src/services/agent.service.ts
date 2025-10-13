@@ -97,11 +97,11 @@ class AgentService {
     const agent = await prisma.agent.create({ 
       data: {    
         ...agentData,
-        personalUrl: `${process.env.AGENT_BASE_URL}/${slug}/properties`, 
+        personalUrl: `${process.env.AGENT_BASE_URL}/${slug}`, 
         password: Helper.hash(agentData.password), 
         profile_picture: imageUrl, 
         id_card: kycUrl,
-        slug,      
+        slug,   
       },  
     }); 
 
