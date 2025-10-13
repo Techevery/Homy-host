@@ -129,7 +129,7 @@ class AdminService {
       "name",
       "address",
       "type",
-      "servicing",
+      "servicing",  
       "bedroom",
       "price",
       "amenities",
@@ -203,6 +203,13 @@ class AdminService {
       throw new Error("Apartment not found");
     }
 
+    // handle propert trtrthat has been booked and disawllow update
+    const booking = await prisma.apartmentLog.findFirst({
+      where: {apartment_id: apartmentId, status: "pending"}
+    })
+
+    if(booking) throw new Error("You cannot update appartment that has been booked!")
+
     // Handle images updated if files are provided 
     const updatedImages = await this.handleImageUpdates(
       existingApartment.images || [],
@@ -219,7 +226,7 @@ class AdminService {
         images: updatedImages,
         updatedAt: new Date(),
       },
-    });
+    });            
     } catch (error) {
       throw error 
     }

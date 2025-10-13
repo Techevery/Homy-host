@@ -136,7 +136,7 @@ export const searchApartment = async (req: Request, res: Response) => {
   try {
     const adminId = (req as any).admin.id;
 
-    checkAdminAccess(res, adminId);  
+    checkAdminAccess(res, adminId);
 
     const { searchTerm } = req.query;
     if (!searchTerm) throw new Error("Search term is required");
