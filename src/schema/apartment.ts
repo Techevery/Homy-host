@@ -11,7 +11,8 @@ export const updateApartmentSchema = z
       .regex(/^\d+$/, "Price must be a valid non-negative integer")
       .transform((val) => parseInt(val, 10))
       .pipe(z.number().min(0))
-      .optional(),    deleteExistingImages: z.boolean().optional(),
+      .optional(),
+      deleteExistingImages: z.boolean().optional(),  
   })
   .refine((data) => Object.values(data).some((val) => val !== undefined), {
     message: "At least one field must be provided for update",
