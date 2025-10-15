@@ -28,7 +28,7 @@ model Admin {
 
   @@map("admins")
 }
-
+ 
 model Agent {
   id                String          @id @default(uuid())
   name              String
@@ -176,7 +176,7 @@ model ApartmentLog {
   @@index([apartment_id], name:"apartment_idx")
   @@index([transaction_id], name:"transaction_idx")
 }
-
+ 
 model AgentListing {
   id                 String    @id @default(uuid())
   agent_id           String

@@ -31,6 +31,7 @@ class PropertyService {
       },
     });
 
+    // handle this part properly 
     if (existingListing)
       throw new Error("Apartment already listed by this agent");
 
@@ -57,29 +58,42 @@ class PropertyService {
     ]);
   }
 
-  async removePropertyFromListing(agentId: string, apartmentId: string) {
-    const listing = await prisma.agentListing.findUnique({
+async removePropertyFromListing(agentId: string, apartmentId: string) {
+  try {
+      const listing = await prisma.agentListing.findUnique({
+    where: {
+      unique_Agent_apartment: {
+        agent_id: agentId,
+        apartment_id: apartmentId,
+      },
+    },
+  });
+
+  if (!listing) {
+    throw new Error("Listing not found");
+  }
+
+  await prisma.$transaction([
+    prisma.agent.update({
+      where: { id: agentId },
+      data: {
+        apartment: { disconnect: { id: apartmentId } },
+      },
+    }),
+    prisma.agentListing.delete({
       where: {
         unique_Agent_apartment: {
           agent_id: agentId,
           apartment_id: apartmentId,
         },
       },
-    });
-
-    if (!listing) {
-      throw new Error("Listing not found");
-    }
-
-    return await prisma.agent.update({
-      where: {
-        id: agentId,
-      },
-      data: {
-        apartment: { disconnect: { id: apartmentId } },
-      },
-    });
+    }),
+  ]);
+  return {message: "Appartment removed from agent listing!"}
+  } catch (error: any) {
+    throw new Error(error.message)
   }
+}
 
   async getAgentProperties(
     agentId: string,

@@ -290,7 +290,7 @@ async addPropertyToListing(
     return await prisma.agent.update({
       where: {
         id: agentId,
-      },
+      },  
       data: {
         apartment: { disconnect: { id: apartmentId } },
       },
