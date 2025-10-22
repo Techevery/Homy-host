@@ -184,7 +184,7 @@ class PaymentService {
   // Calculate amount
   const dailyPrice = agentListing.markedup_price ? agentListing.markedup_price + agentListing.base_price : agentListing.base_price;
   const totalAmount = dailyPrice * durationDays; 
-
+ 
   const validChannel = this.validateChannels(channels);
   const validCurrency = this.validateCurrency(currency);
 
@@ -235,6 +235,9 @@ class PaymentService {
         dailyPrice,
         isMarkedUp,
         originalAmount: dailyPrice * durationDays,
+        nextofKinName,
+        nextofKinNumber,
+        fullName,
       },
     },
   });

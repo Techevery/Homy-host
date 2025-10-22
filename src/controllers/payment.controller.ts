@@ -22,7 +22,7 @@ export const initiatePayment = async (req: Request, res: Response) => {
       email,
       channels,
       currency,
-      agentId,
+      agentId,  
       apartmentId,
       startDate,
       endDate,
