@@ -13,7 +13,8 @@ export const initiatePayment = async (req: Request, res: Response) => {
     endDate,
     phoneNumber,
     nextofKinName,
-    nextOfKinNumber,
+    nextofKinNumber,
+    fullName
   } = req.body;
 
   try {
@@ -27,7 +28,8 @@ export const initiatePayment = async (req: Request, res: Response) => {
       endDate,
       phoneNumber,
       nextofKinName,
-      nextOfKinNumber,
+      nextofKinNumber,
+      fullName,
     );
 
     res.status(HttpStatusCode.HTTP_OK).json({

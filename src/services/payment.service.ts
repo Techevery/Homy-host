@@ -135,7 +135,8 @@ class PaymentService {
   endDate: string,
   phoneNumber: string,
   nextofKinName: string,
-  nextOfKinNumber: string,
+  nextofKinNumber: string,
+  fullName: string
 ) {
   // Validate dates
   if (!startDate || !endDate) {
@@ -199,7 +200,8 @@ class PaymentService {
       startDate,
       endDate,
       nextofKinName,
-      nextOfKinNumber, 
+      nextofKinNumber, 
+      fullName,
       phoneNumber,
       durationDays,
       dailyPrice,
@@ -823,7 +825,7 @@ class PaymentService {
 
     // Parse metadata to get booking details
     const metadata = JSON.parse(failedTransaction.metadata);
-    const { startDate, endDate, phoneNumber, nextofKinName, nextOfKinNumber } = metadata;
+    const { startDate, endDate, phoneNumber, nextofKinName, nextOfKinNumber, fullName } = metadata;
 
     if (!startDate || !endDate) {
       throw new Error("Missing booking dates in failed transaction metadata");
@@ -841,6 +843,7 @@ class PaymentService {
      phoneNumber,
      nextofKinName,
      nextOfKinNumber,
+     fullName
     );
 
     logger.info({

@@ -22,7 +22,8 @@ interface PaystackMetadata {
   endDate?: string;
   phoneNumber: string;
   nextofKinName: string;
-  nextOfKinNumber: string;
+  nextofKinNumber: string;
+  fullName: string;
   durationDays?: number;
   dailyPrice: number;
   isMarkedUp: boolean;
