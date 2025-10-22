@@ -20,6 +20,9 @@ interface PaystackMetadata {
   apartmentId: string;
   startDate?: string; // Make optional if needed
   endDate?: string;
+  phoneNumber: string;
+  nextofKinName: string;
+  nextOfKinNumber: string;
   durationDays?: number;
   dailyPrice: number;
   isMarkedUp: boolean;

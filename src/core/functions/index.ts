@@ -54,7 +54,7 @@ export function checkAdminAccess(res: Response, adminId: string) {
     return false;
   }
 
-  return true;
+  return true; 
 }
 
 export function successResponse(

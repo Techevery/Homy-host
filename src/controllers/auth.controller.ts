@@ -79,6 +79,7 @@ export const createAgent = async (req: Request, res: Response) => {
   });
 };
 
+
 export const agentLogin = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -94,4 +95,34 @@ export const agentLogin = async (req: Request, res: Response) => {
   } catch (error) {
     handleErrorReponse(res, error);
   }
+};
+  
+export const updateAgent = async (req: Request, res: Response) => {
+  upload(req, res, async (err) => {
+    try {
+      if (err instanceof multer.MulterError) {
+        return res
+          .status(400)
+          .json({ message: `File upload error: ${err.message}` });
+      } else if (err) {
+        return res.status(500).json({ message: "Unknown file upload error" });
+      }
+
+    const agentId = (req as any).agent.id;
+      
+      const agent = await agentService.updateAgentProfile(
+        agentId,
+        req.body,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        req.files as any   
+      );      
+
+      return res.status(200).json({
+        message: "Agent updated successfully",
+        data: agent,
+      });
+    } catch (error) {
+      handleErrorReponse(res, error);
+    }  
+  });
 };

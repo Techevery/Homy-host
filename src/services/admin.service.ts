@@ -133,7 +133,6 @@ class AdminService {
       "bedroom",
       "price",
       "amenities",
-      "agentPercentage"
     ];
 
     const missingFields = requiredFields.filter(

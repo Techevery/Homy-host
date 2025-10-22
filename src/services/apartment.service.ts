@@ -31,7 +31,7 @@ class PropertyService {
       },
     });
 
-    // handle this part properly 
+    // handle this part properly
     if (existingListing)
       throw new Error("Apartment already listed by this agent");
 
@@ -95,55 +95,113 @@ async removePropertyFromListing(agentId: string, apartmentId: string) {
   }
 }
 
-  async getAgentProperties(
-    agentId: string,
-    page: number = 1,
-    limit: number = 10
-  ) {
-    const skip = (page - 1) * limit;
+  // async getAgentProperties(
+  //   agentId: string,
+  //   page: number = 1,
+  //   limit: number = 10
+  // ) {
+  //   const skip = (page - 1) * limit;
 
-    const [totalCount, listings] = await Promise.all([
-      prisma.apartment.count({
-        where: { agents: { some: { id: agentId } } },
-      }),
-      prisma.agentListing.findMany({
-        where: { agent_id: agentId },
-        include: {
-          apartment: {
-            select: {
-              id: true,
-              name: true,
-              address: true,
-              type: true,
-              servicing: true,
-              bedroom: true,
-              price: true,
-              images: true,
-              createdAt: true,
-              updatedAt: true,
-            },
+  //   const [totalCount, listings] = await Promise.all([
+  //     prisma.apartment.count({
+  //       where: { agents: { some: { id: agentId } } },
+  //     }),
+  //     prisma.agentListing.findMany({
+  //       where: { agent_id: agentId },
+  //       include: {
+  //         apartment: {
+  //           select: { 
+  //             id: true,
+  //             name: true,
+  //             address: true,
+  //             type: true,
+  //             servicing: true,
+  //             bedroom: true,
+  //             price: true,
+  //             images: true,
+  //             createdAt: true,
+  //             updatedAt: true,
+  //           },
+  //         },
+  //       },
+  //       skip,
+  //       take: limit,
+  //     }),
+  //   ]);
+
+  //   return {
+  //     totalCount,
+  //     currentPage: page,
+  //     totalPages: Math.ceil(totalCount / limit),
+  //     properties: listings.map((listing) => ({
+  //       ...listing.apartment,
+  //       agentPricing: {
+  //         basePrice: listing.base_price,
+  //         markedUpPrice: listing.markedup_price ?? listing.base_price,
+  //         priceChangedAt: listing.price_changed_at,
+  //         total: listing.markedup_price ? listing.markedup_price + listing.base_price : listing.base_price
+  //       },
+  //       listingId: listing.id,   
+  //     })),
+  //   }; 
+  // } 
+
+  async getAgentProperties(
+  agentId: string,
+  page: number = 1,
+  limit: number = 10
+) {
+  const skip = (page - 1) * limit;
+
+  const [totalCount, listings] = await Promise.all([
+    prisma.apartment.count({
+      where: { agents: { some: { id: agentId } } },
+    }),
+    prisma.agentListing.findMany({
+      where: { agent_id: agentId },
+      include: {
+        apartment: {
+          select: { 
+            id: true,
+            name: true,
+            address: true,
+            type: true,
+            servicing: true,
+            bedroom: true,
+            price: true,
+            images: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
-        skip,
-        take: limit,
-      }),
-    ]);
+      },
+      skip,
+      take: limit,
+    }),
+  ]);
 
-    return {
-      totalCount,
-      currentPage: page,
-      totalPages: Math.ceil(totalCount / limit),
-      properties: listings.map((listing) => ({
+  return {
+    totalCount,
+    currentPage: page,
+    totalPages: Math.ceil(totalCount / limit),
+    properties: listings.map((listing) => {
+      const basePrice = listing.base_price;
+      const markedUpPrice = listing.markedup_price;
+      const total = markedUpPrice ? basePrice + markedUpPrice : basePrice;
+
+      return {
         ...listing.apartment,
         agentPricing: {
-          basePrice: listing.base_price,
-          markedUpPrice: listing.markedup_price ?? listing.base_price,
+          basePrice: basePrice,
+          markedUpPrice: markedUpPrice,
           priceChangedAt: listing.price_changed_at,
+          total: total
         },
-        listingId: listing.id,
-      })),
-    };
-  }
+        listingId: listing.id,   
+      };
+    }),
+  }; 
+}
 
   async getAgentPropertiesBySlug(
     slug: string,

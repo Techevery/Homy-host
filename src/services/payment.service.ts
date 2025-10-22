@@ -132,7 +132,10 @@ class PaymentService {
   agentId: string,
   apartmentId: string,
   startDate: string,
-  endDate: string
+  endDate: string,
+  phoneNumber: string,
+  nextofKinName: string,
+  nextOfKinNumber: string,
 ) {
   // Validate dates
   if (!startDate || !endDate) {
@@ -195,6 +198,9 @@ class PaymentService {
       apartmentId,
       startDate,
       endDate,
+      nextofKinName,
+      nextOfKinNumber, 
+      phoneNumber,
       durationDays,
       dailyPrice,
       isMarkedUp: agentListing.markedup_price !== null,
@@ -475,6 +481,7 @@ class PaymentService {
       apartmentId,
       startDate,
       endDate,
+      
       durationDays,
       dailyPrice,
       isMarkedUp,
@@ -787,7 +794,7 @@ class PaymentService {
 
     const total = await prisma.failedTransaction.count({ where });
 
-    return {
+    return {  
       failedTransactions,
       total,
       pagination: {
@@ -816,12 +823,12 @@ class PaymentService {
 
     // Parse metadata to get booking details
     const metadata = JSON.parse(failedTransaction.metadata);
-    const { startDate, endDate } = metadata;
+    const { startDate, endDate, phoneNumber, nextofKinName, nextOfKinNumber } = metadata;
 
     if (!startDate || !endDate) {
       throw new Error("Missing booking dates in failed transaction metadata");
     }
-
+    
     // Re-initiate payment
     const paymentInitiation = await this.initiatePayment(
       failedTransaction.email,
@@ -830,7 +837,10 @@ class PaymentService {
       failedTransaction.agent_id,
       failedTransaction.apartment_id,
       startDate,
-      endDate
+      endDate,
+     phoneNumber,
+     nextofKinName,
+     nextOfKinNumber,
     );
 
     logger.info({

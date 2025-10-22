@@ -38,6 +38,8 @@ class BookingService{
             throw new Error("Could not fetch bookings");
         }
     }
+
+    // list of data booked for an aprtment 
 }  
 
 export default new BookingService();

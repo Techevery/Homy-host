@@ -112,8 +112,8 @@ class AgentCreditCron {
         error: error instanceof Error ? error.message : error,
       });
       throw error; // Optionally rethrow or handle as needed
-    } finally {
-      await prisma.$disconnect();
+    } finally {    
+      await prisma.$disconnect(); 
     }
   }
 

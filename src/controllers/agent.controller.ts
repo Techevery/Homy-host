@@ -11,6 +11,7 @@ export const enlistApartment = async (req: Request, res: Response) => {
 
     const { apartmentId, markedUpPrice, agentPercentage } = req.body;
 
+    // rreturn the total amount if there is mocup price else return the orifginal amount 
     await agentService.addPropertyToListing(
       agentId,
       apartmentId,
