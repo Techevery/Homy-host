@@ -48,7 +48,7 @@ export const publicProperties = async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 10;
 
     const result = await agentService.getAllPublicProperties(page, limit);
-
+ 
     res.status(200).json({
       message: "Properties retrived successfully",
       data: result,

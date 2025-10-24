@@ -7,7 +7,7 @@ import isEmail from "validator/lib/isEmail";
 import { deleteImageFromBucket } from "../core/functions";
 
 class AdminService {
-  async createAdmin(adminData: {
+  async createAdmin(adminData: { 
     name: string;
     email: string; 
     password: string;
@@ -138,7 +138,7 @@ class AdminService {
     const missingFields = requiredFields.filter(
       (field) => !apartmentData[field as keyof typeof apartmentData]
     );
-
+ 
     if (missingFields.length > 0) {
       throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
     }

@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.post(
   "/upload-property",
-  authenticateAdmin,
+  authenticateAdmin, 
   apartmentController.createApartment
 ); 
 

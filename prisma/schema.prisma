@@ -131,8 +131,9 @@ model Transaction {
 
 model Banner{
   id            String @id @default(uuid())
+  name          String
+  description   String?
   image_url     String 
-  link          String
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 }

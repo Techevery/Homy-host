@@ -73,7 +73,7 @@ export const createApartment = async (req: Request, res: Response) => {
       handleErrorReponse(res, error);
 
       return;
-    }
+    }   
   }); 
 }; 
 

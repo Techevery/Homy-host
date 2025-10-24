@@ -4,6 +4,7 @@ import AdminRoutes from "./admin.routes"
 import AgentRoutes from "./agent.routes"
 import PaymentRoutes from "./payment.routes";
 import BookingRoutes from "./booking.route"
+import BannerRoutes from "./banner.route"
 // import AgentRoutes from "./agent.routes";
 
 const router = Router();
@@ -13,5 +14,6 @@ router.use("/admin", AdminRoutes);
 router.use("/agent",AgentRoutes);
 router.use("/payment", PaymentRoutes)
 router.use("/booking", BookingRoutes);
+router.use("/banner", BannerRoutes)
 
 export default router;

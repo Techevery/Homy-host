@@ -14,7 +14,7 @@ export const uploadImageToSupabase = async (
   bucketName: string
 ): Promise<string> => {
   try {
-    const filePath = `agents/${Date.now()}_${file.originalname}`;
+    const filePath = `${bucketName}/${Date.now()}_${file.originalname}`;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { data, error } = await supabase.storage
@@ -22,7 +22,7 @@ export const uploadImageToSupabase = async (
       .upload(filePath, file.buffer, {
         contentType: file.mimetype,
       });
-
+  
     if (error) {
       console.error(`Supabase upload Error (${bucketName}):`, error);
 

@@ -68,7 +68,7 @@ class AgentService {
 
     if (missingFields.length > 0) {
       throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
-    }
+    } 
 
     const existingAgent = await prisma.agent.findUnique({
       where: { email: agentData.email || agentData.personalUrl },
