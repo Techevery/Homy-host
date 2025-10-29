@@ -50,6 +50,6 @@ class BookingService{
     }
 
     // list of data booked for an aprtment 
-}  
+}     
 
 export default new BookingService();

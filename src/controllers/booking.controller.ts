@@ -11,7 +11,7 @@ export const fetchAllBookings = async (req: Request, res: Response) => {
   }
 };
 
-export const gerBookingById = async (req:Request, res:Response)=>{
+export const getBookingById = async (req:Request, res:Response)=>{
   const {id} =  req.params
   try {
     const booking = await bookingService.bookingById(id)
