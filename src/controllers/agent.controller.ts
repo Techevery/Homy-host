@@ -117,7 +117,7 @@ export const getPropertiesBySlug = async (req: Request, res: Response) => {
     const result = await agentService.getAgentPropertiesBySlug(
       slug,
       page,
-      limit
+      limit 
     );
     
     res.status(200).json({

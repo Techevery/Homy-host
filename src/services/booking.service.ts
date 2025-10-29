@@ -39,6 +39,16 @@ class BookingService{
         }
     }
 
+    async bookingById(id: string){
+        try {
+            const booking = await prisma.apartmentLog.findFirst({where: {id}})
+            if(!booking) return "No booking found!"
+            return booking
+        } catch (error) {
+            throw new Error ("cooould noot fetch booking")
+        }
+    }
+
     // list of data booked for an aprtment 
 }  
 

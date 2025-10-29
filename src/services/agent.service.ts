@@ -298,93 +298,6 @@ async updateAgentProfile(
     };
   }
 
-// async addPropertyToListing(
-//   agentId: string,
-//   apartmentId: string,
-//   markedUpPrice?: number,
-//   agentPercentage?: number
-// ) {
-//   try {
-//       const agent = await prisma.agent.findUnique({
-//     where: { id: agentId },
-//     select: { status: true },
-//   });
-
-//   if (!agent) throw new Error("Agent not found");
-
-//   if (agent.status !== "VERIFIED")
-//     throw new Error("Agent account is not verified");
-
-//   const apartment = await prisma.apartment.findUnique({
-//     where: { id: apartmentId },
-//   });
-
-//   if (!apartment) throw new Error("Apartment not found");
-
-//   const existingListing = await prisma.agentListing.findUnique({
-//     where: {
-//       unique_Agent_apartment: {
-//         agent_id: agentId,
-//         apartment_id: apartmentId,
-//       },
-//     },
-//   });
-
-//   if (existingListing)
-//     throw new Error("Apartment already listed by this agent");
-
-//   // Prevent both inputs from being provided
-//   if (markedUpPrice !== undefined && agentPercentage !== undefined) {
-//     throw new Error("Cannot provide both markedUpPrice and agentPercentage");
-//   }
-
-//   // Calculate the final marked-up price (selling price) and commission
-//   let finalPrice: number;
-//   let commissionPercentage: number | null = null;
-//   let totalPrice: number | null 
-
-//   if (agentPercentage !== undefined) {   
-//     if (agentPercentage <= 0 || agentPercentage > 100) {
-//       throw new Error("Agent percentage must be between 0 and 100");
-//     }
-//     finalPrice = 0; 
-//     commissionPercentage = agentPercentage; 
-//   } else if (markedUpPrice !== undefined) {
-//     if (markedUpPrice && markedUpPrice < apartment.price) {
-//       // throw new Error("Marked-up price cannot be greater than the original apartment price");
-//       totalPrice = markedUpPrice + apartment.price
-
-//       // handle this latter
-//     }
-//     finalPrice = markedUpPrice;
-//     commissionPercentage = null;
-//   } else {
-//     // finalPrice = apartment.price;
-//     finalPrice = 0;
-//     commissionPercentage = null;
-//   }
-
-//   return await prisma.$transaction([  
-//     prisma.agent.update({
-//       where: { id: agentId },
-//       data: {
-//         apartment: { connect: { id: apartmentId } },
-//       }, 
-//     }),
-//     prisma.agentListing.create({
-//       data: {
-//         apartment_id: apartmentId, 
-//         agent_id: agentId, 
-//         base_price: markedUpPrice ? totalPrice : apartment.price, 
-//         markedup_price: finalPrice,
-//         agent_commission_percent: commissionPercentage,  // Store the percentage if applicable
-//       },
-//     }),
-//   ]); 
-//   } catch (error: any) {
-//     throw new Error(`${error.message}`)
-//   }
-// }
 
 async addPropertyToListing(
   agentId: string,
@@ -580,6 +493,10 @@ async addPropertyToListing(
             updatedAt: true,
           },
         },
+        agent: {
+          select: {id: true}
+        }
+        
       },
       skip,
       take: limit,

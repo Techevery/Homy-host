@@ -54,7 +54,7 @@ export const createBanner = async (req: Request, res: Response) => {
             const result = await bannerService.fetchBanner()
             res.status(201).json({
                 message: "banner data",
-                data: result
+                data: result 
             })
         } catch (error) {
             handleErrorReponse(res, error);
@@ -72,4 +72,8 @@ export const createBanner = async (req: Request, res: Response) => {
         } catch (error: any) {
             throw new Error(`${error.message}`)
         }
+    }
+
+    export const deleteBanner = async (req: Request, res: Response) => {
+      
     }
