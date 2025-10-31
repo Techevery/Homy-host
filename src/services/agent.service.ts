@@ -144,7 +144,7 @@ async updateAgentProfile(
     nextOfKinPhone?: string;
     nextOfKinAddress?: string;
     nextOfKinEmail?: string;
-    nextOfKinStatus?: string;
+    nextOfKinStatus?: string; 
     nextOfKinOccupation?: string;  
   },
   files?: {
@@ -534,6 +534,10 @@ async addPropertyToListing(
         id: true,
         name: true,
         email: true,
+        status: true,
+        phone_number: true,
+        personalUrl: true,
+        createdAt: true,
         profile_picture: true,
       },
     });
@@ -548,10 +552,12 @@ async addPropertyToListing(
         apartment: {
           select: {
             id: true,
+            name: true,
             address: true,
             type: true,
             servicing: true,
             bedroom: true,
+            amenities: true,
             price: true, // base price
             images: true,
             createdAt: true,
@@ -567,17 +573,22 @@ async addPropertyToListing(
 
     const properties = listing.map((listing) => {
       const apartment = listing.apartment;
+      const finalPrice = listing.markedup_price ? listing.markedup_price + apartment.price : apartment.price;
+    
       return {
         ...apartment,
-        price: listing.markedup_price ?? apartment.price,
+        price: finalPrice
       };
     });
 
     return {
-      agent: {
+      agent: { 
+        id: agent.id,
         name: agent.name,
         email: agent.email,
         image: agent.profile_picture,
+        createdAt: agent.createdAt,
+        status: agent.status,
       },
       properties,
       pagination: {

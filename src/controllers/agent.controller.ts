@@ -133,6 +133,18 @@ export const getPropertiesBySlug = async (req: Request, res: Response) => {
   }
 };
 
+export const updateProfile = async (req:Request, res:Response) => {
+  try {
+      const agentId = (req as any).agent.id;
+    checkAgentAccess(res, agentId);
+    const {personalUrl} = req.body
+    // const result = await this.agentService.updateAgentProfile(agentId, )
+    // res.ststus(200).json(result)
+  } catch (error: any) {
+    res.status(400).json(`${error.message}`)
+  }
+}
+
 function handleErrorResponse(res: Response, error: unknown) {
   console.error(error);
 
