@@ -525,7 +525,7 @@ async addPropertyToListing(
     slug: string,
     page: number = 1,
     limit: number = 10
-  ) {
+  ) { 
     const skip = (page - 1) * limit;
 
     const agent = await prisma.agent.findUnique({
@@ -587,6 +587,7 @@ async addPropertyToListing(
         name: agent.name,
         email: agent.email,
         image: agent.profile_picture,
+        contact: agent.phone_number,
         createdAt: agent.createdAt,
         status: agent.status,
       },
