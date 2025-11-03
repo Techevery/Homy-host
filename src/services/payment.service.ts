@@ -4,443 +4,358 @@ import { PaymentChannels, Currency } from "./paystack";
 import prisma from "../core/utils/prisma";
 import { logger } from "../core/helpers/logger";
 
+interface BookingPeriod {
+  startDate: Date;
+  endDate: Date;
+  durationDays: number;
+}
+
+interface PaymentMetadata {
+  agentId: string;
+  apartmentId: string;
+  bookingPeriods: Array<{
+    startDate: string;
+    endDate: string;
+    durationDays: number;
+  }>;
+  nextofKinName: string;
+  nextofKinNumber: string;
+  fullName: string;
+  phoneNumber: string;
+  totalDurationDays: number;
+  dailyPrice: number;
+  isMarkedUp: boolean;
+}
+
 class PaymentService {
-  // async initiatePayment(
-  //   email: string,
-  //   channels: PaymentChannels[],
-  //   currency: Currency,
-  //   agentId: string,
-  //   apartmentId: string,
-  //   startDate: string,
-  //   endDate: string
-  // ) {
-  //   // Validate dates
-  //   if (!startDate || !endDate) {
-  //     throw new Error("Start date and end date are required");
-  //   }
-
-  //   const parsedStartDate = parseISO(startDate);
-  //   const parsedEndDate = parseISO(endDate);
-
-  //   if (parsedStartDate >= parsedEndDate) {
-  //     throw new Error("End date must be after start date");
-  //   }
-
-  //   const durationDays = differenceInDays(parsedEndDate, parsedStartDate);
-  //   if (durationDays <= 0) {
-  //     throw new Error("Booking duration must be at least 1 day");
-  //   }
-
-  //   // Get agent listing with pricing
-  //   const agentListing = await prisma.agentListing.findUnique({
-  //     where: {
-  //       unique_Agent_apartment: {
-  //         agent_id: agentId,
-  //         apartment_id: apartmentId,
-  //       },
-  //     },
-  //     include: {
-  //       apartment: true,
-  //     },
-  //   });
-
-  //   if (!agentListing) {
-  //     throw new Error("Apartment is not listed by this agent");
-  //   }
-
-  //   // Check availability
-  //   const isAlreadyBooked = await this.isApartmentBooked(apartmentId, parsedStartDate, parsedEndDate)
-
-  //   console.log(isAlreadyBooked)
-
-  //   if (isAlreadyBooked) {
-  //     throw new Error("Apartment is already booked for the selected dates");
-  //   }
-
-  //   // Calculate amount
-  //   const dailyPrice = agentListing.markedup_price || agentListing.base_price;
-  //   const totalAmount = dailyPrice * durationDays; 
-
-  //   // calculate percentage 
-
-  //   const validChannel = this.validateChannels(channels);
-  //   const validCurrency = this.validateCurrency(currency);
-
-  //   // Initialize payment
-  //   const { authorizationUrl, reference } = await Paystack.initializePayment({
-  //     email,
-  //     amount: totalAmount,
-  //     channels: validChannel,
-  //     currency: validCurrency,
-  //     metadata: {
-  //       agentId,
-  //       apartmentId,
-  //       startDate,
-  //       endDate,
-  //       durationDays,
-  //       dailyPrice,
-  //       isMarkedUp: agentListing.markedup_price !== null,
-  //     },
-  //   });
-
-  //   logger.info({
-  //     message: "Payment initialized successfully",
-  //     params: { authorizationUrl, reference },
-  //   });
-
-  //   // save transaction 
-  //         const transactionData = await prisma.transaction.create({
-  //       data: {
-  //         reference,
-  //         amount: totalAmount,
-  //         email,
-  //         status: "pending",
-  //         channel: channel,
-  //         charge: verification.data.fees,
-  //         date_paid: new Date(verification.data.transaction_date),
-  //         payment_month: new Date(verification.data.transaction_date).getMonth() + 1,
-  //         payment_year: new Date(
-  //           verification.data.transaction_date
-  //         ).getFullYear(),
-  //         booking_start_date: new Date(startDate),
-  //         booking_end_date: new Date(endDate),
-  //         duration_days: parseInt(durationDays),
-  //         agent: { connect: { id: agentId } },
-  //         apartment: { connect: { id: apartmentId } },
-  //         metadata: {
-  //           dailyPrice,
-  //           isMarkedUp,
-  //           originalAmount: parseInt(dailyPrice) * parseInt(durationDays),
-  //         },
-  //       },
-  //     });
-
-  //   return {
-  //     paymentUrl: authorizationUrl,
-  //     reference,
-  //     totalAmount,
-  //     durationDays,
-  //     dailyPrice,
-  //     isMarkedUp: agentListing.markedup_price !== null,
-  //   };
-  // }
-
+  /**
+   * Main payment initiation function
+   */
   async initiatePayment(
-  email: string,
-  channels: PaymentChannels[],
-  currency: Currency,
-  agentId: string,
-  apartmentId: string,
-  startDate: string,
-  endDate: string,
-  phoneNumber: string,
-  nextofKinName: string,
-  nextofKinNumber: string,
-  fullName: string
-) {
-  // Validate dates
-  if (!startDate || !endDate) {
-    throw new Error("Start date and end date are required");
-  }
+    email: string,
+    channels: PaymentChannels[],
+    currency: Currency,
+    agentId: string,
+    apartmentId: string,
+    startDates: string[],
+    endDates: string[],
+    phoneNumber: string,
+    nextofKinName: string,
+    nextofKinNumber: string,
+    fullName: string
+  ) {
+    try {
+      // Validate input arrays
+      if (startDates.length !== endDates.length) {
+        throw new Error("Start dates and end dates arrays must have the same length");
+      }
 
-  const parsedStartDate = parseISO(startDate);
-  const parsedEndDate = parseISO(endDate);
+      if (startDates.length === 0) {
+        throw new Error("At least one booking period is required");
+      }
 
-  if (parsedStartDate >= parsedEndDate) {
-    throw new Error("End date must be after start date");
-  }
+      // Validate and parse booking periods
+      const bookingPeriods = this.validateAndParseBookingPeriods(startDates, endDates);
 
-  const durationDays = differenceInDays(parsedEndDate, parsedStartDate);
-  if (durationDays <= 0) {
-    throw new Error("Booking duration must be at least 1 day");
-  }
+      // Get agent listing with pricing
+      const agentListing = await prisma.agentListing.findUnique({
+        where: {
+          unique_Agent_apartment: {
+            agent_id: agentId,
+            apartment_id: apartmentId,
+          },
+        },
+        include: {
+          apartment: true,
+        },
+      });
 
-  // Get agent listing with pricing
-  const agentListing = await prisma.agentListing.findUnique({
-    where: {
-      unique_Agent_apartment: {
-        agent_id: agentId,
-        apartment_id: apartmentId,
-      },
-    },
-    include: {
-      apartment: true,
-    },
-  });
+      if (!agentListing) {
+        throw new Error("Apartment is not listed by this agent");
+      }
 
-  if (!agentListing) {
-    throw new Error("Apartment is not listed by this agent");
-  }
+      // Check availability for all periods
+      const hasConflict = await this.isApartmentBookedForPeriods(apartmentId, bookingPeriods);
+      if (hasConflict) {
+        const conflictingPeriods = await this.getConflictingPeriods(apartmentId, bookingPeriods);
+        const conflictMessages = conflictingPeriods.map(period => 
+          `${period.startDate.toISOString()} to ${period.endDate.toISOString()}`
+        );
+        throw new Error(`Apartment is already booked for the following periods: ${conflictMessages.join(', ')}`);
+      }
 
-  // Check availability
-  const isAlreadyBooked = await this.isApartmentBooked(apartmentId, parsedStartDate, parsedEndDate);
+      // Calculate pricing
+      const dailyPrice = agentListing.markedup_price 
+        ? agentListing.markedup_price + agentListing.base_price 
+        : agentListing.base_price;
+      
+      const totalDurationDays = bookingPeriods.reduce((total, period) => total + period.durationDays, 0);
+      const totalAmount = this.calculateTotalAmount(bookingPeriods, dailyPrice);
 
-  console.log(isAlreadyBooked);
+      // Validate payment options
+      const validChannel = this.validateChannels(channels);
+      const validCurrency = this.validateCurrency(currency);
 
-  if (isAlreadyBooked) {
-    throw new Error("Apartment is already booked for the selected dates");
-  }
-
-  // Calculate amount
-  const dailyPrice = agentListing.markedup_price ? agentListing.markedup_price + agentListing.base_price : agentListing.base_price;
-  const totalAmount = dailyPrice * durationDays; 
- 
-  const validChannel = this.validateChannels(channels);
-  const validCurrency = this.validateCurrency(currency);
-
-  // Initialize payment
-  const { authorizationUrl, reference } = await Paystack.initializePayment({
-    email,
-    amount: totalAmount,
-    channels: validChannel,
-    currency: validCurrency,
-    metadata: {
-      agentId,
-      apartmentId,
-      startDate,
-      endDate,
-      nextofKinName,
-      nextofKinNumber, 
-      fullName,
-      phoneNumber,
-      durationDays,
-      dailyPrice,
-      isMarkedUp: agentListing.markedup_price !== null,
-    },
-  });
-
-  logger.info({
-    message: "Payment initialized successfully",
-    params: { authorizationUrl, reference },
-  });
-
-  // Save pending transaction
-  const isMarkedUp = agentListing.markedup_price !== null;
-  const agentPercentage = agentListing.agent_commission_percent ? agentListing.agent_commission_percent : 0
-  const mockupPrice = agentListing.markedup_price ? agentListing.markedup_price : 0
-  const transactionData = await prisma.transaction.create({
-    data: {
-      reference,
-      amount: totalAmount,
-      email,
-      status: "pending",
-      booking_start_date: parsedStartDate,
-      booking_end_date: parsedEndDate,
-      duration_days: durationDays,
-      agent: { connect: { id: agentId } },
-      apartment: { connect: { id: apartmentId } },
-      mockupPrice,
-      agentPercentage,
-      metadata: {
-        dailyPrice,
-        isMarkedUp,
-        originalAmount: dailyPrice * durationDays,
+      // Prepare metadata
+      const metadata: PaymentMetadata = {
+        agentId,
+        apartmentId,
+        bookingPeriods: bookingPeriods.map(period => ({
+          startDate: period.startDate.toISOString(),
+          endDate: period.endDate.toISOString(),
+          durationDays: period.durationDays
+        })),
         nextofKinName,
         nextofKinNumber,
         fullName,
+        phoneNumber,
+        totalDurationDays,
+        dailyPrice,
+        isMarkedUp: agentListing.markedup_price !== null,
+      };
+
+      // Initialize payment with Paystack
+      const { authorizationUrl, reference } = await Paystack.initializePayment({
+        email,
+        amount: totalAmount,
+        channels: validChannel,
+        currency: validCurrency,
+        metadata: metadata as any, // Type assertion for Paystack metadata
+      });
+
+      logger.info({
+        message: "Payment initialized successfully",
+        params: { authorizationUrl, reference, totalAmount, bookingPeriods: metadata.bookingPeriods },
+      });
+
+      // Save pending transaction
+      const isMarkedUp = agentListing.markedup_price !== null;
+      const agentPercentage = agentListing.agent_commission_percent ? agentListing.agent_commission_percent : 0;
+      const mockupPrice = agentListing.markedup_price ? agentListing.markedup_price : 0;
+
+      // After creating the transaction, create individual booking periods
+const transactionData = await prisma.transaction.create({
+  data: {
+    reference,
+    amount: totalAmount,
+    email,
+    status: "pending",
+    // Store overall date range for backward compatibility
+    booking_start_date: bookingPeriods[0].startDate,
+    booking_end_date: bookingPeriods[bookingPeriods.length - 1].endDate,
+    duration_days: totalDurationDays,
+    agent: { connect: { id: agentId } },
+    apartment: { connect: { id: apartmentId } },
+    mockupPrice,
+    agentPercentage,
+    metadata: {
+      dailyPrice,
+      isMarkedUp,
+      originalAmount: dailyPrice * totalDurationDays,
+      nextofKinName,
+      nextofKinNumber,
+      fullName,
+      totalBookingPeriods: bookingPeriods.length
+      // Don't store periods array in metadata anymore
+    },
+  },
+});
+
+// Create individual booking period records
+const createdBookingPeriods = [];
+for (const period of bookingPeriods) {
+  const bookingPeriod = await prisma.bookingPeriod.create({
+    data: {
+      transaction_id: transactionData.id,
+      apartment_id: apartmentId,
+      start_date: period.startDate,
+      end_date: period.endDate,
+      duration_days: period.durationDays,
+    }
+  });
+  createdBookingPeriods.push(bookingPeriod);
+
+  // Also create apartment log for each period
+  await prisma.apartmentLog.create({
+    data: {
+      apartment_id: apartmentId,
+      transaction_id: transactionData.id,
+      booking_period_id: bookingPeriod.id,
+      availability: false,
+      status: 'booked',
+    }
+  });
+}
+
+let currentMetadata: Record<string, any> = {};
+
+if (transactionData.metadata && typeof transactionData.metadata === 'object' && !Array.isArray(transactionData.metadata)) {
+  currentMetadata = transactionData.metadata as Record<string, any>;
+}
+
+await prisma.transaction.update({
+  where: { id: transactionData.id },
+  data: {
+    metadata: {
+      ...currentMetadata,
+      bookingPeriodIds: createdBookingPeriods.map(bp => bp.id)
+    }
+  }
+});
+
+      logger.info({
+        message: "Pending transaction record created successfully",
+        transactionId: transactionData.id,
+        reference,
+        bookingPeriodsCount: bookingPeriods.length,
+      });
+
+      return {
+        paymentUrl: authorizationUrl,
+        reference,
+        totalAmount,
+        totalDurationDays,
+        dailyPrice,
+        isMarkedUp: agentListing.markedup_price !== null,
+        bookingPeriods: metadata.bookingPeriods,
+        totalBookingPeriods: bookingPeriods.length
+      };
+
+    } catch (error) {
+      console.log("error", error)
+      logger.error({
+        message: "Error initiating payment",
+        error: error instanceof Error ? error.message : 'Unknown error',
+        agentId,
+        apartmentId,
+        startDates,
+        endDates
+      });
+      throw error;
+    }
+  }
+
+  private validateAndParseBookingPeriods(startDates: string[], endDates: string[]): BookingPeriod[] {
+    const bookingPeriods: BookingPeriod[] = [];
+
+    for (let i = 0; i < startDates.length; i++) {
+      const startDate = startDates[i];
+      const endDate = endDates[i];
+
+      if (!startDate || !endDate) {
+        throw new Error("All start dates and end dates are required");
+      }
+
+      const parsedStartDate = parseISO(startDate);
+      const parsedEndDate = parseISO(endDate);
+
+      if (parsedStartDate >= parsedEndDate) {
+        throw new Error(`End date must be after start date for period ${i + 1}`);
+      }
+
+      const durationDays = differenceInDays(parsedEndDate, parsedStartDate);
+      if (durationDays <= 0) {
+        throw new Error(`Booking duration must be at least 1 day for period ${i + 1}`);
+      }
+
+      // Check for overlapping periods within the same booking request
+      for (const existingPeriod of bookingPeriods) {
+        if (
+          (parsedStartDate >= existingPeriod.startDate && parsedStartDate <= existingPeriod.endDate) ||
+          (parsedEndDate >= existingPeriod.startDate && parsedEndDate <= existingPeriod.endDate) ||
+          (parsedStartDate <= existingPeriod.startDate && parsedEndDate >= existingPeriod.endDate)
+        ) {
+          throw new Error(`Booking periods cannot overlap. Period ${i + 1} overlaps with another period`);
+        }
+      }
+
+      bookingPeriods.push({
+        startDate: parsedStartDate,
+        endDate: parsedEndDate,
+        durationDays
+      });
+    }
+
+    // Sort periods by start date
+    return bookingPeriods.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  }
+
+  /**
+   * Check if apartment is booked for any of the periods
+   */
+  private async isApartmentBookedForPeriods(apartmentId: string, bookingPeriods: BookingPeriod[]): Promise<boolean> {
+    for (const period of bookingPeriods) {
+      const isBooked = await this.isApartmentBooked(apartmentId, period.startDate, period.endDate);
+      if (isBooked) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Get conflicting periods for detailed error message
+   */
+  private async getConflictingPeriods(apartmentId: string, bookingPeriods: BookingPeriod[]): Promise<BookingPeriod[]> {
+    const conflictingPeriods: BookingPeriod[] = [];
+
+    for (const period of bookingPeriods) {
+      const isBooked = await this.isApartmentBooked(apartmentId, period.startDate, period.endDate);
+      if (isBooked) {
+        conflictingPeriods.push(period);
+      }
+    }
+
+    return conflictingPeriods;
+  }
+
+  /**
+   * Calculate total amount for all booking periods
+   */
+  private calculateTotalAmount(bookingPeriods: BookingPeriod[], dailyPrice: number): number {
+    const totalDurationDays = bookingPeriods.reduce((total, period) => total + period.durationDays, 0);
+    return dailyPrice * totalDurationDays;
+  }
+
+
+  /**
+   * Helper method to check if apartment is booked (existing method - keep as is)
+   */
+  // private async isApartmentBooked(apartmentId: string, startDate: Date, endDate: Date): Promise<boolean> {
+  //   const existingBooking = await prisma.transaction.findFirst({
+  //     where: {
+  //       apartment_id: apartmentId,
+  //       status: "booked",
+  //       OR: [
+  //         {
+  //           booking_start_date: { lte: endDate },
+  //           booking_end_date: { gte: startDate },
+  //         },
+  //       ],
+  //     },
+  //   });
+
+  //   return !!existingBooking;
+  // }
+
+  private async isApartmentBooked(apartmentId: string, startDate: Date, endDate: Date): Promise<boolean> {
+  const existingBooking = await prisma.bookingPeriod.findFirst({
+    where: {
+      apartment_id: apartmentId,
+      transaction: {
+        status: "success" // Only check successful transactions
       },
+      OR: [ 
+        {
+          start_date: { lte: endDate },
+          end_date: { gte: startDate },
+        },
+      ],
     },
   });
 
-  logger.info({
-    message: "Pending transaction record created successfully",
-    transactionId: transactionData.id,
-  });
-
-  return {
-    paymentUrl: authorizationUrl,
-    reference,
-    totalAmount,
-    durationDays,
-    dailyPrice,
-    isMarkedUp: agentListing.markedup_price !== null,
-  };
+  return !!existingBooking;
 }
-
-  // async verifyPayment(reference: string) {
-  //   try {
-  //     logger.info({ reference }, "Verifying payment with reference");
-
-  //     const verification = await Paystack.verifyPayment(reference);
-
-  //     logger.info({ verification }, "Paystack verification response");
-
-  //     if (verification.data.status !== "success") {
-  //       logger.error(
-  //         { status: verification.data.status },
-  //         "Payment verification failed"
-  //       );
-
-  //       // Log failed transaction
-  //       await this.logFailedTransaction(
-  //         verification.data,
-  //         "Payment verification failed - status not success"
-  //       );
-  //       throw new Error("Payment verification failed");
-  //     }
-
-  //     const metadata = verification.data.metadata || {};
-
-  //     // Extract metadata
-  //     const {
-  //       agentId,
-  //       apartmentId,
-  //       startDate,
-  //       endDate,
-  //       durationDays,
-  //       dailyPrice,
-  //       isMarkedUp,
-  //     } = metadata;
-
-  //     logger.info({
-  //       message: "Extracted metadata",
-  //       metadata,
-  //     });
-
-  //     // Validate required fields
-  //     if (
-  //       !agentId ||
-  //       !apartmentId ||
-  //       !startDate ||
-  //       !endDate ||
-  //       !durationDays ||
-  //       !dailyPrice ||
-  //       isMarkedUp === undefined
-  //     ) {
-  //       logger.error({
-  //         message: "Incomplete payment metadata",
-  //         metadata: verification.data.metadata,
-  //       });
-
-  //       // Log failed transaction due to incomplete metadata
-  //       await this.logFailedTransaction(
-  //         verification.data,
-  //         "Incomplete payment metadata"
-  //       );
-  //       throw new Error("Incomplete payment metadata");
-  //     }
-
-  //     // Verify agent and apartment exist
-  //     const [agentExists, apartmentExists] = await Promise.all([
-  //       prisma.agent.findUnique({ where: { id: agentId } }),
-  //       prisma.apartment.findUnique({ where: { id: apartmentId } }),
-  //     ]);   
-
-  //     if (!agentExists || !apartmentExists) {
-  //       logger.error({
-  //         message: "Agent or Apartment not found",
-  //         agentExists,
-  //         apartmentExists,
-  //       });
-
-  //       // Log failed transaction due to missing agent/apartment
-  //       await this.logFailedTransaction(
-  //         verification.data,
-  //         "Agent or Apartment not found"
-  //       );
-  //       throw new Error("Agent or Apartment not found");
-  //     }
-
-  //     const existingTransaction = await prisma.transaction.findUnique({
-  //       where: { reference: verification.data.reference },
-  //     });
-
-  //     if (existingTransaction) {
-  //       logger.warn({ existingTransaction }, "Transaction already exists");
-
-  //       throw new Error("Transaction already exists");
-  //     }
-
-  //     // Create transaction
-  //     const transactionData = await prisma.transaction.create({
-  //       data: {
-  //         reference: verification.data.reference,
-  //         amount: verification.data.amount,
-  //         email: verification.data.customer.email,
-  //         status: verification.data.status,
-  //         channel: verification.data.channel,
-  //         charge: verification.data.fees,
-  //         date_paid: new Date(verification.data.transaction_date),
-  //         payment_month: new Date(verification.data.transaction_date).getMonth() + 1,
-  //         payment_year: new Date(
-  //           verification.data.transaction_date
-  //         ).getFullYear(),
-  //         booking_start_date: new Date(startDate),
-  //         booking_end_date: new Date(endDate),
-  //         duration_days: parseInt(durationDays),
-  //         agent: { connect: { id: agentId } },
-  //         apartment: { connect: { id: apartmentId } },
-  //         metadata: {
-  //           dailyPrice,
-  //           isMarkedUp,
-  //           originalAmount: parseInt(dailyPrice) * parseInt(durationDays),
-  //         },
-  //       },
-  //     });
-
-  //     logger.info({
-  //       message: "Transaction record created successfully",
-  //       transactionId: transactionData.id,
-  //     });
-
-  //     if (!metadata.apartmentId || !metadata.startDate || !metadata.endDate) {
-  //       throw new Error("Missing required metadata for apatment log creation");
-  //     }
-
-  //     // Create apartment log
-  //     const apartmentLog = await prisma.apartmentLog.create({
-  //       data: {
-  //         apartment: { connect: { id: metadata.apartmentId } },
-  //         transaction: { connect: { id: transactionData.id } },
-  //         availability: false,
-  //         status: "booked",
-  //         booking_start_date: new Date(metadata.startDate),
-  //         booking_end_date: new Date(metadata.endDate),
-  //         duration_days: Number(metadata.durationDays),
-  //       },
-  //     });
-
-  //     logger.info({
-  //       message: "Payment verified successfully",
-  //       params: { transactionData, apartmentLog },
-  //     });
-
-  //     return {
-  //       transaction: transactionData,
-  //       booking: apartmentLog,
-  //       pricingDetails: {
-  //         dailyPrice,
-  //         durationDays,
-  //         isMarkedUp,
-  //       },
-  //     };
-  //   } catch (error) {
-  //     logger.error({
-  //       message: "Error during payment verification",
-  //       error: error instanceof Error ? error.message : error,
-  //       reference,
-  //     });
-
-  //     // If it's not already a logged failure, log it as a general error
-  //     if (
-  //       error instanceof Error &&
-  //       !error.message.includes("Payment verification failed")
-  //     ) {
-  //       try {
-  //         // Try to get verification data for logging
-  //         const verification = await Paystack.verifyPayment(reference);
-  //         await this.logFailedTransaction(verification.data, error.message);
-  //       } catch (logError) {
-  //         logger.error({
-  //           message: "Failed to log failed transaction",
-  //           error: logError instanceof Error ? logError.message : logError,
-  //         });
-  //       }   
-  //     }
-
-  //     throw error;
-  //   }
-  // }
 
   async verifyPayment(reference: string) {
   try {
@@ -579,9 +494,9 @@ class PaymentService {
         transaction: { connect: { id: transactionData.id } },
         availability: false,
         status: "booked",
-        booking_start_date: new Date(metadata.startDate),
-        booking_end_date: new Date(metadata.endDate),
-        duration_days: Number(metadata.durationDays),
+        // booking_start_date: new Date(metadata.startDate),
+        // booking_end_date: new Date(metadata.endDate),
+        // duration_days: Number(metadata.durationDays),
       },
     });
 
@@ -650,26 +565,26 @@ class PaymentService {
     return "NGN";
   }
 
-  private async isApartmentBooked(
-    apartmentId: string,
-    startDate: Date,
-    endDate: Date
-  ): Promise<boolean> {
-    const conflictingBookings = await prisma.apartmentLog.count({
-      where: {
-        apartment_id: apartmentId,
-        status: "booked",
-        OR: [
-          {
-            booking_start_date: { lte: endDate },
-            booking_end_date: { gte: startDate },
-          },
-        ],
-      },
-    });
+  // private async isApartmentBooked(
+  //   apartmentId: string,
+  //   startDate: Date,
+  //   endDate: Date
+  // ): Promise<boolean> {
+  //   const conflictingBookings = await prisma.apartmentLog.count({
+  //     where: {
+  //       apartment_id: apartmentId,
+  //       status: "booked",
+  //       OR: [
+  //         {
+  //           booking_start_date: { lte: endDate },
+  //           booking_end_date: { gte: startDate },
+  //         },
+  //       ],
+  //     },
+  //   });
 
-    return conflictingBookings > 0;
-  }
+  //   return conflictingBookings > 0;
+  // }
 
   /**
    * Log a failed transaction to the FailedTransaction table

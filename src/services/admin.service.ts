@@ -247,11 +247,12 @@ class AdminService {
           ApartmentLog: {
             orderBy: { created_at: "desc" },
             take: 1,
+            include:{
+              booking_period: {select: {start_date: true, end_date: true}},
+            },
             select: {
               availability: true,
               status: true,
-              booking_start_date: true,
-              booking_end_date: true,
             },
           },
         },

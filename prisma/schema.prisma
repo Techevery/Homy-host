@@ -83,6 +83,7 @@ model Apartment {
   updatedAt   DateTime  @updatedAt
   Transaction Transaction[]
   ApartmentLog ApartmentLog[]
+  bookingPeriods BookingPeriod[]
 
   @@map("apartment")
   AgentListing AgentListing[] 
@@ -120,6 +121,7 @@ model Transaction {
   updated_at   DateTime  @updatedAt
 
   TransactionLog TransactionLog[]
+  bookingPeriods BookingPeriod[]
 
   @@map("transactions")
   @@index([status], name:"status_idx")
@@ -160,22 +162,60 @@ enum AgentStatus {
 }
 
 
+// model ApartmentLog {
+//   id              String    @id @default(uuid())
+//   apartment_id    String
+//   apartment       Apartment @relation(fields: [apartment_id], references: [id])
+//   transaction_id  String
+//   transaction     Transaction @relation(fields: [transaction_id], references: [id])
+//   availability    Boolean
+//   status          String
+//   created_at      DateTime  @default(now())
+//   booking_start_date DateTime?
+//   booking_end_date   DateTime?
+//   duration_days      Int?
+
+//   @@map("apartment_logs")
+//   @@index([apartment_id], name:"apartment_idx")
+//   @@index([transaction_id], name:"transaction_idx")
+// }
+
+model BookingPeriod {
+  id               String         @id @default(uuid())
+  transaction_id   String
+  transaction      Transaction    @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
+  apartment_id     String
+  apartment        Apartment      @relation(fields: [apartment_id], references: [id])
+  start_date       DateTime
+  end_date         DateTime
+  duration_days    Int
+  created_at       DateTime       @default(now())
+  
+  // Relation to ApartmentLog - this is correct
+  apartment_logs   ApartmentLog[]  // Remove the @relation name here since it's the same relation
+
+  @@map("booking_periods")
+  @@index([transaction_id])
+  @@index([apartment_id])
+  @@index([start_date, end_date])
+}
+
 model ApartmentLog {
-  id              String    @id @default(uuid())
-  apartment_id    String
-  apartment       Apartment @relation(fields: [apartment_id], references: [id])
-  transaction_id  String
-  transaction     Transaction @relation(fields: [transaction_id], references: [id])
-  availability    Boolean
-  status          String
-  created_at      DateTime  @default(now())
-  booking_start_date DateTime?
-  booking_end_date   DateTime?
-  duration_days      Int?
+  id               String         @id @default(uuid())
+  apartment_id     String
+  apartment        Apartment      @relation(fields: [apartment_id], references: [id])
+  transaction_id   String
+  transaction      Transaction    @relation(fields: [transaction_id], references: [id])
+  booking_period_id String?
+  booking_period   BookingPeriod? @relation(fields: [booking_period_id], references: [id])
+  availability     Boolean
+  status           String
+  created_at       DateTime       @default(now())
 
   @@map("apartment_logs")
-  @@index([apartment_id], name:"apartment_idx")
-  @@index([transaction_id], name:"transaction_idx")
+  @@index([apartment_id])
+  @@index([transaction_id])
+  @@index([booking_period_id])
 }
  
 model AgentListing {

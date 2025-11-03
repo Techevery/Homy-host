@@ -3,7 +3,7 @@ import prisma from "../core/utils/prisma";
 import { ApartmentLog } from "@prisma/client";  
 
 class BookingService{
-    async getAllBookingsForAdmin(): Promise<ApartmentLog[]> {
+    async getAllBookingsForAdmin(): Promise<any[]> {
         try {
             const bookings = await prisma.apartmentLog.findMany({
                 orderBy: { created_at: 'desc' },
@@ -11,15 +11,19 @@ class BookingService{
                     id: true,
                     apartment_id: true, 
                     availability: true,
-                    booking_end_date: true,
-                    booking_start_date: true,
                     status: true,
                     created_at: true,
-                    duration_days: true,
                     transaction_id: true,
                     transaction:{
                         select: {
                            reference: true 
+                        }
+                    },
+                    booking_period: {
+                        select: {
+                            start_date: true,
+                            end_date: true,
+                            duration_days: true
                         }
                     },
                     apartment: {
@@ -51,7 +55,7 @@ class BookingService{
 
     // list of data booked for an aprtment 
 
-    async getBookingDates(apartmentId: string): Promise<{booking_start_date: Date | null, booking_end_date: Date | null}[]> {
+    async getBookingDates(apartmentId: string): Promise<any[]> {
         try {
             const dates = await prisma.apartmentLog.findMany({
                 where: {
@@ -59,9 +63,13 @@ class BookingService{
                     availability: false,
                     apartment_id: apartmentId
                 },
-                select: {
-                    booking_start_date: true,
-                    booking_end_date: true
+                include: {
+                    booking_period: {
+                        select: {
+                            start_date: true,
+                            end_date: true,
+                        }
+                    }
                 }
             });
             return dates;
@@ -96,7 +104,7 @@ class BookingService{
       include: {
         apartment: {
           select: {
-            id: true,
+            id: true, 
             name: true,
             address: true,
             price: true,
@@ -124,6 +132,35 @@ class BookingService{
             throw new Error("Could not manage booking");
         }
     }
+
+    // Get all bookings for an apartment in a date range
+// const bookings = await prisma.bookingPeriod.findMany({
+//   where: {
+//     apartment_id: apartmentId,
+//     start_date: { gte: startDate },
+//     end_date: { lte: endDate },
+//     transaction: { status: "success" }
+//   },
+//   include: {
+//     transaction: true
+//   }
+// });
+
+// // Get availability for specific dates
+// const isAvailable = await prisma.bookingPeriod.findFirst({
+//   where: {
+//     apartment_id: apartmentId,
+//     transaction: { status: "success" },
+//     OR: [
+//       { start_date: { lte: checkInDate }, end_date: { gte: checkInDate } },
+//       { start_date: { lte: checkOutDate }, end_date: { gte: checkOutDate } },
+//       { 
+//         start_date: { gte: checkInDate }, 
+//         end_date: { lte: checkOutDate } 
+//       }
+//     ]
+//   }
+// }) === null;
 }
 
 export default new BookingService();

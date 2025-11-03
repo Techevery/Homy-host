@@ -9,12 +9,12 @@ export const fetchAllBookings = async (req: Request, res: Response) => {
     console.error("Error fetching bookings:", error);
     res.status(500).json({ error: "Internal server error" });
   }
-};
+}; 
 
 export const getBookingById = async (req:Request, res:Response)=>{
   const {id} =  req.params
   try { 
-    const booking = await bookingService.bookingById(id)
+    const booking = await bookingService.bookingById(id) 
     res.json(booking)
   } catch (error: any) {
     res.status(500).json(`${error.message}`)
