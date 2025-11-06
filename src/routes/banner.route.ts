@@ -1,11 +1,13 @@
 import { Router } from "express";
-import { authenticateAdmin } from "../middlewares/Admin";
-import { createBanner, fetchBanner, getBannerById } from "../controllers/banner.controller";
+import { createBanner, deleteBanner, fetchBanner, getBannerById, updateBanner } from "../controllers/banner.controller";
+import { authenticateAgent } from "../middlewares/Agent";
 
 const router = Router()
 
-router.post("/create", authenticateAdmin, createBanner)
-router.get("/", fetchBanner)
+router.post("/create", authenticateAgent, createBanner)
+router.get("/", authenticateAgent, fetchBanner)
+router.patch("/:id", authenticateAgent, updateBanner)
+router.delete("/:id", authenticateAgent, deleteBanner)
 router.get("/:id", getBannerById) 
 
 export default router    

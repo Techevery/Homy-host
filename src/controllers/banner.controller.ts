@@ -9,11 +9,12 @@ const upload = multer({
 }).array("image", 2);
 
 export const createBanner = async (req: Request, res: Response) => {
-     upload(req, res, async (err) => {
-        try {
-          if (err instanceof multer.MulterError) {
-            res.status(400).json({
-              message: `File upload error: ${err.message}`,
+  const agentId = (req as any).agent.id;
+  upload(req, res, async (err) => {
+    try {
+      if (err instanceof multer.MulterError) {
+        res.status(400).json({
+          message: `File upload error: ${err.message}`,
             });
     
             return;
@@ -25,13 +26,14 @@ export const createBanner = async (req: Request, res: Response) => {
             return;
           }
     
-          const { name, desscription } = req.body;
+          const { name, description } = req.body;
           console.log("file", req.files, "body", req.body)
     
     
           const apartment = await bannerService.createBanner(
             name,
-            desscription,
+            description,
+            agentId,
             req.files as Express.Multer.File[]
           );  
      
@@ -51,7 +53,8 @@ export const createBanner = async (req: Request, res: Response) => {
 
     export const fetchBanner = async (req: Request, res:Response) => {
         try {
-            const result = await bannerService.fetchBanner()
+            const agentId = (req as any).agent.id;
+            const result = await bannerService.fetchBanner(agentId)
             res.status(201).json({
                 message: "banner data",
                 data: result 
@@ -74,6 +77,65 @@ export const createBanner = async (req: Request, res: Response) => {
         }
     }
 
+export const updateBanner = async (req: Request, res: Response) => {
+
+    upload(req, res, async (err) => {
+      try {
+        const agentId = (req as any).agent.id;
+    const { id } = req.params; // Get banner ID from URL params
+
+    if (!id) {
+      return res.status(400).json({
+        message: "Banner ID is required",
+      });
+    }
+        if (err instanceof multer.MulterError) {
+          return res.status(400).json({
+            message: `File upload error: ${err.message}`,
+          });
+        } else if (err) {
+          return res.status(500).json({   
+            message: "Unknown file upload error",
+          });
+        }
+
+        const { name, description } = req.body;
+        const files = req.files as Express.Multer.File[];
+
+        console.log("file", files, "body", req.body);
+
+        const updatedBanner = await bannerService.updateBanner(
+          id,
+          name,
+          description,
+          agentId,
+          files
+        );
+
+        return res.status(200).json({
+          message: "Banner updated successfully",
+          data: updatedBanner,
+        });
+      } catch (error) {
+        return handleErrorReponse(res, error);
+      }
+    });
+  // } catch (error: any) {
+  //   return res.status(500).json({
+  //     message: error.message || "Internal server error",
+  //   });
+  // }
+};
+
     export const deleteBanner = async (req: Request, res: Response) => {
-      
+      try {
+        const {id} = req.params;
+        const agentId = (req as any).agent.id;
+        await bannerService.deleteBanner(id, agentId);
+        res.status(200).json({
+          message: "Banner deleted successfully"
+        });
+      } catch (error: any) {
+          throw new Error(`${error.message}`)
+      }
     }

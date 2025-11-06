@@ -2,7 +2,7 @@ import prisma from "../core/utils/prisma";
 import { uploadImageToSupabase } from "../core/utils/supabase";
 
 class BannerService{
-    async createBanner(name: string, description: string, files: Express.Multer.File[]){
+    async createBanner(name: string, description: string, agentId: any, files: Express.Multer.File[]){
           try {
                 let imageUrl: string | any;
 
@@ -16,6 +16,7 @@ class BannerService{
             const banner = await prisma.banner.create({
                 data: {
                     name,
+                    agent: {connect: {id: agentId}},
                     description,
                     image_url: imageUrl
                 }
@@ -26,9 +27,11 @@ class BannerService{
           } 
     }
 
-    async fetchBanner(){
+    async fetchBanner(agentId: any){
         try {
-            const banners = await prisma.banner.findMany()
+            const banners = await prisma.banner.findMany({
+                where: {agentId}
+            })
             return banners
         } catch (error: any) {
             throw new Error(`${error.message}`)
@@ -45,8 +48,57 @@ class BannerService{
         }
     }
 
-    async deleteBanner(id: string){
-        
+async updateBanner(
+  id: string,
+  name: string,
+  description: string,
+  agentId: string,
+  files: Express.Multer.File[]
+) {
+  try {
+    const banner = await prisma.banner.findUnique({ where: { id } });
+    if (!banner) throw new Error("Banner not found");
+    if (banner.agentId !== agentId) throw new Error("You are not authorized to update this banner");
+
+    // Handle file upload logic (e.g., upload to cloud, get URLs)
+ try {
+                let imageUrl: string | any;
+
+                if (files [0]) {
+                  imageUrl = await uploadImageToSupabase(
+                    files[0],
+                    "banner"
+                  ); 
+                }  
+
+    const updatedBanner = await prisma.banner.update({
+      where: { id },
+      data: {
+        name: name || banner.name,
+        description: description || banner.description,
+        image_url: imageUrl || banner.image_url,
+      },
+    });
+
+    return updatedBanner;
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}  catch (error: any) {
+    throw new Error(`${error.message}`);
+  }
+}
+ 
+    async deleteBanner(id: string, agentId: string){
+        try {
+            const banner = await prisma.banner.findUnique({where: {id}})
+            if(!banner) throw new Error (`No banner found`)
+            if(banner.agentId !== agentId) throw new Error (`You are not authorized to delete this banner`)
+            await prisma.banner.delete({where: {id}})
+            return `Banner deleted successfully`
+        } catch (error: any) {
+            throw new Error(`${error.message}`)
+        }
     }
 }  
 export default new BannerService

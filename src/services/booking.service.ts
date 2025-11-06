@@ -113,8 +113,8 @@ class BookingService{
         transaction: {
           select: {
             id: true,
-            email: true,
-            phone_number: true,
+            email: true, 
+            phone_number: true,    
             status: true,
             amount: true,
             booking_start_date: true,

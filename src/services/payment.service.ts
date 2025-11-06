@@ -88,7 +88,7 @@ class PaymentService {
       const dailyPrice = agentListing.markedup_price 
         ? agentListing.markedup_price + agentListing.base_price 
         : agentListing.base_price;
-      
+       
       const totalDurationDays = bookingPeriods.reduce((total, period) => total + period.durationDays, 0);
       const totalAmount = this.calculateTotalAmount(bookingPeriods, dailyPrice);
 
@@ -321,6 +321,7 @@ await prisma.transaction.update({
   /**
    * Helper method to check if apartment is booked (existing method - keep as is)
    */
+
   // private async isApartmentBooked(apartmentId: string, startDate: Date, endDate: Date): Promise<boolean> {
   //   const existingBooking = await prisma.transaction.findFirst({
   //     where: {
@@ -341,7 +342,7 @@ await prisma.transaction.update({
   private async isApartmentBooked(apartmentId: string, startDate: Date, endDate: Date): Promise<boolean> {
   const existingBooking = await prisma.bookingPeriod.findFirst({
     where: {
-      apartment_id: apartmentId,
+      apartment_id: apartmentId, 
       transaction: {
         status: "success" // Only check successful transactions
       },

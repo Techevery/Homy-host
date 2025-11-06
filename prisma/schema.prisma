@@ -55,6 +55,7 @@ model Agent {
   updatedAt         DateTime      @updatedAt
   Transaction       Transaction[]
   Wallet            Wallet[]
+  Banner            Banner[]
 
   slug              String        @unique
 
@@ -134,6 +135,8 @@ model Transaction {
 model Banner{
   id            String @id @default(uuid())
   name          String
+  agentId       String?
+  agent         Agent? @relation(fields: [agentId], references: [id])
   description   String?
   image_url     String 
   created_at    DateTime @default(now())
