@@ -1,7 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
 import agentService from "../services/agent.service";
-import { checkAgentAccess } from "../core/functions";
+import { checkAgentAccess, handleErrorReponse } from "../core/functions";
+import multer from "multer";
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+}).array("image", 2);
 
 export const enlistApartment = async (req: Request, res: Response) => {
   try {
@@ -148,16 +152,82 @@ export const updateProfile = async (req:Request, res:Response) => {
 export const createAgentBanner = async (req: Request, res: Response) => {
   try {
     const agentId = (req as any).agent.id;
-    checkAgentAccess(res, agentId);
-
-    const { name, description, imageUrls } = req.body;
-
-    // const result = await bannerService.createBanner(name, description, agentId, imageUrls);
-    // res.status(201).json({ message: "Banner created successfully", data: result });
+    upload(req, res, async (err) => {
+        try {
+          if (err instanceof multer.MulterError) {
+            res.status(400).json({
+              message: `File upload error: ${err.message}`,
+                });
+        
+                return;
+              } else if (err) {
+                res.status(500).json({
+                  message: "Unknown file upload error",
+                });
+        
+                return;
+              }
+        
+              const { name, description } = req.body;
+        
+        
+              const apartment = await agentService.createBanner(
+                name,
+                description,
+                agentId,
+                req.files as Express.Multer.File[]
+              );  
+         
+              res.status(201).json({
+                message: "Banner created successfully",
+                data: apartment, 
+              });
+        
+              return;
+            } catch (error) { 
+              handleErrorReponse(res, error);
+        
+              return;
+            }
+          });
   } catch (error: any) {
     handleErrorResponse(res, error);
   }
 };
+
+export const updateAgentBanner = async (req: Request, res: Response) => {
+  try {
+    const agentId = (req as any).agent.id;
+    const { id } = req.params; // Assuming banner ID comes from params
+
+    upload(req, res, async (err) => {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ message: `File upload error: ${err.message}` });
+      } else if (err) {
+        return res.status(500).json({ message: "Unknown file upload error" });
+      }
+
+      const { name, description } = req.body;
+      const files = req.files as Express.Multer.File[];
+
+      const updatedBanner = await agentService.updateBanner({
+        bannerId: id,
+        agentId,
+        name: name?.trim(),
+        description: description?.trim(),
+        files,
+      });
+
+      return res.status(200).json({
+        message: "Banner updated successfully",
+        data: updatedBanner,
+      });
+    });
+  } catch (error: any) {
+    handleErrorResponse(res, error);
+  }
+};
+
 
 function handleErrorResponse(res: Response, error: unknown) {
   console.error(error);

@@ -8,6 +8,7 @@ import {
   getPropertiesBySlug,
   publicProperties,
   agentprofileDetails,
+  createAgentBanner,
 } from "../controllers/agent.controller";
 
 const router = express.Router();
@@ -20,6 +21,9 @@ router.get("/profile", authenticateAgent, agentprofileDetails)
 //enlist property
 router.post("/enlist-property", authenticateAgent, enlistApartment);
 
+// create banner 
+router.post("/create-banner", authenticateAgent, createAgentBanner)
+   
 // remove property
 router.delete("/remove-apartment", authenticateAgent, removeApartment);
 

@@ -7,6 +7,14 @@ import account_number from "validator/lib/isNumeric";
 import { findBankByName } from "../core/functions/bank";
 // import * as validator from "../core/utils/validator";
 
+interface UpdateBannerParams {
+  bannerId: string;
+  agentId: string;
+  name?: string;
+  description?: string;
+  files?: Express.Multer.File[];
+}
+
 class AgentService {     
   async registerAgent(    
     agentData: {
@@ -413,58 +421,6 @@ async addPropertyToListing(
   //  cheking booking daily this can only happen with cron job  
   // the agent would only get credited when the end time reach 
 
-  // async getAgentProperties(
-  //   agentId: string,
-  //   page: number = 1,
-  //   limit: number = 10
-  // ) {
-  //   const skip = (page - 1) * limit;
-
-  //   const [totalCount, listings] = await Promise.all([
-  //     prisma.apartment.count({
-  //       where: { agents: { some: { id: agentId } } },
-  //     }),
-  //     prisma.agentListing.findMany({
-  //       where: { agent_id: agentId },
-  //       include: {
-  //         apartment: {
-  //           select: {
-  //             id: true,
-  //             name: true,
-  //             address: true,
-  //             type: true,
-  //             servicing: true,
-  //             bedroom: true,
-  //             price: true,
-  //             images: true,
-  //             createdAt: true,
-  //             updatedAt: true,
-  //           },
-  //         },
-  //       },
-  //       skip,
-  //       take: limit,
-  //     }),
-  //   ]);
-
-  //   return {
-  //     totalCount,
-  //     currentPage: page,
-  //     totalPages: Math.ceil(totalCount / limit),
-  //     properties: listings.map((listing) => ({
-  //       ...listing.apartment,
-  //       agentPricing: {
-  //         basePrice: listing.base_price,
-  //         markedUpPrice: listing.markedup_price ?? listing.base_price,
-  //         priceChangedAt: listing.price_changed_at,
-  //         total: 
-  //       },
-  //       listingId: listing.id,
-  //     })), 
-  //     agentId: agentId,
-  //   };
-  // }
-
   async getAgentProperties(
   agentId: string,
   page: number = 1,
@@ -600,6 +556,101 @@ async addPropertyToListing(
       },
     };
   }
+
+  async createBanner(name: string, description: string, agentId: string, files: Express.Multer.File[]){
+    try {
+         const imageUrls =
+            files && files.length > 0
+              ? await Promise.all(
+                  files.map((file) => uploadImageToSupabase(file, "agent-banner"))
+                )
+              : [];
+        const banner = await prisma.agentBanner.create({
+            data: {
+                name,
+                description,
+                agentId,
+                image_url: imageUrls[0]
+            }
+        })
+        return banner
+    } catch (error) {
+      throw new Error(`Something went wrong. ${error instanceof Error ? error.message : ''}`);
+    }
+  }
+
+  async fetchBanner(agentId: any) {
+      try {
+          const banners = await prisma.agentBanner.findMany({
+            where: { agentId }
+          })
+          return banners
+      } catch (error: any) {
+          throw new Error(`${error.message}`)
+      }
+}
+
+async updateBanner(params: UpdateBannerParams) {
+  const { bannerId, agentId, name, description, files } = params;
+
+  const banner = await prisma.agentBanner.findUnique({
+    where: { id: bannerId },
+  });
+
+  if (!banner) {
+    throw new Error("Banner not found");
+  }
+
+  if (banner.agentId !== agentId) {
+    throw new Error("Unauthorized: You don't own this banner");
+  }
+
+  // Build dynamic update data — only include fields that are provided
+  const updateData: any = {};
+
+  if (name !== undefined && name !== '') {
+    updateData.name = name;
+  }
+
+  if (description !== undefined) { // description is optional in schema
+    updateData.description = description === '' ? null : description;
+  }
+
+  // Handle image update only if new files are uploaded
+  if (files && files.length > 0) {
+    const imageUrls = await Promise.all(
+      files.map((file) => uploadImageToSupabase(file, "agent-banner"))
+    );
+    updateData.image_url = imageUrls[0]; // assuming single image
+  }
+
+  // If nothing to update
+  if (Object.keys(updateData).length === 0) {
+    return banner; // return unchanged
+  }
+
+  // Perform update
+  return await prisma.agentBanner.update({
+    where: { id: bannerId },
+    data: updateData,
+  });
+}
+
+async deleteBanner(id: string, agentId: any) {
+ try {
+  const banner = await prisma.agentBanner.findUnique({ where: { id } });
+  if (!banner) throw new Error("Banner not found");
+  
+  const deleteAgentBanner = await prisma.agentBanner.delete({
+    where: { id, agentId }
+  })
+  if(!deleteAgentBanner) throw new Error("Unable to delete banner")
+  return `Banner deleted successfully`
+ } catch (error) {
+  
+ }
+}
+
 }
 
 export default new AgentService();

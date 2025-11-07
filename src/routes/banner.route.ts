@@ -1,14 +1,14 @@
 import { Router } from "express";
 import { createBanner, deleteBanner, fetchBanner, getBannerById, updateBanner } from "../controllers/banner.controller";
-import { authenticateAgent } from "../middlewares/Agent";
+import { authenticateAdmin } from "../middlewares/Admin";
 
 const router = Router()
 
-router.post("/create", authenticateAgent, createBanner)
-router.get("/", authenticateAgent, fetchBanner)
-router.patch("/:id", authenticateAgent, updateBanner)
-router.delete("/:id", authenticateAgent, deleteBanner)
-router.get("/:id", getBannerById) 
+router.post("/create", authenticateAdmin, createBanner)
+router.get("/", authenticateAdmin, fetchBanner)
+router.patch("/:id", authenticateAdmin, updateBanner)
+router.delete("/:id", authenticateAdmin, deleteBanner)
+router.get("/:id", authenticateAdmin, getBannerById)
 
 export default router    
 

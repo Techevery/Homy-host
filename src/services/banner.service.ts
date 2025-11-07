@@ -2,7 +2,7 @@ import prisma from "../core/utils/prisma";
 import { uploadImageToSupabase } from "../core/utils/supabase";
 
 class BannerService{
-    async createBanner(name: string, description: string, agentId: any, files: Express.Multer.File[]){
+    async createBanner(name: string, description: string, files: Express.Multer.File[]){
           try {
                 let imageUrl: string | any;
 

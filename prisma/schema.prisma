@@ -146,9 +146,12 @@ model AgentBanner {
   description         String?
   agent               Agent   @relation(fields: [agentId], references: [id])
   agentId             String
-  image_url           String[]
+  image_url           String
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
+
+  @@map("agent_banners")
+  @@index([agentId], name:"agent_banner_agent_idx")
 }
 
 model TransactionLog {

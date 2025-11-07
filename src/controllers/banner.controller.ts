@@ -9,7 +9,6 @@ const upload = multer({
 }).array("image", 2);
 
 export const createBanner = async (req: Request, res: Response) => {
-  const agentId = (req as any).agent.id;
   upload(req, res, async (err) => {
     try {
       if (err instanceof multer.MulterError) {
@@ -33,7 +32,6 @@ export const createBanner = async (req: Request, res: Response) => {
           const apartment = await bannerService.createBanner(
             name,
             description,
-            agentId,
             req.files as Express.Multer.File[]
           );  
      
