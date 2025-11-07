@@ -5,7 +5,7 @@ import { authenticateAdmin } from "../middlewares/Admin";
 const router = Router()
 
 router.post("/create", authenticateAdmin, createBanner)
-router.get("/", authenticateAdmin, fetchBanner)
+router.get("/", fetchBanner)
 router.patch("/:id", authenticateAdmin, updateBanner)
 router.delete("/:id", authenticateAdmin, deleteBanner)
 router.get("/:id", authenticateAdmin, getBannerById)
