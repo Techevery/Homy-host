@@ -16,7 +16,6 @@ class BannerService{
             const banner = await prisma.banner.create({
                 data: {
                     name,
-                    agent: {connect: {id: agentId}},
                     description,
                     image_url: imageUrl
                 }
@@ -29,9 +28,7 @@ class BannerService{
 
     async fetchBanner(agentId: any){
         try {
-            const banners = await prisma.banner.findMany({
-                where: {agentId}
-            })
+            const banners = await prisma.banner.findMany()
             return banners
         } catch (error: any) {
             throw new Error(`${error.message}`)
@@ -58,7 +55,6 @@ async updateBanner(
   try {
     const banner = await prisma.banner.findUnique({ where: { id } });
     if (!banner) throw new Error("Banner not found");
-    if (banner.agentId !== agentId) throw new Error("You are not authorized to update this banner");
 
     // Handle file upload logic (e.g., upload to cloud, get URLs)
  try {
@@ -89,11 +85,10 @@ async updateBanner(
   }
 }
  
-    async deleteBanner(id: string, agentId: string){
+  async deleteBanner(id: string, agentId: string){
         try {
             const banner = await prisma.banner.findUnique({where: {id}})
             if(!banner) throw new Error (`No banner found`)
-            if(banner.agentId !== agentId) throw new Error (`You are not authorized to delete this banner`)
             await prisma.banner.delete({where: {id}})
             return `Banner deleted successfully`
         } catch (error: any) {

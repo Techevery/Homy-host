@@ -145,6 +145,20 @@ export const updateProfile = async (req:Request, res:Response) => {
   }
 }
 
+export const createAgentBanner = async (req: Request, res: Response) => {
+  try {
+    const agentId = (req as any).agent.id;
+    checkAgentAccess(res, agentId);
+
+    const { name, description, imageUrls } = req.body;
+
+    // const result = await bannerService.createBanner(name, description, agentId, imageUrls);
+    // res.status(201).json({ message: "Banner created successfully", data: result });
+  } catch (error: any) {
+    handleErrorResponse(res, error);
+  }
+};
+
 function handleErrorResponse(res: Response, error: unknown) {
   console.error(error);
 

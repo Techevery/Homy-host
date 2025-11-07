@@ -55,8 +55,7 @@ model Agent {
   updatedAt         DateTime      @updatedAt
   Transaction       Transaction[]
   Wallet            Wallet[]
-  Banner            Banner[]
-
+  AgentBanner       AgentBanner[]
   slug              String        @unique
 
   @@map("agents")
@@ -135,12 +134,21 @@ model Transaction {
 model Banner{
   id            String @id @default(uuid())
   name          String
-  agentId       String?
-  agent         Agent? @relation(fields: [agentId], references: [id])
   description   String?
   image_url     String 
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
+}
+
+model AgentBanner {
+  id                  String @id @default(uuid())
+  name                String
+  description         String?
+  agent               Agent   @relation(fields: [agentId], references: [id])
+  agentId             String
+  image_url           String[]
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
 }
 
 model TransactionLog {
