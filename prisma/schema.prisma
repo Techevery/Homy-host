@@ -53,6 +53,7 @@ model Agent {
   nextOfKinOccupation String?    
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
+  suspended         Boolean      @default(false)
   Transaction       Transaction[]
   Wallet            Wallet[]
   AgentBanner       AgentBanner[]
@@ -175,24 +176,6 @@ enum AgentStatus {
   UNVERIFIED
 }
 
-
-// model ApartmentLog {
-//   id              String    @id @default(uuid())
-//   apartment_id    String
-//   apartment       Apartment @relation(fields: [apartment_id], references: [id])
-//   transaction_id  String
-//   transaction     Transaction @relation(fields: [transaction_id], references: [id])
-//   availability    Boolean
-//   status          String
-//   created_at      DateTime  @default(now())
-//   booking_start_date DateTime?
-//   booking_end_date   DateTime?
-//   duration_days      Int?
-
-//   @@map("apartment_logs")
-//   @@index([apartment_id], name:"apartment_idx")
-//   @@index([transaction_id], name:"transaction_idx")
-// }
 
 model BookingPeriod {
   id               String         @id @default(uuid())

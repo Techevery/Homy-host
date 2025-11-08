@@ -5,6 +5,30 @@ import { handleErrorReponse } from "../core/functions";
 import { checkAdminAccess } from "../core/functions";
 import dashboardService from "../services/dashboard.service";
 
+export const suspendAgentToggle = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { agentId } = req.body;
+
+    if (!agentId) {
+      res.status(400).json({ message: "Agent ID is required" });
+      return; // OK to return early
+    }
+
+    const { suspended } = await adminService.toggleAgentSuspension(agentId);
+
+    // No `return` here!
+    res.status(200).json({
+      message: suspended ? 'Agent suspended' : 'Agent unsuspended',
+      data: { suspended },
+    });
+  } catch (error) {
+    handleErrorReponse(res, error);
+  }
+};
+
 export const verifyAgent = async (req: Request, res: Response) => {
   try {
     const adminId = (req as any).admin.id;
@@ -216,6 +240,7 @@ export const getTransactionDetailsByYear = async (
     handleErrorReponse(res, error);
   }
 };
+
 
 // TODO: implement transfer endpoint for payout into agent accounts
 

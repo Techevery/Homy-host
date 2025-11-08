@@ -40,6 +40,13 @@ router.get(
 
 router.get("/stats", authenticateAdmin, adminController.getDashboardStats);
 
+// suspend agent 
+router.patch(
+  "/suspend-agent", 
+  authenticateAdmin,
+  adminController.suspendAgentToggle 
+);
+
 router.delete(
   "/:apartmentId", 
   authenticateAdmin,

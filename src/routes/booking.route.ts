@@ -5,7 +5,7 @@ import { authenticateAdmin } from "../middlewares/Admin";
 const router = Router()
 
 router.get("/", authenticateAdmin, fetchAllBookings)
-router.get("/booking-dates", fetchBookingDates) 
+router.get("/booking-dates/:apartmentId", fetchBookingDates) 
 router.get("/manage-booking", manageBooking) 
 router.get('/:id', authenticateAdmin, getBookingById)   
 

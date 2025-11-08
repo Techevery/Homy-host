@@ -495,6 +495,14 @@ async addPropertyToListing(
         personalUrl: true,
         createdAt: true,
         profile_picture: true,
+        AgentBanner: {
+        select: {
+            id: true,
+            name: true,
+            image_url: true,
+            description: true,
+          },
+        },
       },
     });
 
@@ -547,6 +555,7 @@ async addPropertyToListing(
         createdAt: agent.createdAt,
         status: agent.status,
       },
+      banners: agent.AgentBanner,
       properties,
       pagination: {
         total: totalCount,

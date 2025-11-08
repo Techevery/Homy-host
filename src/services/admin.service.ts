@@ -428,6 +428,28 @@ class AdminService {
 
     return images;
   }
+
+  async toggleAgentSuspension(agentId: string): Promise<any> {
+  try {
+     const agent = await prisma.agent.findUnique({ where: { id: agentId } });
+  if (!agent) {
+    throw new Error("Agent not found");
+  }
+
+  const newStatus = !agent.suspended;
+  
+  await prisma.agent.update({
+    where: { id: agentId },
+    data: { suspended: newStatus },
+  });
+  
+  return `Agent has been ${newStatus ? "suspended" : "unsuspended"}.`;
+  } catch (error) {
+    throw new Error("Failed to suspend agent");
+  } 
 }
+
+}
+
 
 export default new AdminService();

@@ -26,7 +26,7 @@ export const fetchBookingDates = async (req: Request, res: Response) => {
     const { apartmentId } = req.params;
     const dates = await bookingService.getBookingDates(apartmentId);
     res.json(dates);
-  } catch (error) {
+  } catch (error) { 
     console.error("Error fetching booking dates:", error);
     res.status(500).json({ error: "Internal server error" });
   }

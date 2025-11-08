@@ -63,7 +63,7 @@ class BookingService{
                     availability: false,
                     apartment_id: apartmentId
                 },
-                include: {
+                include: { 
                     booking_period: {
                         select: {
                             start_date: true,
