@@ -242,6 +242,18 @@ export const getTransactionDetailsByYear = async (
 };
 
 
+export const offlineBoking = async (req: Request, res: Response) => {
+  try {
+    const {apartmentId, startDate, endDate, amount, name, email, agentId} = req.body
+    await adminService.oflineBookings(apartmentId, startDate, endDate, amount, name, email, agentId)
+    res.status(200).json({message: `Appartment booked sucessfully!`})
+    return 
+  } catch (error) {
+    throw error
+  }
+}
+
+
 // TODO: implement transfer endpoint for payout into agent accounts
 
 // export const transferPayout = async (req:Request, res:Response) => {

@@ -5,6 +5,7 @@ import { uploadImageToSupabase } from "../core/utils/supabase";
 import { getAgentById } from "../core/repositories/admin";
 import isEmail from "validator/lib/isEmail";
 import { deleteImageFromBucket } from "../core/functions";
+import { differenceInDays, parseISO } from "date-fns";
 
 class AdminService {
   async createAdmin(adminData: { 
@@ -232,45 +233,65 @@ class AdminService {
   }
 
   async listApartments(
-    adminId: string,
-    page: number = 1,
-    pageSize: number = 10
-  ) {
-    const skip = (page - 1) * pageSize;
+  adminId: string,
+  page: number = 1,
+  pageSize: number = 10
+) {
+  const skip = (page - 1) * pageSize;
 
-    const [apartments, totalCount] = await Promise.all([
-      prisma.apartment.findMany({
-        where: { adminId },
-        skip,
-        take: pageSize,
-        include: {
-          ApartmentLog: {
-            orderBy: { created_at: "desc" },
-            take: 1,
-            include:{
-              booking_period: {select: {start_date: true, end_date: true}},
-            },
-            select: {
-              availability: true,
-              status: true,
+  const [apartments, totalCount] = await Promise.all([
+    prisma.apartment.findMany({
+      where: { adminId },
+      skip,
+      take: pageSize,
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        type: true,
+        servicing: true,
+        amenities: true,
+        bedroom: true,
+        price: true,
+        images: true,
+        video_link: true,
+        adminId: true,
+        agentPercentage: true,
+        createdAt: true,
+        updatedAt: true,
+
+        // Select only what you need from ApartmentLog
+        ApartmentLog: {
+          orderBy: { created_at: "desc" },
+          take: 1,
+          select: {
+            availability: true,
+            status: true,
+            // Nested select for booking_period
+            booking_period: {
+              select: {
+                start_date: true,
+                end_date: true,
+              },
             },
           },
         },
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.apartment.count({ where: { adminId } }),
-    ]);
-
-    return {
-      apartments,
-      pagination: {
-        totalItems: totalCount,
-        totalPages: Math.ceil(totalCount / pageSize),
-        currentPage: page,
-        itemsPerPage: pageSize,
       },
-    };
-  }
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.apartment.count({ where: { adminId } }),
+  ]);
+
+  return {
+    apartments,
+    pagination: {
+      totalItems: totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+      currentPage: page,
+      itemsPerPage: pageSize,
+    },
+  };
+}
 
   async searchApartments(searchTerm: string) {
     return await prisma.apartment.findMany({
@@ -449,7 +470,184 @@ class AdminService {
   } 
 }
 
+async oflineBookings(apartmentId: string, startDate: string[], endDate: string[], amount: number, name: string, email: string, agentId: string){
+  try {
+    const agent = await prisma.agent.findUnique({where: {id: agentId}})
+    if(!agent) throw new Error (`No agent found for thiss apartment`)
+      const agentListing = await prisma.agentListing.findFirst({where: {agent_id: agentId, apartment_id: apartmentId}})
+    if(!agentListing) throw new Error (`No agent found for this listing`)
+    const booking = await this.validateAndParseBookingPeriods(startDate, endDate)
+
+    const hasConflict = await this.isApartmentBookedForPeriods(apartmentId, booking);
+      if (hasConflict) {
+        const conflictingPeriods = await this.getConflictingPeriods(apartmentId, booking);
+        const conflictMessages = conflictingPeriods.map(period => 
+          `${period.startDate.toISOString()} to ${period.endDate.toISOString()}`
+        );
+        throw new Error(`Apartment is already booked for the following periods: ${conflictMessages.join(', ')}`);
+      }
+        const totalDurationDays = booking.reduce((total, period) => total + period.durationDays, 0);
+
+          const dailyPrice = agentListing.markedup_price 
+            ? agentListing.markedup_price + agentListing.base_price 
+            : agentListing.base_price;
+
+          const isMarkedUp = agentListing.markedup_price !== null;
+          const agentPercentage = agentListing.agent_commission_percent ? agentListing.agent_commission_percent : 0;
+          const mockupPrice = agentListing.markedup_price ? agentListing.markedup_price : 0;
+
+          // Generate a 10 character reference
+          const reference = Math.random().toString(36).substring(2, 12).toUpperCase();
+
+          const transactionData = await prisma.transaction.create({
+            data: {
+              reference,
+              amount,
+          email,
+          status: "pending",
+          // Store overall date range for backward compatibility
+          booking_start_date: booking[0].startDate,
+          booking_end_date: booking[booking.length - 1].endDate,
+          duration_days: totalDurationDays,
+          agent: { connect: { id: agentId } },
+          apartment: { connect: { id: apartmentId } },
+          mockupPrice,
+          agentPercentage,
+          metadata: {
+            dailyPrice,
+            isMarkedUp,
+            originalAmount: dailyPrice * totalDurationDays,
+            fullName: name,
+            totalBookingPeriods: booking.length
+            // Don't store periods array in metadata anymore
+          },
+        },
+      });
+
+      const createdBookingPeriods = [];
+      for (const period of booking) {
+        const bookingPeriod = await prisma.bookingPeriod.create({
+          data: {
+            transaction_id: transactionData.id,
+            apartment_id: apartmentId,
+            start_date: period.startDate,
+            end_date: period.endDate,
+            duration_days: period.durationDays,
+          }
+        });
+        createdBookingPeriods.push(bookingPeriod);
+      
+        // Also create apartment log for each period
+        await prisma.apartmentLog.create({
+          data: {
+            apartment_id: apartmentId,
+            transaction_id: transactionData.id,
+            booking_period_id: bookingPeriod.id,
+            availability: false,
+            status: 'booked',
+          }
+        });
+      }
+
+  } catch (error) {
+    
+  }
 }
 
 
+ private validateAndParseBookingPeriods(startDates: string[], endDates: string[]): BookingPeriod[] {
+    const bookingPeriods: BookingPeriod[] = [];
+
+    for (let i = 0; i < startDates.length; i++) {
+      const startDate = startDates[i];
+      const endDate = endDates[i];
+
+      if (!startDate || !endDate) {
+        throw new Error("All start dates and end dates are required");
+      }
+
+      const parsedStartDate = parseISO(startDate);
+      const parsedEndDate = parseISO(endDate);
+
+      if (parsedStartDate >= parsedEndDate) {
+        throw new Error(`End date must be after start date for period ${i + 1}`);
+      }
+
+      const durationDays = differenceInDays(parsedEndDate, parsedStartDate);
+      if (durationDays <= 0) {
+        throw new Error(`Booking duration must be at least 1 day for period ${i + 1}`);
+      }
+
+      // Check for overlapping periods within the same booking request
+      for (const existingPeriod of bookingPeriods) {
+        if (
+          (parsedStartDate >= existingPeriod.startDate && parsedStartDate <= existingPeriod.endDate) ||
+          (parsedEndDate >= existingPeriod.startDate && parsedEndDate <= existingPeriod.endDate) ||
+          (parsedStartDate <= existingPeriod.startDate && parsedEndDate >= existingPeriod.endDate)
+        ) {
+          throw new Error(`Booking periods cannot overlap. Period ${i + 1} overlaps with another period`);
+        }
+      }
+
+      bookingPeriods.push({
+        startDate: parsedStartDate,
+        endDate: parsedEndDate,
+        durationDays,
+      });
+    }
+
+    // Sort periods by start date
+    return bookingPeriods.sort((a, b) => a.startDate.getTime() - b.endDate.getTime());
+  }
+
+  private async isApartmentBookedForPeriods(apartmentId: string, bookingPeriods: BookingPeriod[]): Promise<boolean> {
+    for (const period of bookingPeriods) {
+      const isBooked = await this.isApartmentBooked(apartmentId, period.startDate, period.endDate);
+      if (isBooked) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private async getConflictingPeriods(apartmentId: string, bookingPeriods: BookingPeriod[]): Promise<BookingPeriod[]> {
+    const conflictingPeriods: BookingPeriod[] = [];
+
+    for (const period of bookingPeriods) {
+      const isBooked = await this.isApartmentBooked(apartmentId, period.startDate, period.endDate);
+      if (isBooked) {
+        conflictingPeriods.push(period);
+      }
+    }
+
+    return conflictingPeriods;
+  }
+
+   private async isApartmentBooked(apartmentId: string, startDate: Date, endDate: Date): Promise<boolean> {
+    const existingBooking = await prisma.bookingPeriod.findFirst({
+      where: {
+        apartment_id: apartmentId, 
+        transaction: {
+          status: "success" // Only check successful transactions
+        },
+        OR: [ 
+          {
+            start_date: { lte: endDate },
+            end_date: { gte: startDate },
+          },
+        ],
+      },
+    });
+  
+    return !!existingBooking;
+  }
+
+}
+
 export default new AdminService();
+
+interface BookingPeriod {
+  startDate: Date;
+  endDate: Date;
+  durationDays: number;
+}

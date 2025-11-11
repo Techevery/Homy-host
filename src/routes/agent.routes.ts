@@ -25,7 +25,7 @@ router.post("/enlist-property", authenticateAgent, enlistApartment);
 router.post("/create-banner", authenticateAgent, createAgentBanner)
    
 // remove property
-router.delete("/remove-apartment", authenticateAgent, removeApartment);
+router.delete("/remove-apartment/:apartmentId", authenticateAgent, removeApartment);
 
 router.get("/:slug/properties", getPropertiesBySlug);
 

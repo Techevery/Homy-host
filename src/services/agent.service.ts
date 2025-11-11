@@ -49,7 +49,7 @@ class AgentService {
         "Invalid Bank name, Please provide a valid Nigerian Bank"
       );
 
-    if (!account_number(agentData.account_number))
+    if (!account_number(agentData.account_number)) 
       throw new Error("Account number must be 10 digits long");
 
     const requiredFields = [
@@ -139,7 +139,8 @@ class AgentService {
       accountBalance: agent.accountBalance,
       status: agent.status,
       bankName: agent.bank_name,
-      accountNumber: agent.account_number    
+      accountNumber: agent.account_number,
+      idCard: agent.id_card   
     }       
     return data   
   }  
@@ -399,7 +400,7 @@ async addPropertyToListing(
       where: {
         unique_Agent_apartment: {
           agent_id: agentId,
-          apartment_id: apartmentId,
+          apartment_id: apartmentId,  
         },
       },
     });
@@ -408,7 +409,7 @@ async addPropertyToListing(
       throw new Error("Listing not found");
     }
 
-    return await prisma.agent.update({
+    await prisma.agent.update({
       where: {
         id: agentId,
       },  
@@ -416,6 +417,11 @@ async addPropertyToListing(
         apartment: { disconnect: { id: apartmentId } },
       },
     });
+
+
+    return await prisma.agentListing.delete({ 
+      where: {id: listing.id, agent_id: agentId}
+    })
   }
 
   //  cheking booking daily this can only happen with cron job  
@@ -451,8 +457,7 @@ async addPropertyToListing(
         },
         agent: {
           select: {id: true}
-        }
-        
+        },        
       },
       skip,
       take: limit,
@@ -495,6 +500,7 @@ async addPropertyToListing(
         personalUrl: true,
         createdAt: true,
         profile_picture: true,
+        suspended: true,
         AgentBanner: {
         select: {
             id: true,
@@ -506,7 +512,7 @@ async addPropertyToListing(
       },
     });
 
-    if (!agent) throw new Error("Agent not found");
+    if (!agent || agent.suspended === true) throw new Error("Agent not found or agent suspended!");
 
     const listing = await prisma.agentListing.findMany({
       where: { agent_id: agent.id },

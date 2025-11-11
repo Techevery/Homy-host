@@ -72,7 +72,7 @@ export const removeApartment = async (req: Request, res: Response) => {
 
     checkAgentAccess(res, agentId);
 
-    const { apartmentId } = req.body;
+    const { apartmentId } = req.params;
 
     await agentService.removePropertyFromListing(agentId, apartmentId);
 

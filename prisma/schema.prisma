@@ -268,3 +268,5 @@ model Wallet{
   agent         Agent @relation(fields: [agentId], references: [id])
   balance       Int @default(0)
 }
+
+// withdrawer 
