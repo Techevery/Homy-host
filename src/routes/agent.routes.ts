@@ -9,7 +9,9 @@ import {
   publicProperties,
   agentprofileDetails,
   createAgentBanner,
+  deleteBanner,
 } from "../controllers/agent.controller";
+import { fetchBanner, updateBanner } from "../controllers/banner.controller";
 
 const router = express.Router();
 
@@ -21,14 +23,18 @@ router.get("/profile", authenticateAgent, agentprofileDetails)
 //enlist property
 router.post("/enlist-property", authenticateAgent, enlistApartment);
 
-// create banner 
+router.get("/agent-listing", authenticateAgent, enlistedProperties);
+
+// / banner 
 router.post("/create-banner", authenticateAgent, createAgentBanner)
+router.get("/banner", authenticateAgent, fetchBanner)
+router.patch("/banner/:id", authenticateAgent, updateBanner)
+router.delete("/banner/:id", authenticateAgent, deleteBanner)
+
    
 // remove property
 router.delete("/remove-apartment/:apartmentId", authenticateAgent, removeApartment);
 
 router.get("/:slug/properties", getPropertiesBySlug);
-
-router.get("/agent-listing", authenticateAgent, enlistedProperties);
 
 export default router;    

@@ -51,8 +51,7 @@ export const createBanner = async (req: Request, res: Response) => {
 
     export const fetchBanner = async (req: Request, res:Response) => {
         try {
-            const agentId = (req as any).agent.id;
-            const result = await bannerService.fetchBanner(agentId)
+            const result = await bannerService.fetchBanner()
             res.status(201).json({
                 message: "banner data",
                 data: result 

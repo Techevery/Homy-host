@@ -9,7 +9,7 @@ router.get("/", fetchBanner)
 router.patch("/:id", authenticateAdmin, updateBanner)
 router.delete("/:id", authenticateAdmin, deleteBanner)
 router.get("/:id", authenticateAdmin, getBannerById)
-
+ 
 export default router    
 
 // discount for property and this would remove the discount from the total amount if it is more than one days

@@ -26,7 +26,7 @@ class BannerService{
           } 
     }
 
-    async fetchBanner(agentId: any){
+    async fetchBanner(){
         try {
             const banners = await prisma.banner.findMany()
             return banners

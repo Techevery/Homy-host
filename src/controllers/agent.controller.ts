@@ -195,6 +195,19 @@ export const createAgentBanner = async (req: Request, res: Response) => {
   }
 };
 
+export const getBanners = async (req: Request, res: Response) => {
+  try {
+    const agentId = (req as any).agent.id;
+    const result = await agentService.fetchBanner(agentId)
+    res.status(200).json({
+      message: "Banner retrived successfully!",
+      result
+    })
+  } catch (error: any) {
+    throw new Error(`${error.message}`)
+  }
+}
+
 export const updateAgentBanner = async (req: Request, res: Response) => {
   try {
     const agentId = (req as any).agent.id;
@@ -227,6 +240,17 @@ export const updateAgentBanner = async (req: Request, res: Response) => {
     handleErrorResponse(res, error);
   }
 };
+
+export const deleteBanner = async (req: Request, res: Response) => {
+  try {
+        const agentId = (req as any).agent.id;
+        const {id} = req.params
+        const result = await agentService.deleteBanner(id, agentId)
+        res.status(200).json({message: "Banner deleted successfully!"})
+  } catch (error: any) {
+    throw new Error(`${error.message}`)
+  }
+}
 
 
 function handleErrorResponse(res: Response, error: unknown) {
