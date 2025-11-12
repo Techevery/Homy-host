@@ -10,11 +10,12 @@ import {
   agentprofileDetails,
   createAgentBanner,
   deleteBanner,
+  getBanners,
+  updateAgentBanner,
 } from "../controllers/agent.controller";
-import { fetchBanner, updateBanner } from "../controllers/banner.controller";
 
 const router = express.Router();
-
+ 
 // all properties publicly available
 router.get("/public-properties", publicProperties);
 
@@ -27,8 +28,8 @@ router.get("/agent-listing", authenticateAgent, enlistedProperties);
 
 // / banner 
 router.post("/create-banner", authenticateAgent, createAgentBanner)
-router.get("/banner", authenticateAgent, fetchBanner)
-router.patch("/banner/:id", authenticateAgent, updateBanner)
+router.get("/banner", authenticateAgent, getBanners)
+router.patch("/banner/:id", authenticateAgent, updateAgentBanner)
 router.delete("/banner/:id", authenticateAgent, deleteBanner)
 
    
