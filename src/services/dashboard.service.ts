@@ -23,7 +23,7 @@ interface TransactionDetails {
   id: string;
   year?: number;
   month?: number;
-  agentId: string;
+  agentId?: string;
   apartmentId: string;
   apartmentPrice: number;
   duration: number;
@@ -104,6 +104,7 @@ class DashboardService {
           },
         },
       });
+
 
       return transactions.map((transaction) => ({
         id: transaction.id,

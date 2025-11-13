@@ -25,6 +25,8 @@ class AgentCreditCron {
         },
       });
 
+      if(!transactions) throw new Error(``)
+
       if (transactions.length === 0) {
         logger.info({ message: 'No transactions eligible for crediting' });
         return;

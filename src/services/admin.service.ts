@@ -470,13 +470,16 @@ class AdminService {
   } 
 }
 
-async oflineBookings(apartmentId: string, startDate: string[], endDate: string[], amount: number, name: string, email: string, agentId: string){
+async oflineBookings(apartmentId: string, startDate: string[], endDate: string[], name: string, email: string, adminId: string){
   try {
-    const agent = await prisma.agent.findUnique({where: {id: agentId}})
+    const agent = await prisma.admin.findUnique({where: {id: adminId}})
     if(!agent) throw new Error (`No agent found for thiss apartment`)
-      const agentListing = await prisma.agentListing.findFirst({where: {agent_id: agentId, apartment_id: apartmentId}})
-    if(!agentListing) throw new Error (`No agent found for this listing`)
+      const adminListing = await prisma.apartment.findFirst({where: {adminId}})
+    if(!adminListing) throw new Error (`No agent found for this listing`)
     const booking = await this.validateAndParseBookingPeriods(startDate, endDate)
+// take note of this incase no listing for the agent 
+    const agentList = await prisma.agentListing.findFirst({where: {apartment_id: apartmentId}})
+
 
     const hasConflict = await this.isApartmentBookedForPeriods(apartmentId, booking);
       if (hasConflict) {
@@ -488,13 +491,11 @@ async oflineBookings(apartmentId: string, startDate: string[], endDate: string[]
       }
         const totalDurationDays = booking.reduce((total, period) => total + period.durationDays, 0);
 
-          const dailyPrice = agentListing.markedup_price 
-            ? agentListing.markedup_price + agentListing.base_price 
-            : agentListing.base_price;
+          const dailyPrice = 0 
 
-          const isMarkedUp = agentListing.markedup_price !== null;
-          const agentPercentage = agentListing.agent_commission_percent ? agentListing.agent_commission_percent : 0;
-          const mockupPrice = agentListing.markedup_price ? agentListing.markedup_price : 0;
+          const isMarkedUp = 0;
+          const agentPercentage = 0;
+          const mockupPrice = 0;
 
           // Generate a 10 character reference
           const reference = Math.random().toString(36).substring(2, 12).toUpperCase();
@@ -502,16 +503,16 @@ async oflineBookings(apartmentId: string, startDate: string[], endDate: string[]
           const transactionData = await prisma.transaction.create({
             data: {
               reference,
-              amount,
+              amount: 0,
           email,
-          status: "pending",
+          status: "success",
           // Store overall date range for backward compatibility
           booking_start_date: booking[0].startDate,
           booking_end_date: booking[booking.length - 1].endDate,
           duration_days: totalDurationDays,
-          agent: { connect: { id: agentId } },
+          agent: { connect: { id: agentList?.agent_id } },
           apartment: { connect: { id: apartmentId } },
-          mockupPrice,
+          mockupPrice, 
           agentPercentage,
           metadata: {
             dailyPrice,
@@ -520,8 +521,8 @@ async oflineBookings(apartmentId: string, startDate: string[], endDate: string[]
             fullName: name,
             totalBookingPeriods: booking.length
             // Don't store periods array in metadata anymore
-          },
-        },
+          }, 
+        }, 
       });
 
       const createdBookingPeriods = [];
@@ -549,11 +550,12 @@ async oflineBookings(apartmentId: string, startDate: string[], endDate: string[]
         });
       }
 
-  } catch (error) {
-    
+  } catch (error: any) {
+    console.log(error)
+    throw new Error(`${error.message}`)
   }
 }
-
+ 
 
  private validateAndParseBookingPeriods(startDates: string[], endDates: string[]): BookingPeriod[] {
     const bookingPeriods: BookingPeriod[] = [];

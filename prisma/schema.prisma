@@ -104,7 +104,7 @@ model Transaction {
   date_paid    DateTime? // Set only when payment is successful
   payment_month Decimal?       // Extracted month of payment for filtering (1-12)
   payment_year  Int?     // Extracted year of payment for filtering 
-  credited      Boolean @default(false)
+  credited      Boolean @default(false) 
 
   agentPercentage Int?
   mockupPrice     Int?

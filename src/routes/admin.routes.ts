@@ -14,12 +14,14 @@ router.post(
 
 router.put("/verify-agent", authenticateAdmin, adminController.verifyAgent);
 
-router.get(
+router.get( 
   "/list-apartments",
   authenticateAdmin,
   adminController.listProperties
 );
 
+// offline booking ,
+router.post("/book", authenticateAdmin, adminController.offlineBoking )
 router.get("/list-agents", authenticateAdmin, adminController.listAgents);
 
 router.get("/agents-profile", Admin.getAgentProfile);

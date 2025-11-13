@@ -16,7 +16,11 @@ class BookingService{
                     transaction_id: true,
                     transaction:{
                         select: {
-                           reference: true 
+                           reference: true,
+                           email: true,
+                           phone_number: true,
+                           date_paid: true,
+                           amount: true, 
                         }
                     },
                     booking_period: {

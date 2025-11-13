@@ -244,8 +244,9 @@ export const getTransactionDetailsByYear = async (
 
 export const offlineBoking = async (req: Request, res: Response) => {
   try {
-    const {apartmentId, startDate, endDate, amount, name, email, agentId} = req.body
-    await adminService.oflineBookings(apartmentId, startDate, endDate, amount, name, email, agentId)
+    const {apartmentId, startDate, endDate, name, email} = req.body
+    const adminId = (req as any).admin.id;
+    await adminService.oflineBookings(apartmentId, startDate, endDate, name, email, adminId)
     res.status(200).json({message: `Appartment booked sucessfully!`})
     return 
   } catch (error) {

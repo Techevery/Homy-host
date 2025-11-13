@@ -35,7 +35,7 @@ router.delete("/banner/:id", authenticateAgent, deleteBanner)
    
 // remove property
 router.delete("/remove-apartment/:apartmentId", authenticateAgent, removeApartment);
-
+ 
 router.get("/:slug/properties", getPropertiesBySlug);
 
 export default router;    
