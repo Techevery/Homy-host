@@ -50,7 +50,7 @@ router.patch(
 );
 
 router.delete(
-  "/:apartmentId", 
+  "/:apartmentId",  
   authenticateAdmin,
   apartmentController.deleteApartment
 );   

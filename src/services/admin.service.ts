@@ -170,7 +170,7 @@ class AdminService {
       const appartment = await prisma.apartment.delete({
         where: { id: apartmentId },
       });
-
+ 
       return 
     } catch (error: any) {
       if ((error as any).code === "P2025") {

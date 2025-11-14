@@ -147,6 +147,7 @@ const transactionData = await prisma.transaction.create({
     agent: { connect: { id: agentId } },
     apartment: { connect: { id: apartmentId } },
     mockupPrice,
+    phone_number: phoneNumber,
     agentPercentage,
     metadata: {
       dailyPrice,
