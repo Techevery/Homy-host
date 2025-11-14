@@ -78,6 +78,7 @@ model Apartment {
   createdBy   Admin     @relation("AdminApartments", fields: [adminId], references: [id]) // Admin ownership
   adminId     String
   agentPercentage Int? 
+  isBooked        Boolean @default(false)
 
   agents      Agent[]   @relation("AgentApartments") // Agents listing this apartment
   createdAt   DateTime  @default(now())

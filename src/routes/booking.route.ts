@@ -9,4 +9,4 @@ router.get("/booking-dates/:apartmentId", fetchBookingDates)
 router.get("/manage-booking", manageBooking) 
 router.get('/:id', authenticateAdmin, getBookingById)    
 
-export default router
+export default router  

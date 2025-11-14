@@ -61,7 +61,10 @@ class BookingService{
                            email: true,
                            amount: true,
                            phone_number: true,
-                           metadata: true 
+                           metadata: true,
+                           agent: {
+                            select: {name: true}
+                           }
                         }
                     },
                     booking_period: { 
