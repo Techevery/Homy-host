@@ -42,7 +42,7 @@ class PaymentService {
     phoneNumber: string,
     nextofKinName: string,
     nextofKinNumber: string,
-    fullName: string
+    fullName: string,
   ) {
     try {
       // Validate input arrays
@@ -115,13 +115,15 @@ class PaymentService {
       };
 
       // Initialize payment with Paystack
-      const { authorizationUrl, reference } = await Paystack.initializePayment({
+      const { authorizationUrl, reference } = await Paystack.initializePayment(
+        {
         email,
         amount: totalAmount,
         channels: validChannel,
         currency: validCurrency,
         metadata: metadata as any, // Type assertion for Paystack metadata
-      });
+      },
+    );
 
       logger.info({
         message: "Payment initialized successfully",
@@ -359,24 +361,6 @@ await prisma.transaction.update({
       logger.error({ reference }, "No pending transaction found");
       throw new Error("No pending transaction found");
     }
-
-    // if (verification.data.status !== "success") {
-    //   // Update to failed instead of logging a new one
-    //   await prisma.transaction.update({
-    //     where: { reference: verification.data.reference }, 
-    //     data: {
-    //       status: "failed",
-    //       // Optionally add channel or other details if available: channel: verification.data.channel,
-    //     },
-    //   });
-
-    //   logger.error(
-    //     { status: verification.data.status },
-    //     "Payment verification failed"
-    //   );
-
-    //   throw new Error("Payment verification failed");
-    // }
 
     const metadata = verification.data.metadata || {};
 
@@ -746,7 +730,7 @@ await prisma.transaction.update({
      phoneNumber,
      nextofKinName,
      nextOfKinNumber,
-     fullName
+     fullName,
     );
 
     logger.info({

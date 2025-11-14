@@ -62,7 +62,7 @@ class BookingService{
                            amount: true,
                            phone_number: true,
                            metadata: true,
-                           agent: {
+                           agent: { 
                             select: {name: true}
                            }
                         }

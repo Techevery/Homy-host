@@ -2,6 +2,7 @@ import axios from "axios";
 import "dotenv/config";
 // import Helper from "../core/helpers";
 import { logger } from "../core/helpers/logger";
+import { Request } from "express";
 
 export type PaymentChannels =
   | "bank"
@@ -97,12 +98,15 @@ class Paystack {
         feeDetails,
         ...(payload.metadata || {}),
       },
+      callback_url: `https://homeyhost.ng/`
     };
 
     try {
       const response = await axios.post(
         `${process.env.PAYSTACK_URL}/transaction/initialize`,
         paymentData,
+        
+        // callback_url: `${req.headers}`,
         {
           headers: {
             Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
