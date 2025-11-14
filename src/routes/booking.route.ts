@@ -7,6 +7,6 @@ const router = Router()
 router.get("/", authenticateAdmin, fetchAllBookings)
 router.get("/booking-dates/:apartmentId", fetchBookingDates) 
 router.get("/manage-booking", manageBooking) 
-router.get('/:id', authenticateAdmin, getBookingById)   
+router.get('/:id', authenticateAdmin, getBookingById)    
 
 export default router

@@ -252,6 +252,40 @@ export const deleteBanner = async (req: Request, res: Response) => {
   }
 }
 
+// feetch appartment that has not been enlisted 
+export const getUnlistedApartmentsCtrl = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const agentId = (req as any).agent.id;
+
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 10, 100);
+    const cursor = (req.query.cursor as string) || undefined;
+
+    const result = await agentService.getUnlistedApartments(agentId, {
+      limit,
+      cursor,
+    });
+
+    // DO NOT `return` here
+    res.status(200).json({
+      success: true,
+      ...result,
+      message: 'Apartments not yet listed by this agent',
+    });
+  } catch (error: any) {
+    console.error('getUnlistedApartmentsCtrl error:', error);
+
+    // DO NOT `return` here either
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch apartments',
+      error: error.message,
+    });
+  }
+};
+
 
 function handleErrorResponse(res: Response, error: unknown) {
   console.error(error);

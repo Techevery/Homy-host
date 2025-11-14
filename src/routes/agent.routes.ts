@@ -12,6 +12,7 @@ import {
   deleteBanner,
   getBanners,
   updateAgentBanner,
+  getUnlistedApartmentsCtrl,
 } from "../controllers/agent.controller";
 
 const router = express.Router();
@@ -26,8 +27,11 @@ router.post("/enlist-property", authenticateAgent, enlistApartment);
 
 router.get("/agent-listing", authenticateAgent, enlistedProperties);
 
+// unlisted apartment 
+router.get("/unlisted-apartment", authenticateAgent, getUnlistedApartmentsCtrl)
+
 // / banner 
-router.post("/create-banner", authenticateAgent, createAgentBanner)
+router.post("/create-banner", authenticateAgent, createAgentBanner) 
 router.get("/banner", authenticateAgent, getBanners)
 router.patch("/banner/:id", authenticateAgent, updateAgentBanner)
 router.delete("/banner/:id", authenticateAgent, deleteBanner)

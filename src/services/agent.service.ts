@@ -661,11 +661,73 @@ async deleteBanner(id: string, agentId: any) {
   })
   if(!deleteAgentBanner) throw new Error("Unable to delete banner")
   return `Banner deleted successfully`
- } catch (error) {
-  
+ } catch (error: any) {
+  throw new Error (`${error.message}`)
  }
 }
 
+// services/agentService.ts
+async getUnlistedApartments(
+    agentId: string,
+    options: {
+      limit?: number;
+      cursor?: string;
+    } = {}
+  ) {
+    const { limit = 10, cursor } = options;
+
+    const apartments = await prisma.apartment.findMany({
+      where: {
+        AgentListing: {
+          none: { agent_id: agentId },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        type: true,
+        servicing: true,
+        amenities: true,
+        bedroom: true,
+        price: true,
+        images: true,
+        video_link: true,
+        agentPercentage: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit + 1,
+      ...(cursor && {
+        cursor: { id: cursor },
+        skip: 1,
+      }),
+    });
+
+    const hasMore = apartments.length > limit;
+    const data = hasMore ? apartments.slice(0, -1) : apartments;
+    const nextCursor = hasMore ? apartments[apartments.length - 1].id : null;
+
+    const total = await prisma.apartment.count({
+      where: {
+        AgentListing: {
+          none: { agent_id: agentId },
+        },
+      },
+    });
+
+    return {
+      data,
+      pagination: {
+        total,
+        limit,
+        cursor: nextCursor,
+        hasMore,
+      },
+    };
+  }
 }
+
 
 export default new AgentService();
