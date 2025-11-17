@@ -98,7 +98,7 @@ class Paystack {
         feeDetails,
         ...(payload.metadata || {}),
       },
-      callback_url: `https://homeyhost.ng/`
+      callback_url: `https://homeyhost.ng/payment-success`
     };
 
     try {
