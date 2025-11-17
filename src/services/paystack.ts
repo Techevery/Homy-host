@@ -96,7 +96,7 @@ class Paystack {
       metadata: {
         email: payload.email,
         feeDetails,
-        ...(payload.metadata || {}),
+        ...(payload.metadata || {}),  
       },
       callback_url: `https://homeyhost.ng/payment-success`
     };

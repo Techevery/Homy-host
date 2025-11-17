@@ -57,6 +57,7 @@ model Agent {
   Transaction       Transaction[]
   Wallet            Wallet[]
   AgentBanner       AgentBanner[]
+  payout            Payout[]
   slug              String        @unique
 
   @@map("agents")
@@ -268,6 +269,24 @@ model Wallet{
   agentId       String
   agent         Agent @relation(fields: [agentId], references: [id])
   balance       Int @default(0)
+}
+
+model Payout {
+  id                    String @id @default(uuid())
+  agentId               String
+  agent                 Agent @relation(fields: [agentId], references: [id])
+  accountNumber         String
+  accountName           String
+  bankName              String 
+  amount                Float
+  status                PayoutStatus @default(pending)
+  createdAt             DateTime @default(now())
+}
+ 
+enum PayoutStatus {
+  pending
+  cancelled
+  success
 }
 
 // withdrawer 
