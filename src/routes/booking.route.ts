@@ -10,7 +10,7 @@ router.get("/booking-dates/:apartmentId", fetchBookingDates)
 router.get("/manage-booking", manageBooking) 
 router.get('/:id', authenticateAdmin, getBookingById)    
 
-// update admin booking 
+// update admin booking     
 
 router.patch("/update/:bookingId", authenticateAdmin, updateOflineBooking)
 
