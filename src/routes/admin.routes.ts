@@ -65,4 +65,5 @@ router.patch("/update-apartment/:apartmentId", authenticateAdmin, apartmentContr
 
 // reject agent
 router.delete("/reject/:agentId", authenticateAdmin, adminController.rejectAgent)
+
 export default router;

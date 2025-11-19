@@ -576,10 +576,137 @@ async oflineBookings(apartmentId: string, startDate: string[], endDate: string[]
           }
         });
       }
+      await prisma.apartment.update({
+        where: {id: apartmentId},
+        data: {
+          isBooked: true
+        }
+      })
 
   } catch (error: any) {
     console.log(error)
     throw new Error(`${error.message}`)
+  }
+}
+
+async updateOflineBooking(
+  bookingId: string, 
+  startDate: string[], 
+  endDate: string[],
+) {
+  try {
+    // Fetch existing transaction with relations
+    const transaction = await prisma.bookingPeriod.findUnique({
+      where: { id: bookingId },
+      include: {
+        apartment: true,
+      },
+    });
+
+    if (!transaction) {
+      throw new Error("Booking not found");
+    }
+
+    const apartmentId = transaction.apartment.id;
+
+    // Validate agent/admin authorization (replicates create's intent but ties to existing booking)
+
+    // Replicate create's listing checks (adjusted for update)
+    // const adminListing = await prisma.apartment.findFirst({ where: { adminId } });
+    // if (!adminListing) {
+    //   throw new Error("No agent found for this listing");
+    // }
+
+    const agentList = await prisma.agentListing.findFirst({ where: { apartment_id: apartmentId } });
+    if (!agentList) {
+      throw new Error("No agent listing for this apartment");
+    }
+
+    const booking = await this.validateAndParseBookingPeriods(startDate, endDate);
+
+    // Check conflicts, excluding current booking
+    const hasConflict = await this.isApartmentBookedForPeriods(apartmentId, booking);
+    if (hasConflict) {
+      const conflictingPeriods = await this.getConflictingPeriods(apartmentId, booking);
+      const conflictMessages = conflictingPeriods.map(period => 
+        `${period.startDate.toISOString()} to ${period.endDate.toISOString()}`
+      );
+      throw new Error(`Apartment is already booked for the following periods: ${conflictMessages.join(', ')}`);
+    }
+
+    const totalDurationDays = booking.reduce((total, period) => total + period.durationDays, 0);
+
+    const dailyPrice = 0;
+    const isMarkedUp = 0;
+    const agentPercentage = 0;
+    const mockupPrice = 0;
+
+    // Update transaction (keep reference, amount=0, status="success", agent/apartment connections)
+    await prisma.transaction.update({
+      where: { id: bookingId },
+      data: {
+        // Store overall date range for backward compatibility
+        booking_start_date: booking[0].startDate,
+        booking_end_date: booking[booking.length - 1].endDate,
+        duration_days: totalDurationDays,
+        mockupPrice, 
+        agentPercentage,
+        metadata: {
+          dailyPrice,
+          isMarkedUp,
+          originalAmount: dailyPrice * totalDurationDays,
+          totalBookingPeriods: booking.length,
+        }, 
+      },
+    });
+
+    // Delete old booking periods and apartment logs
+    await prisma.apartmentLog.deleteMany({
+      where: { transaction_id: bookingId },
+    });
+
+    await prisma.bookingPeriod.deleteMany({
+      where: { transaction_id: bookingId },
+    });
+
+    // Create new booking periods and apartment logs
+    for (const period of booking) {
+      const bookingPeriod = await prisma.bookingPeriod.create({
+        data: {
+          transaction_id: bookingId,
+          apartment_id: apartmentId,
+          start_date: period.startDate,
+          end_date: period.endDate,
+          duration_days: period.durationDays,
+        },
+      });
+
+      // Create apartment log for each period
+      await prisma.apartmentLog.create({
+        data: {
+          apartment_id: apartmentId,
+          transaction_id: bookingId,
+          booking_period_id: bookingPeriod.id,
+          availability: false,
+          status: 'booked',
+        },
+      });
+    }
+
+    // Fetch and return the updated transaction (with relations for completeness)
+    const updatedTransaction = await prisma.transaction.findUnique({
+      where: { id: bookingId },
+      include: {
+        apartment: true,
+        agent: true,
+        // Add more includes if needed, e.g., bookingPeriods: { include: { apartment_logs: true } }
+      },
+    });
+
+    return updatedTransaction;
+  } catch (error: any) {
+    console.log(error);
+    throw new Error(`${error.message}`);
   }
 }
  
