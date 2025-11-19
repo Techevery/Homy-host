@@ -254,13 +254,13 @@ export const offlineBoking = async (req: Request, res: Response) => {
   }
 }
 
-
-// TODO: implement transfer endpoint for payout into agent accounts
-
-// export const transferPayout = async (req:Request, res:Response) => {
-//   try {
-    
-//   } catch (error) {
-//     handleErrorReponse(res, error);
-//   }
-// }
+export const rejectAgent = async (req: Request, res: Response) => {
+try {
+  const {agentId} = req.params
+  const {reason} = req.body
+  const result = await adminService.rejectAgent(agentId, reason)
+  res.status(200).json(result) 
+} catch (error: any) {
+  res.status(500).json(`${error.message}`)
+}
+}

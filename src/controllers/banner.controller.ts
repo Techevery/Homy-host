@@ -75,60 +75,52 @@ export const createBanner = async (req: Request, res: Response) => {
     }
 
 export const updateBanner = async (req: Request, res: Response) => {
-
-    upload(req, res, async (err) => {
-      try {
-        const agentId = (req as any).agent.id;
-    const { id } = req.params; // Get banner ID from URL params
-
-    if (!id) {
-      return res.status(400).json({
-        message: "Banner ID is required",
-      });
-    }
-        if (err instanceof multer.MulterError) {
-          return res.status(400).json({
-            message: `File upload error: ${err.message}`,
-          });
-        } else if (err) {
-          return res.status(500).json({   
-            message: "Unknown file upload error",
-          });
-        }
-
-        const { name, description } = req.body;
-        const files = req.files as Express.Multer.File[];
-
-        console.log("file", files, "body", req.body);
-
-        const updatedBanner = await bannerService.updateBanner(
-          id,
-          name,
-          description,
-          agentId,
-          files
-        );
-
-        return res.status(200).json({
-          message: "Banner updated successfully",
-          data: updatedBanner,
+  upload(req, res, async (err) => { 
+    try {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({
+          message: `File upload error: ${err.message}`,
         });
-      } catch (error) {
-        return handleErrorReponse(res, error);
+      } else if (err) {
+        return res.status(500).json({   
+          message: "Unknown file upload error",
+        });
       }
-    });
-  // } catch (error: any) {
-  //   return res.status(500).json({
-  //     message: error.message || "Internal server error",
-  //   });
-  // }
+
+      const { id } = req.params; // Get banner ID from URL params
+
+      if (!id) {
+        return res.status(400).json({
+          message: "Banner ID is required",
+        });
+      }
+
+      const { name, description } = req.body;
+      const files = req.files as Express.Multer.File[];
+
+      console.log("file", files, "body", req.body);
+
+      const updatedBanner = await bannerService.updateBanner(
+        id,
+        name,
+        description,
+        files
+      );
+
+      return res.status(200).json({
+        message: "Banner updated successfully",
+        data: updatedBanner,
+      });
+    } catch (error) {
+      return handleErrorReponse(res, error);
+    }
+  });
 };
 
     export const deleteBanner = async (req: Request, res: Response) => {
       try {
         const {id} = req.params;
-        const agentId = (req as any).agent.id;
-        await bannerService.deleteBanner(id, agentId);
+        await bannerService.deleteBanner(id);
         res.status(200).json({
           message: "Banner deleted successfully"
         });

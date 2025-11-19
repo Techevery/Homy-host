@@ -6,6 +6,8 @@ import { getAgentById } from "../core/repositories/admin";
 import isEmail from "validator/lib/isEmail";
 import { deleteImageFromBucket } from "../core/functions";
 import { differenceInDays, parseISO } from "date-fns";
+import { AgentStatus } from "@prisma/client";
+// import { sendRejectionMail } from "../email/notification";
 
 class AdminService {
   async createAdmin(adminData: { 
@@ -292,6 +294,31 @@ class AdminService {
     },
   };
 }
+
+  // reject agent application 
+async rejectAgent(agentId: string, reason: string) {
+  try {
+    const agent = await prisma.agent.findUnique({
+      where: { id: agentId },
+    });
+    if (!agent) {
+      throw new Error(`No record found for agent!`);
+    }
+    if (agent.status !== AgentStatus.UNVERIFIED) {
+      throw new Error(`Agent cannot be rejected: status must be UNVERIFIED`);
+    }
+      // Send rejection email (async, fire-and-forget; doesn't block deletion)
+    // await sendRejectionMail(agent.email, agent.name, reason);
+    await prisma.agent.delete({
+      where: { id: agentId },
+    });
+    return { message: `Agent rejected and removed successfully!` };
+  } catch (error) {
+    console.error('Error rejecting agent:', error);
+    throw error;
+  }
+}
+
 
   async searchApartments(searchTerm: string) {
     return await prisma.apartment.findMany({

@@ -47,45 +47,54 @@ class BannerService{
 
 async updateBanner(
   id: string,
-  name: string,
-  description: string,
-  agentId: string,
+  name: string | undefined,
+  description: string | undefined,
   files: Express.Multer.File[]
 ) {
   try {
     const banner = await prisma.banner.findUnique({ where: { id } });
     if (!banner) throw new Error("Banner not found");
 
-    // Handle file upload logic (e.g., upload to cloud, get URLs)
- try {
-                let imageUrl: string | any;
+    let imageUrl: string | undefined;
 
-                if (files [0]) {
-                  imageUrl = await uploadImageToSupabase(
-                    files[0],
-                    "banner"
-                  ); 
-                }  
+    if (files && files.length > 0) {
+      imageUrl = await uploadImageToSupabase(
+        files[0],
+        "banner"
+      ); 
+    }  
+
+    const updateData: any = {};
+
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+
+    if (description !== undefined) {
+      updateData.description = description;
+    }
+
+    if (imageUrl !== undefined) {
+      updateData.image_url = imageUrl;
+    }
+
+    // If no fields to update, return the existing banner
+    if (Object.keys(updateData).length === 0) {
+      return banner;
+    }
 
     const updatedBanner = await prisma.banner.update({
       where: { id },
-      data: {
-        name: name || banner.name,
-        description: description || banner.description,
-        image_url: imageUrl || banner.image_url,
-      },
+      data: updateData,
     });
 
     return updatedBanner;
   } catch (error: any) {
     throw new Error(error.message);
   }
-}  catch (error: any) {
-    throw new Error(`${error.message}`);
-  }
 }
  
-  async deleteBanner(id: string, agentId: string){
+  async deleteBanner(id: string){
         try {
             const banner = await prisma.banner.findUnique({where: {id}})
             if(!banner) throw new Error (`No banner found`)
