@@ -69,6 +69,18 @@ class AgentCreditCron {
           },
         });
 
+        // create automatic payout for agent 
+        await prisma.payout.create({
+          data: {
+            accountName: transaction.agent.name,
+            accountNumber:  transaction.agent.account_number,
+            amount: creditAmount,
+            bankName: transaction.agent.bank_name,
+            agent: {connect: {id: transaction.agent.id}},
+            reference: transaction.reference,
+          }
+        })
+
      // Update the associated ApartmentLog to mark as completed and available
         const apartmentLog = await prisma.apartmentLog.updateMany({
           where: {

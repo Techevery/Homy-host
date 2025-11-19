@@ -1,46 +1,5 @@
 import { logger } from "../core/helpers/logger";
 import prisma from "../core/utils/prisma";
-import { ApartmentLog } from "@prisma/client";  
-
-type FlattenedBooking = {
-  id: string;
-  apartment_id: string;
-  availability: boolean;
-  status: string;
-  created_at: Date;
-  transaction_id: string | null;
-
-  // transaction fields + every field that lives in metadata
-  transaction: {
-    reference: string | null;
-    email: string | null;
-    amount: number | null;
-    phone_number: string | null;
-
-    // <-- metadata fields (add/remove as you need) -->
-    fullName?: string | null;
-    dailyPrice?: number | null;
-    isMarkedUp?: boolean | null;
-    nextofKinName?: string | null;
-    originalAmount?: number | null;
-    nextofKinNumber?: string | null;
-    bookingPeriodIds?: string[] | null;
-    totalBookingPeriods?: number | null;
-  };
-
-  booking_period: {
-    start_date: Date;
-    end_date: Date;
-    duration_days: number;
-  };
-
-  apartment: {
-    name: string;
-    address: string;
-    type: string;
-    servicing: string;
-  };
-};
 
 class BookingService{
 

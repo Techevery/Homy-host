@@ -281,6 +281,10 @@ model Payout {
   amount                Float
   status                PayoutStatus @default(pending)
   createdAt             DateTime @default(now())
+  reference             String 
+  proof                 String?
+  remark                String?
+  @@index([id, status, reference])
 }
  
 enum PayoutStatus {

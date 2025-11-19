@@ -95,57 +95,6 @@ async removePropertyFromListing(agentId: string, apartmentId: string) {
   }
 }
 
-  // async getAgentProperties(
-  //   agentId: string,
-  //   page: number = 1,
-  //   limit: number = 10
-  // ) {
-  //   const skip = (page - 1) * limit;
-
-  //   const [totalCount, listings] = await Promise.all([
-  //     prisma.apartment.count({
-  //       where: { agents: { some: { id: agentId } } },
-  //     }),
-  //     prisma.agentListing.findMany({
-  //       where: { agent_id: agentId },
-  //       include: {
-  //         apartment: {
-  //           select: { 
-  //             id: true,
-  //             name: true,
-  //             address: true,
-  //             type: true,
-  //             servicing: true,
-  //             bedroom: true,
-  //             price: true,
-  //             images: true,
-  //             createdAt: true,
-  //             updatedAt: true,
-  //           },
-  //         },
-  //       },
-  //       skip,
-  //       take: limit,
-  //     }),
-  //   ]);
-
-  //   return {
-  //     totalCount,
-  //     currentPage: page,
-  //     totalPages: Math.ceil(totalCount / limit),
-  //     properties: listings.map((listing) => ({
-  //       ...listing.apartment,
-  //       agentPricing: {
-  //         basePrice: listing.base_price,
-  //         markedUpPrice: listing.markedup_price ?? listing.base_price,
-  //         priceChangedAt: listing.price_changed_at,
-  //         total: listing.markedup_price ? listing.markedup_price + listing.base_price : listing.base_price
-  //       },
-  //       listingId: listing.id,   
-  //     })),
-  //   }; 
-  // } 
-
   async getAgentProperties(
   agentId: string,
   page: number = 1,
@@ -256,6 +205,3 @@ async removePropertyFromListing(agentId: string, apartmentId: string) {
 }
 
 export default new PropertyService()
-
-// if markup put amount when the use goess to see the propertty hhe sees the original price plus the markup price 
-// during uploading of an appartnent  by admin the should have agent fee wouuld bbe added

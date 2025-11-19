@@ -1,4 +1,6 @@
+import { PayoutStatus } from "@prisma/client";
 import prisma from "../core/utils/prisma"
+import { uploadImageToSupabase } from "../core/utils/supabase";
 
 class WalletService {
     async getAllPayout(){
@@ -10,28 +12,29 @@ class WalletService {
         }
     }
 
-    async placeWithdrawer(agentId: string, accountNumber: string, accountName: string, bankName: string, amount: number) {
+    async confirmPayout(payoutId: string, remark: string, files: Express.Multer.File[]){
         try {
-            const wallet = await prisma.wallet.findFirst({where: {agentId}})
-            if(!wallet) throw new Error("Access denied you don't have a wallet!")
-            // validate the amount to be withdrawn if the user hhas such amount 
-        if(wallet.balance && wallet.balance < amount){
-            throw new Error("Insuficient balance")
-        }
-        // create a payout for this user 
-        const payout = await prisma.payout.create({
-            data:{
-                agentId,
-                accountName,
-                accountNumber,
-                bankName,
-                amount 
-            }
-        })
-        } catch (error: any) {
+                            let imageUrl: string | any;
+            
+                            if (files [0]) {
+                              imageUrl = await uploadImageToSupabase(
+                                files[0],
+                                "payment-proof"
+                              ); 
+                            }   
+                        const payout = await prisma.payout.update({
+                            where: {id: payoutId},
+                            data: {
+                                proof: imageUrl,
+                                status: PayoutStatus.success,
+                                remark
+                            }
+                        })
+        } catch (error:any) {
             throw new Error(`${error.message}`)
         }
     }
+
 }
 
 export default new WalletService

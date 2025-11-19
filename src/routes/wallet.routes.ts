@@ -1,11 +1,10 @@
 import { Router } from "express";
-import { authenticateAgent } from "../middlewares/Agent";
-import { getAllPayout, payout } from "../controllers/wallet.controller";
+import { confirmPayout, getAllPayout } from "../controllers/wallet.controller";
 import { authenticateAdmin } from "../middlewares/Admin";
 
 const router = Router()
 
-router.post("/withdraw", authenticateAgent, payout)
 router.get("/", authenticateAdmin, getAllPayout)
+router.post("/confirm-payout", authenticateAdmin, confirmPayout)
 
 export default router

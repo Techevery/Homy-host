@@ -43,6 +43,7 @@ class PaymentService {
     nextofKinName: string,
     nextofKinNumber: string,
     fullName: string,
+    personalUrl: string
   ) {
     try {
       // Validate input arrays
@@ -195,7 +196,7 @@ let currentMetadata: Record<string, any> = {};
 if (transactionData.metadata && typeof transactionData.metadata === 'object' && !Array.isArray(transactionData.metadata)) {
   currentMetadata = transactionData.metadata as Record<string, any>;
 }
-
+ 
 await prisma.transaction.update({
   where: { id: transactionData.id },
   data: {
@@ -204,7 +205,7 @@ await prisma.transaction.update({
       bookingPeriodIds: createdBookingPeriods.map(bp => bp.id)
     }
   }
-});
+}); 
 
       logger.info({
         message: "Pending transaction record created successfully",
@@ -324,13 +325,15 @@ await prisma.transaction.update({
   /**
    * Helper method to check if apartment is booked (existing method - keep as is)
    */
-
   private async isApartmentBooked(apartmentId: string, startDate: Date, endDate: Date): Promise<boolean> {
   const existingBooking = await prisma.bookingPeriod.findFirst({
     where: {
-      apartment_id: apartmentId, 
+      apartment_id: apartmentId,  
       transaction: {
         status: "success" // Only check successful transactions
+      },
+      apartment:{
+        isBooked: true
       },
       OR: [ 
         {
@@ -712,7 +715,7 @@ await prisma.transaction.update({
 
     // Parse metadata to get booking details
     const metadata = JSON.parse(failedTransaction.metadata);
-    const { startDate, endDate, phoneNumber, nextofKinName, nextOfKinNumber, fullName } = metadata;
+    const { startDate, endDate, phoneNumber, nextofKinName, nextOfKinNumber, fullName, personalUrl } = metadata;
 
     if (!startDate || !endDate) {
       throw new Error("Missing booking dates in failed transaction metadata");
@@ -731,6 +734,7 @@ await prisma.transaction.update({
      nextofKinName,
      nextOfKinNumber,
      fullName,
+     personalUrl 
     );
 
     logger.info({

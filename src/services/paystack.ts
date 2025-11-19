@@ -29,6 +29,7 @@ interface PaystackMetadata {
   dailyPrice: number;
   isMarkedUp: boolean;
   originalAmount?: number;
+  personalUrl: string
 }
 
 interface paystackBody {
@@ -85,12 +86,11 @@ class Paystack {
     const totalAmountInNaira = payload.amount + charge;
 
     const amountInKobo = Math.round(totalAmountInNaira * 100);
-
+    const url = payload.metadata?.personalUrl
     const paymentData = {
       amount: amountInKobo,
       email: payload.email,
       charge: Math.round(charge * 100), // charge in kobo
-      // reference: Helper.generatePaystackRef(),
       channel: payload.channels,
       currency: payload.currency,
       metadata: {
@@ -98,7 +98,7 @@ class Paystack {
         feeDetails,
         ...(payload.metadata || {}),  
       },
-      callback_url: `https://homeyhost.ng/payment-success`
+      callback_url: `https://homeyhost.ng/shortlet/${url}`
     };
 
     try {
