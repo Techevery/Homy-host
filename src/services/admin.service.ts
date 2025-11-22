@@ -8,6 +8,7 @@ import { deleteImageFromBucket } from "../core/functions";
 import { differenceInDays, parseISO } from "date-fns";
 import { UpdateApartmentInput } from "../schema/apartment";
 import { AgentStatus } from "@prisma/client";
+import { sendRejectionMail } from "../email/notification";
 // import { sendRejectionMail } from "../email/notification";
  
 class AdminService {
@@ -365,8 +366,8 @@ async rejectAgent(agentId: string, reason: string) {
     if (agent.status !== AgentStatus.UNVERIFIED) {
       throw new Error(`Agent cannot be rejected: status must be UNVERIFIED`);
     }
-      // Send rejection email (async, fire-and-forget; doesn't block deletion)
-    // await sendRejectionMail(agent.email, agent.name, reason);
+// send a rejectin mail to the agent 
+    await sendRejectionMail(agent.email, agent.name, reason);
     await prisma.agent.delete({
       where: { id: agentId },
     });

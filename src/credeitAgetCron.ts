@@ -77,6 +77,7 @@ class AgentCreditCron {
             bankName: transaction.agent.bank_name,
             agent: {connect: {id: transaction.agent.id}},
             reference: transaction.reference,
+            transaction: {connect: {id: transaction.id}}
           }
         })
 
