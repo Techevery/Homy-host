@@ -10,7 +10,7 @@ export class PrismaSingleton {
 
     return PrismaSingleton.instance;
   }
-}
+} 
 
 const prisma = PrismaSingleton.getInstance();
 export default prisma;

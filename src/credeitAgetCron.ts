@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
-import cron from 'node-cron';
 import { startOfDay, isBefore } from 'date-fns';
 import { logger } from './core/helpers/logger';
-
+import cron from 'node-cron';
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 class AgentCreditCron {
@@ -13,7 +12,7 @@ class AgentCreditCron {
 
       // Find successful transactions where booking_end_date has passed and not yet credited
       const transactions = await prisma.transaction.findMany({
-        where: {
+        where: {     
           status: 'success', 
           booking_end_date: {
             lte: today, // Booking end date is today or earlier
@@ -41,7 +40,7 @@ class AgentCreditCron {
           creditAmount = transaction.amount * (transaction.agentPercentage / 100);
         } else if (transaction.mockupPrice && transaction.mockupPrice > 0) {
           // Agent gets the mockupPrice (e.g., 10,000 for a 70,000 total where base is 60,000)
-          creditAmount = transaction.mockupPrice;
+          creditAmount = transaction.mockupPrice * transaction.duration_days;
         } else {
           // Fallback: no commission if neither is set (log and skip, or set default)
           logger.warn({

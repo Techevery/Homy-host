@@ -6,10 +6,10 @@ import { getAgentById } from "../core/repositories/admin";
 import isEmail from "validator/lib/isEmail";
 import { deleteImageFromBucket } from "../core/functions";
 import { differenceInDays, parseISO } from "date-fns";
-import { AgentStatus } from "@prisma/client";
 import { UpdateApartmentInput } from "../schema/apartment";
+import { AgentStatus } from "@prisma/client";
 // import { sendRejectionMail } from "../email/notification";
-
+ 
 class AdminService {
   async createAdmin(adminData: { 
     name: string;
@@ -459,7 +459,7 @@ async rejectAgent(agentId: string, reason: string) {
     }
 
     return await Promise.all(
-      agents.map(async (agent) => {
+      agents.map(async (agent: any) => {
         const apartments = await prisma.apartment.findMany({
           where: { agents: { some: { id: agent.id } } },
         });

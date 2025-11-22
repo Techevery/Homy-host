@@ -45,7 +45,7 @@ class BookingService{
             }); 
             return bookings;
         } catch (error) {
-            logger.error("Error fetching bookings:", error);
+            logger.error("Error fetching bookings:");
             throw new Error("Could not fetch bookings");
         }
     }
@@ -81,7 +81,7 @@ class BookingService{
             });
             return dates;
         } catch (error) {
-            logger.error("Error fetching booking dates:", error);
+            logger.error("Error fetching booking dates:");
             throw new Error("Could not fetch booking dates"); 
         }
     }
@@ -135,7 +135,7 @@ class BookingService{
 
     return bookings;
         } catch (error) {
-            logger.error("Error managing booking:", error);
+            logger.error("Error managing booking:");
             throw new Error("Could not manage booking");
         }
     }

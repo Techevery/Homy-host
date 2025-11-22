@@ -75,7 +75,7 @@ class DashboardService {
         recentTransactions: this.formatRecentTransactions(recentTransactions),
       };
     } catch (error) {
-      logger.error("Failed to fetch dashboard stats", error);
+      logger.error("Failed to fetch dashboard stats");
       throw new Error("Failed to retrieve dashboard statistics");
     }
   }

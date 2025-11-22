@@ -21,7 +21,7 @@ class WalletService {
                                 files[0],
                                 "payment-proof"
                               ); 
-                            }   
+                            }    
                         const payout = await prisma.payout.update({
                             where: {id: payoutId},
                             data: {

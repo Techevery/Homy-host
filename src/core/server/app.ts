@@ -20,14 +20,15 @@ export const CreateServer = async (): Promise<Express> => {
     logger.info("Prisma connected to database");
   } catch (error) {
     console.log(error)
-    logger.error("Failed to connect to database:", error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error("Failed to connect to database:");
     process.exit(1);
   }
 
   AgentCreditCron.schedule(); 
   logger.info("Agent crediting cron job scheduled");
 
-  app.use(
+  app.use(     
     cors({
       origin: true,
       optionsSuccessStatus: 200,
@@ -91,7 +92,7 @@ export const CreateServer = async (): Promise<Express> => {
         });
       });
     } catch (error) {
-      logger.error("Error during shutdown:", error);
+      logger.error("Error during shutdown:");
       process.exit(1);
     }
   };

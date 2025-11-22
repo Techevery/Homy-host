@@ -88,7 +88,7 @@ export async function deleteImageFromBucket(imageUrl: string): Promise<void> {
 
     logger.info(`Successfully deleted image: ${filePath}`);
   } catch (error) {
-    logger.error("Error deleting image from supabase:", error);
+    logger.error("Error deleting image from supabase:");
     throw new Error("Failed to delete image from storage");
   }
 }

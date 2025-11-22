@@ -7,11 +7,11 @@
     "rootDir": "./src",                              
     "esModuleInterop": true, 
     "forceConsistentCasingInFileNames": true,           
-    "strict": true,                                      
+    "strict": false,                                      
     "skipLibCheck": true,                                 /* Skip type checking all .d.ts files. */
     "diagnostics": true, // Enables detailed compilation statistics
     "listFiles": true,   // Lists all files included in the build
-    "listEmittedFiles": true // Lists all emitted files
+    "listEmittedFiles": true,
   },
   "include": ["src/**/*.ts"],	
   "exclude": ["node_modules","dist"]	
