@@ -53,3 +53,29 @@ export const confirmPayoutMail = async (agentEmail: string, agentName: string): 
     console.error('Unexpected error sending payout confirmation email:', err);
   }
 };
+
+export const rejectPayoutMail = async (agentEmail: string, agentName: string, reason: string): Promise<void> => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'Acme <onboarding@yourdomain.com>', // Replace with your verified domain/sender
+      to: [agentEmail],
+      subject: 'Successful Payout', 
+      html: `
+        <h2>Dear ${agentName},</h2> 
+        <p> We regret to tell you that your payout request was rejected due to tthe reason below.</p>
+        <p>Reason: ${reason}</p>
+        <p>Thank you for your continued partnership with Homeyhost. If you have any questions or need further assistance, feel free to reply to this email.</p>
+        <p>Best regards,<br>The Acme Team</p>
+      `,
+    });  
+  
+    if (error) {
+      console.error('Failed to send payout confirmation email:', error);
+      // Optionally, throw to rollback payout; here, we log and continue
+    } else {
+      console.log('Payout confirmation email sent successfully to:', agentEmail);
+    }
+  } catch (err) {
+    console.error('Unexpected error sending payout confirmation email:', err);
+  }
+};

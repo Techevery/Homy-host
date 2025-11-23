@@ -287,6 +287,7 @@ model Payout {
   proof                 String?
   remark                String?
   transactionId         String 
+  reason                String?
   transaction           Transaction @relation(fields: [transactionId], references: [id])
   @@index([id, status, reference])
 }

@@ -1,7 +1,7 @@
 import { PayoutStatus } from "@prisma/client";
 import prisma from "../core/utils/prisma"
 import { uploadImageToSupabase } from "../core/utils/supabase";
-import { confirmPayoutMail } from "../email/notification";
+import { confirmPayoutMail, rejectPayoutMail } from "../email/notification";
 
 class WalletService {
     async getAllPayout(){
@@ -22,7 +22,7 @@ class WalletService {
                         mockupPrice: true,
                         apartment: {select:{name: true}}
                       }
-                    }
+                    }   
                 },
             });
             return payout 
@@ -61,6 +61,74 @@ async confirmPayout(payoutId: string, remark: string, files: Express.Multer.File
     throw new Error(`${error.message}`);
   }
 }
+
+async agentTransactions(agentId: string){
+  try {
+    const transactions = await prisma.payout.findMany({
+      where:{agentId}
+    })
+    if(!transactions) throw new Error(`No transaction for this user`)
+      return transactions 
+  } catch (error: any) {
+    throw new Error(`${error.message}`)
+  }
+}
+
+async payoutStatistics() {
+  try {
+    const [
+      totalPayoutResult,
+      totalPendingResult,
+      totalVerifiedAgents,
+      totalRevenueResult
+    ] = await Promise.all([
+      prisma.payout.aggregate({
+        where: { status: 'success' },
+        _sum: { amount: true },
+      }),
+      prisma.payout.aggregate({
+        where: { status: 'pending' },
+        _sum: { amount: true },
+      }),
+      prisma.agent.count({
+        where: { status: 'VERIFIED' }, // Assuming AgentStatus enum includes 'VERIFIED'
+      }),
+      prisma.transaction.aggregate({
+        _sum: { amount: true }, // Assumes Transaction model has an 'amount' field of type Float; filter further if needed (e.g., for positive/income transactions only)
+      }),
+    ]);
+
+    return {
+      totalPayout: totalPayoutResult._sum?.amount || 0,
+      totalPendingPayout: totalPendingResult._sum?.amount || 0,
+      totalVerifiedAgents,
+      totalRevenue: totalRevenueResult._sum?.amount || 0,
+    };
+  } catch (error) {
+    console.error('Error fetching payout statistics:', error);
+    throw error; // Or handle as needed, e.g., return a default error response
+  }
+}
+
+async rejectPayout(payoutId: string, reason: string){
+  try {
+    const payout = await prisma.payout.update({
+      where: {id: payoutId},
+      data:{status: PayoutStatus.cancelled, reason},
+      include: {agent: true}
+    })
+    const agentEmail = payout.agent.email;
+    const agentName = payout.agent.name;
+
+    // Send confirmation mail to agent using remark as success details
+    await rejectPayoutMail(agentEmail, agentName, reason);
+    return `Payout successfully rejected!`
+  } catch (error: any) {
+    throw new Error(`${error.message}`)
+  }
+}
+
+// reject payout     
 
 }
 

@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import WalletService from "../services/wallet.service";
 import { handleErrorReponse } from "../core/functions";
 import multer from "multer";
+import walletService from "../services/wallet.service";
+import { error } from "console";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -56,4 +58,33 @@ export const confirmPayout = async (req: Request, res: Response) => {
           return;
         }
       });
+    }
+  
+    export const agentTransactions = async (req: Request, res: Response) => {
+      try {
+         const agentId = (req as any).agent.id; 
+         const result = await walletService.agentTransactions(agentId)
+         res.status(200).json(result)
+      } catch (error: any) {
+        res.status(400).json(`${error.messsage}`)
+      }
+    }
+
+    export const getPayoutStatistics = async (req: Request, res: Response) => {
+      try {
+        const payout = await walletService.payoutStatistics()
+        res.status(200).json(payout)
+      } catch (error) {
+        res.status(400).json(`${error.message}`)
+      }
+    }
+
+    export const rejectPayout = async (req: Request, res: Response) => {
+      try {
+        const {reasson, payoutId} = req.body
+        const result = await walletService.rejectPayout(payoutId, reasson)
+        res.status(200).json(result)
+      } catch (error: any) {
+        res.status(400).json(`${error.message}`)
+      }
     }
