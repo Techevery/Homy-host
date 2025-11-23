@@ -5,7 +5,7 @@ const resend = new Resend(process.env.RESEND_KEY);
 export const sendRejectionMail = async (agentEmail: string, agentName: string, reason: string): Promise<void> => {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Acme <onboarding@yourdomain.com>', // Replace with your verified domain/sender
+      from: `${process.env.EMAIL_FROM}`, // Replace with your verified domain/sender
       to: [agentEmail],
       subject: 'Application Rejection Notice', 
       html: `
@@ -32,7 +32,7 @@ export const sendRejectionMail = async (agentEmail: string, agentName: string, r
 export const confirmPayoutMail = async (agentEmail: string, agentName: string): Promise<void> => {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Acme <onboarding@yourdomain.com>', // Replace with your verified domain/sender
+      from: `${process.env.EMAIL_FROM}`, // Replace with your verified domain/sender
       to: [agentEmail],
       subject: 'Successful Payout', 
       html: `
@@ -57,7 +57,7 @@ export const confirmPayoutMail = async (agentEmail: string, agentName: string): 
 export const rejectPayoutMail = async (agentEmail: string, agentName: string, reason: string): Promise<void> => {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Acme <onboarding@yourdomain.com>', // Replace with your verified domain/sender
+      from: `${process.env.EMAIL_FROM}`, // Replace with your verified domain/sender
       to: [agentEmail],
       subject: 'Successful Payout', 
       html: `
