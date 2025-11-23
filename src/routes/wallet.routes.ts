@@ -9,6 +9,6 @@ router.get("/", authenticateAdmin, getAllPayout)
 router.post("/confirm-payout", authenticateAdmin, confirmPayout)
 router.get("/agent-transactions", authenticateAgent, agentTransactions)
 router.get("/payout-stats", authenticateAdmin, getPayoutStatistics)
-router.get("/reject-payout", authenticateAdmin, rejectPayout)
-
+router.patch("/reject-payout", authenticateAdmin, rejectPayout)
+ 
 export default router
