@@ -43,7 +43,6 @@ class PaymentService {
     nextofKinName: string,
     nextofKinNumber: string,
     fullName: string,
-    personalUrl: string
   ) {
     try {
       // Validate input arrays
@@ -68,12 +67,15 @@ class PaymentService {
         },
         include: {
           apartment: true,
+          agent: true
         },
       });
 
       if (!agentListing) {
         throw new Error("Apartment is not listed by this agent");
       }
+
+      const agentUrl = agentListing.agent.personalUrl
 
       // Check availability for all periods
       const hasConflict = await this.isApartmentBookedForPeriods(apartmentId, bookingPeriods);
@@ -124,6 +126,7 @@ class PaymentService {
         currency: validCurrency,
         metadata: metadata as any, // Type assertion for Paystack metadata
       },
+      agentUrl
     );
 
       logger.info({
@@ -186,7 +189,7 @@ for (const period of bookingPeriods) {
       transaction_id: transactionData.id,
       booking_period_id: bookingPeriod.id,
       availability: false,
-      status: 'booked',
+      status: 'booked', 
     }
   });
 }
@@ -734,7 +737,6 @@ await prisma.transaction.update({
      nextofKinName,
      nextOfKinNumber,
      fullName,
-     personalUrl 
     );
 
     logger.info({

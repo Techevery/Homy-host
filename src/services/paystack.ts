@@ -29,7 +29,6 @@ interface PaystackMetadata {
   dailyPrice: number;
   isMarkedUp: boolean;
   originalAmount?: number;
-  personalUrl: string
 }
 
 interface paystackBody {
@@ -78,7 +77,7 @@ class Paystack {
     };
   }
 
-  async initializePayment(payload: paystackBody) {
+  async initializePayment(payload: paystackBody, agentUrl: string) {
     const feeDetails = Paystack.getFeeBreakdown(payload.amount);
 
     const charge = Paystack.calculatePaystackCharge(payload.amount);
@@ -86,7 +85,6 @@ class Paystack {
     const totalAmountInNaira = payload.amount + charge;
 
     const amountInKobo = Math.round(totalAmountInNaira * 100);
-    const url = payload.metadata?.personalUrl
     const paymentData = {
       amount: amountInKobo,
       email: payload.email,
@@ -98,7 +96,7 @@ class Paystack {
         feeDetails,
         ...(payload.metadata || {}),  
       },
-      callback_url: `https://homeyhost.ng/shortlet/${url}`
+      callback_url: `https://homeyhost.ng/shortlet/${agentUrl}`
     };
 
     try {

@@ -31,7 +31,6 @@ export const initiatePayment = async (req: Request, res: Response) => {
       nextofKinName,
       nextofKinNumber,
       fullName,
-      personalUrl
     );
 
     res.status(HttpStatusCode.HTTP_OK).json({

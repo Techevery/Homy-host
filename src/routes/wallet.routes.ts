@@ -11,4 +11,4 @@ router.get("/agent-transactions", authenticateAgent, agentTransactions)
 router.get("/payout-stats", authenticateAdmin, getPayoutStatistics)
 router.patch("/reject-payout", authenticateAdmin, rejectPayout)
  
-export default router
+export default router     
