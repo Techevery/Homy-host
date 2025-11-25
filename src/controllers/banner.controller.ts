@@ -6,6 +6,9 @@ import bannerService from "../services/banner.service";
 // Configure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
+    limits: {
+    fileSize: 20 * 1024 * 1024, // 20MB per file
+  }
 }).array("image", 2);
 
 export const createBanner = async (req: Request, res: Response) => {

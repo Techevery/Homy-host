@@ -15,7 +15,7 @@ router.use("/admin", AdminRoutes);
 router.use("/agent",AgentRoutes);
 router.use("/payment", PaymentRoutes)
 router.use("/booking", BookingRoutes);
-router.use("/banner", BannerRoutes)  
+router.use("/banner", BannerRoutes)
 router.use("/wallet", WalletRoutes)
 
 export default router;

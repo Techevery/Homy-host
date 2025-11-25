@@ -381,7 +381,6 @@ await prisma.transaction.update({
     const existingTransaction = await prisma.transaction.findUnique({
       where: { reference: verification.data.reference },
     });
-    console.log("verify reference", existingTransaction)
 
     if (!existingTransaction) {
       logger.error({ reference }, "No pending transaction found");
@@ -389,7 +388,6 @@ await prisma.transaction.update({
     }
 
     const metadata = verification.data.metadata || {};
-    console.log("metadata", metadata)
 
     // Extract metadata
     const {
@@ -413,13 +411,12 @@ await prisma.transaction.update({
     if (
       !agentId ||
       !apartmentId ||
-      !durationDays ||
       !dailyPrice
     ) {
       logger.error({
         message: "Incomplete payment metadata",
         metadata: verification.data.metadata,
-      });
+      }); 
 
       // Update to failed
       await prisma.transaction.update({
@@ -471,14 +468,14 @@ await prisma.transaction.update({
       transactionId: transactionData.id,
     });
 
-    if (!metadata.apartmentId || !metadata.startDate || !metadata.endDate) {
+    if (!metadata.apartmentId) {
       // Update to failed (though unlikely to reach here)
       await prisma.transaction.update({
         where: { reference: verification.data.reference },
         data: { status: "failed" },
       });
       throw new Error("Missing required metadata for apartment log creation");
-    }
+    }        
 
     // create booking period
   // 1️⃣ Extract booking periods from metadata
@@ -498,9 +495,9 @@ for (const period of bookingPeriods) {
       apartment_id: metadata.apartmentId,
       start_date: new Date(period.startDate),
       end_date: new Date(period.endDate),
-      duration_days: period.durationDays
+      duration_days: parseInt(period.durationDays, 10)  
     }
-  });
+  });   
 
   createdPeriods.push(bookingPeriod);
 

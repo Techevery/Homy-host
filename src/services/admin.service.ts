@@ -746,7 +746,7 @@ async updateOflineBooking(
           apartment_id: apartmentId,
           transaction_id: bookingId,
           booking_period_id: bookingPeriod.id,
-          availability: false,
+          availability: false, 
           status: 'booked',
         },
       });

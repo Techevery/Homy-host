@@ -62,17 +62,130 @@ async confirmPayout(payoutId: string, remark: string, files: Express.Multer.File
   }
 }
 
-async agentTransactions(agentId: string){
+// async agentTransactions(agentId: string){
+//   try {
+//     const transactions = await prisma.payout.findMany({
+//       where:{agentId},
+//       include: {transaction: true}
+//     })
+//     if(!transactions) throw new Error(`No transaction for this user`)
+//       return transactions 
+//   } catch (error: any) {
+//     throw new Error(`${error.message}`)
+//   }
+// }
+
+async agentTransactions(agentId: string, status?: "pending" | "success") {
   try {
-    const transactions = await prisma.payout.findMany({
-      where:{agentId}
-    })
-    if(!transactions) throw new Error(`No transaction for this user`)
-      return transactions 
+    // Optional filter
+    const payoutFilter = status ? { status } : {};
+
+    // Fetch transactions + payout + booking periods
+    const payouts = await prisma.payout.findMany({
+      where: {
+        agentId,
+        ...payoutFilter, // optionally filter by status
+      },
+      include: {
+        transaction: {
+          include: {
+            bookingPeriods: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!payouts || payouts.length === 0) {
+      return {
+        message: "No transaction for this agent",
+        payouts: [],
+        totalEarnings: 0,
+        totalPending: 0,
+        totalSuccess: 0
+      };
+    }
+
+    // Calculate totals
+    const totalEarnings = await prisma.payout.aggregate({
+      _sum: { amount: true },
+      where: { agentId, status: "success" }
+    });
+
+    const totalPending = await prisma.payout.aggregate({
+      _sum: { amount: true },
+      where: { agentId, status: "pending" }
+    });
+
+    const totalSuccess = await prisma.payout.aggregate({
+      _sum: { amount: true },
+      where: { agentId, status: "success" }
+    });
+
+    return {
+      payouts,
+      totals: {
+        totalEarnings: totalEarnings._sum.amount || 0,
+        totalPending: totalPending._sum.amount || 0,
+        totalSuccess: totalSuccess._sum.amount || 0,
+      }
+    };
+
   } catch (error: any) {
-    throw new Error(`${error.message}`)
+    throw new Error(error.message);
   }
 }
+
+
+async agentPayoutById(agentId: string, payoutId: string, status?: "pending" | "success") {
+  try {
+    const payout = await prisma.payout.findFirst({
+      where: {
+        id: payoutId,
+        agentId,
+        ...(status ? { status } : {}) // optional filter
+      },
+      include: {
+        transaction: {
+          include: {
+            bookingPeriods: true
+          }
+        }
+      }
+    });
+
+    if (!payout) throw new Error("Payout not found");
+
+    // Compute totals for this agent
+    const [totalEarning, totalPending, totalSuccess] = await Promise.all([
+      prisma.payout.aggregate({
+        where: { agentId },
+        _sum: { amount: true }
+      }),
+      prisma.payout.aggregate({
+        where: { agentId, status: "pending" },
+        _sum: { amount: true }
+      }),
+      prisma.payout.aggregate({
+        where: { agentId, status: "success" },
+        _sum: { amount: true }
+      })
+    ]);
+
+    return {
+      summary: {
+        totalEarning: totalEarning._sum.amount || 0,
+        totalPending: totalPending._sum.amount || 0,
+        totalSuccess: totalSuccess._sum.amount || 0,
+      },
+      payout
+    };
+
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
 
 async payoutStatistics() {
   try {
