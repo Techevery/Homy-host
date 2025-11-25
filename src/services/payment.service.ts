@@ -3,6 +3,7 @@ import Paystack from "./paystack";
 import { PaymentChannels, Currency } from "./paystack";
 import prisma from "../core/utils/prisma";
 import { logger } from "../core/helpers/logger";
+import { Request } from "express";
 
 interface BookingPeriod {
   startDate: Date;
@@ -43,6 +44,7 @@ class PaymentService {
     nextofKinName: string,
     nextofKinNumber: string,
     fullName: string,
+    req: Request
   ) {
     try {
       // Validate input arrays
@@ -126,7 +128,8 @@ class PaymentService {
         currency: validCurrency,
         metadata: metadata as any, // Type assertion for Paystack metadata
       },
-      agentUrl
+      agentUrl,
+      req
     );
 
       logger.info({
@@ -169,46 +172,61 @@ const transactionData = await prisma.transaction.create({
 });
 
 // Create individual booking period records
-const createdBookingPeriods = [];
-for (const period of bookingPeriods) {
-  const bookingPeriod = await prisma.bookingPeriod.create({
-    data: {
-      transaction_id: transactionData.id,
-      apartment_id: apartmentId,
-      start_date: period.startDate,
-      end_date: period.endDate,
-      duration_days: period.durationDays,
-    }
-  });
-  createdBookingPeriods.push(bookingPeriod);
+// const createdBookingPeriods = [];
+// for (const period of bookingPeriods) {
+//   const bookingPeriod = await prisma.bookingPeriod.create({
+//     data: {
+//       transaction_id: transactionData.id,
+//       apartment_id: apartmentId,
+//       start_date: period.startDate,
+//       end_date: period.endDate,
+//       duration_days: period.durationDays,
+//     }
+//   });
+//   createdBookingPeriods.push(bookingPeriod);
 
-  // Also create apartment log for each period
-  await prisma.apartmentLog.create({
-    data: {
-      apartment_id: apartmentId,
-      transaction_id: transactionData.id,
-      booking_period_id: bookingPeriod.id,
-      availability: false,
-      status: 'booked', 
-    }
-  });
-}
+//   // Also create apartment log for each period
+//   // await prisma.apartmentLog.create({
+//   //   data: {
+//   //     apartment_id: apartmentId,
+//   //     transaction_id: transactionData.id,
+//   //     booking_period_id: bookingPeriod.id,
+//   //     availability: false,
+//   //     status: 'booked', 
+//   //   }
+//   // });
+// }
 
 let currentMetadata: Record<string, any> = {};
 
-if (transactionData.metadata && typeof transactionData.metadata === 'object' && !Array.isArray(transactionData.metadata)) {
-  currentMetadata = transactionData.metadata as Record<string, any>;
-}
+// if (transactionData.metadata && typeof transactionData.metadata === 'object' && !Array.isArray(transactionData.metadata)) {
+//   currentMetadata = transactionData.metadata as Record<string, any>;
+// }
  
+// await prisma.transaction.update({
+//   where: { id: transactionData.id },
+//   data: {
+//     metadata: {
+//       ...currentMetadata,
+//       bookingPeriodIds: createdBookingPeriods.map(bp => bp.id)
+//     }
+//   }
+// }); 
+
 await prisma.transaction.update({
   where: { id: transactionData.id },
   data: {
     metadata: {
       ...currentMetadata,
-      bookingPeriodIds: createdBookingPeriods.map(bp => bp.id)
+      bookingPeriods: bookingPeriods.map(p => ({
+        startDate: p.startDate.toISOString(),
+        endDate: p.endDate.toISOString(),
+        durationDays: p.durationDays
+      }))
     }
   }
-}); 
+});
+
 
       logger.info({
         message: "Pending transaction record created successfully",
@@ -350,6 +368,7 @@ await prisma.transaction.update({
   return !!existingBooking;
 }
 
+
   async verifyPayment(reference: string) {
   try {
     logger.info({ reference }, "Verifying payment with reference");
@@ -362,6 +381,7 @@ await prisma.transaction.update({
     const existingTransaction = await prisma.transaction.findUnique({
       where: { reference: verification.data.reference },
     });
+    console.log("verify reference", existingTransaction)
 
     if (!existingTransaction) {
       logger.error({ reference }, "No pending transaction found");
@@ -369,6 +389,7 @@ await prisma.transaction.update({
     }
 
     const metadata = verification.data.metadata || {};
+    console.log("metadata", metadata)
 
     // Extract metadata
     const {
@@ -392,11 +413,8 @@ await prisma.transaction.update({
     if (
       !agentId ||
       !apartmentId ||
-      !startDate ||
-      !endDate ||
       !durationDays ||
-      !dailyPrice ||
-      isMarkedUp === undefined
+      !dailyPrice
     ) {
       logger.error({
         message: "Incomplete payment metadata",
@@ -462,31 +480,61 @@ await prisma.transaction.update({
       throw new Error("Missing required metadata for apartment log creation");
     }
 
-    // Create apartment log
-    const apartmentLog = await prisma.apartmentLog.create({
-      data: {
-        apartment: { connect: { id: metadata.apartmentId } },
-        transaction: { connect: { id: transactionData.id } },
-        availability: false,
-        status: "booked",
-        // booking_start_date: new Date(metadata.startDate),
-        // booking_end_date: new Date(metadata.endDate),
-        // duration_days: Number(metadata.durationDays),
-      },
-    });
+    // create booking period
+  // 1️⃣ Extract booking periods from metadata
+const bookingPeriods = metadata.bookingPeriods || [];
+
+if (!Array.isArray(bookingPeriods) || bookingPeriods.length === 0) {
+  throw new Error("No booking periods found in metadata");
+}
+
+// 2️⃣ Create booking period records after successful payment
+const createdPeriods = [];
+
+for (const period of bookingPeriods) {
+  const bookingPeriod = await prisma.bookingPeriod.create({
+    data: {
+      transaction_id: transactionData.id,
+      apartment_id: metadata.apartmentId,
+      start_date: new Date(period.startDate),
+      end_date: new Date(period.endDate),
+      duration_days: period.durationDays
+    }
+  });
+
+  createdPeriods.push(bookingPeriod);
+
+  // Create apartment log per period
+ await prisma.apartmentLog.create({
+    data: {
+      apartment_id: metadata.apartmentId,
+      transaction_id: transactionData.id,
+      booking_period_id: bookingPeriod.id,
+      availability: false,
+      status: "booked"
+    }
+  });
+}
+
+// 3️⃣ Update apartment state
+await prisma.apartment.update({
+  where: { id: metadata.apartmentId },
+  data: { isBooked: true }
+});
+
 
     logger.info({
       message: "Payment verified successfully",
-      params: { transactionData, apartmentLog },
+      params: { transactionData, bookingPeriods },
     });
 
     return {
       transaction: transactionData,
-      booking: apartmentLog,
+      booking: bookingPeriods,
       pricingDetails: {
         dailyPrice,
         durationDays,
-        isMarkedUp,
+        isMarkedUp,    
       },
     };
   } catch (error) {
@@ -514,6 +562,8 @@ await prisma.transaction.update({
   }
 }
 
+// verify payment via webhook 
+
   private validateChannels(channels: PaymentChannels[]): PaymentChannels[] {
     const validChannels: PaymentChannels[] = [
       "card",
@@ -539,27 +589,6 @@ await prisma.transaction.update({
 
     return "NGN";
   }
-
-  // private async isApartmentBooked(
-  //   apartmentId: string,
-  //   startDate: Date,
-  //   endDate: Date
-  // ): Promise<boolean> {
-  //   const conflictingBookings = await prisma.apartmentLog.count({
-  //     where: {
-  //       apartment_id: apartmentId,
-  //       status: "booked",
-  //       OR: [
-  //         {
-  //           booking_start_date: { lte: endDate },
-  //           booking_end_date: { gte: startDate },
-  //         },
-  //       ],
-  //     },
-  //   });
-
-  //   return conflictingBookings > 0;
-  // }
 
   /**
    * Log a failed transaction to the FailedTransaction table
@@ -703,50 +732,50 @@ await prisma.transaction.update({
   /**
    * Retry a failed transaction by re-initiating payment
    */
-  async retryFailedTransaction(failedTransactionId: string) {
-    const failedTransaction = await prisma.failedTransaction.findUnique({
-      where: { id: failedTransactionId },
-      include: {
-        agent: true,
-        apartment: true,
-      },
-    });
+  // async retryFailedTransaction(failedTransactionId: string) {
+  //   const failedTransaction = await prisma.failedTransaction.findUnique({
+  //     where: { id: failedTransactionId },
+  //     include: {
+  //       agent: true,
+  //       apartment: true,
+  //     },
+  //   });
 
-    if (!failedTransaction) {
-      throw new Error("Failed transaction not found");
-    }
+  //   if (!failedTransaction) {
+  //     throw new Error("Failed transaction not found");
+  //   }
 
-    // Parse metadata to get booking details
-    const metadata = JSON.parse(failedTransaction.metadata);
-    const { startDate, endDate, phoneNumber, nextofKinName, nextOfKinNumber, fullName, personalUrl } = metadata;
+  //   // Parse metadata to get booking details
+  //   const metadata = JSON.parse(failedTransaction.metadata);
+  //   const { startDate, endDate, phoneNumber, nextofKinName, nextOfKinNumber, fullName, personalUrl } = metadata;
 
-    if (!startDate || !endDate) {
-      throw new Error("Missing booking dates in failed transaction metadata");
-    }
+  //   if (!startDate || !endDate) {
+  //     throw new Error("Missing booking dates in failed transaction metadata");
+  //   }
     
-    // Re-initiate payment
-    const paymentInitiation = await this.initiatePayment(
-      failedTransaction.email,
-      [failedTransaction.channel as PaymentChannels],
-      "NGN" as Currency,
-      failedTransaction.agent_id,
-      failedTransaction.apartment_id,
-      startDate,
-      endDate,
-     phoneNumber,
-     nextofKinName,
-     nextOfKinNumber,
-     fullName,
-    );
+  //   // Re-initiate payment
+  //   const paymentInitiation = await this.initiatePayment(
+  //     failedTransaction.email,
+  //     [failedTransaction.channel as PaymentChannels],
+  //     "NGN" as Currency,
+  //     failedTransaction.agent_id,
+  //     failedTransaction.apartment_id,
+  //     startDate,
+  //     endDate,
+  //    phoneNumber,
+  //    nextofKinName,
+  //    nextOfKinNumber,
+  //    fullName,
+  //   );
 
-    logger.info({
-      message: "Retrying failed transaction",
-      originalFailedTransactionId: failedTransactionId,
-      newReference: paymentInitiation.reference,
-    });
+  //   logger.info({
+  //     message: "Retrying failed transaction",
+  //     originalFailedTransactionId: failedTransactionId,
+  //     newReference: paymentInitiation.reference,
+  //   });
 
-    return paymentInitiation;
-  }
+  //   return paymentInitiation;
+  // }
 }
 
 export default new PaymentService();

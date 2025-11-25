@@ -77,7 +77,7 @@ class Paystack {
     };
   }
 
-  async initializePayment(payload: paystackBody, agentUrl: string) {
+  async initializePayment(payload: paystackBody, agentUrl: string, req: Request) {
     const feeDetails = Paystack.getFeeBreakdown(payload.amount);
 
     const charge = Paystack.calculatePaystackCharge(payload.amount);
@@ -96,7 +96,7 @@ class Paystack {
         feeDetails,
         ...(payload.metadata || {}),  
       },
-      callback_url: `https://homeyhost.ng/shortlet/${agentUrl}`
+      callback_url: `${req.headers.origin}/shortlet/${agentUrl}`
     };
 
     try {

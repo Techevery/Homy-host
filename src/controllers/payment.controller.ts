@@ -15,7 +15,6 @@ export const initiatePayment = async (req: Request, res: Response) => {
     nextofKinName,
     nextofKinNumber,
     fullName,
-    personalUrl
   } = req.body;
 
   try {
@@ -31,6 +30,7 @@ export const initiatePayment = async (req: Request, res: Response) => {
       nextofKinName,
       nextofKinNumber,
       fullName,
+      req
     );
 
     res.status(HttpStatusCode.HTTP_OK).json({
