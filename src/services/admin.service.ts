@@ -749,7 +749,7 @@ async updateOflineBooking(
           availability: false, 
           status: 'booked',
         },
-      });
+      }); 
     }
 
     // Fetch and return the updated transaction (with relations for completeness)

@@ -94,7 +94,7 @@ class Paystack {
       metadata: {
         email: payload.email,
         feeDetails,
-        ...(payload.metadata || {}),  
+        ...(payload.metadata || {}),   
       },
       callback_url: `${req.headers.origin}/shortlet/${agentUrl}`
     };

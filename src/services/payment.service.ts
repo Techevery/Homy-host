@@ -77,7 +77,7 @@ class PaymentService {
         throw new Error("Apartment is not listed by this agent");
       }
 
-      const agentUrl = agentListing.agent.personalUrl
+      const agentUrl = agentListing.agent.slug
 
       // Check availability for all periods
       const hasConflict = await this.isApartmentBookedForPeriods(apartmentId, bookingPeriods);
