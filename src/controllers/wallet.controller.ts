@@ -60,15 +60,14 @@ export const confirmPayout = async (req: Request, res: Response) => {
       });
     }
   
-    // export const agentTransactions = async (req: Request, res: Response) => {
-    //   try {
-    //      const agentId = (req as any).agent.id; 
-    //      const result = await walletService.agentTransactions(agentId)
-    //      res.status(200).json(result)
-    //   } catch (error: any) {
-    //     res.status(400).json(`${error.messsage}`)
-    //   }
-    // }
+    export const getSucessfulPayout = async (req: Request, res: Response) => {
+      try {
+        const result = await walletService.getSuccesfulPayout()
+        res.status(200).json(result)
+      } catch (error: any) {
+        res.status(500).json(`${error.message}`)
+      }
+    }
 
     export const agentTransactions = async (req: Request, res: Response) => {
   try {

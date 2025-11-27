@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { agentPayoutById, agentTransactions, confirmPayout, getAllPayout, getPayoutStatistics, rejectPayout } from "../controllers/wallet.controller";
+import { agentPayoutById, agentTransactions, confirmPayout, getAllPayout, getPayoutStatistics, getSucessfulPayout, rejectPayout } from "../controllers/wallet.controller";
 import { authenticateAdmin } from "../middlewares/Admin";
 import { authenticateAgent } from "../middlewares/Agent";
 
@@ -11,5 +11,6 @@ router.get("/agent-transactions", authenticateAgent, agentTransactions)
 router.get("/payout-stats", authenticateAdmin, getPayoutStatistics)
 router.patch("/reject-payout", authenticateAdmin, rejectPayout)
 router.get("/agent/:payoutId", authenticateAgent, agentPayoutById)
+router.get("/sucesful-payout", authenticateAdmin, getSucessfulPayout)
  
 export default router     
