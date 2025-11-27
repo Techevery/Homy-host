@@ -68,18 +68,39 @@ class AgentCreditCron {
           },
         });
 
-        // create automatic payout for agent 
-        await prisma.payout.create({
-          data: {
-            accountName: transaction.agent.name,
-            accountNumber:  transaction.agent.account_number,
-            amount: creditAmount,
-            bankName: transaction.agent.bank_name,
-            agent: {connect: {id: transaction.agent.id}},
-            reference: transaction.reference,
-            transaction: {connect: {id: transaction.id}}
-          }
-        })
+      const agentData = await prisma.agent.findUnique({
+  where: { id: transaction.agent_id },
+});
+
+if (agentData) {
+  // Deduct service fee
+  const serviceFee = 50; // Naira
+  const payoutAmount = creditAmount - serviceFee;
+
+  // Only create payout if agent has enough balance
+  if (agentData.accountBalance >= payoutAmount && payoutAmount > 0) {
+    await prisma.payout.create({
+      data: {
+        accountName: transaction.agent.name,
+        accountNumber: transaction.agent.account_number,
+        amount: payoutAmount,
+        bankName: transaction.agent.bank_name,
+        agent: { connect: { id: transaction.agent.id } },
+        reference: transaction.reference,
+        transaction: { connect: { id: transaction.id } },
+      },
+    });
+
+    // Deduct payout from agent balance
+    await prisma.agent.update({
+      where: { id: transaction.agent_id },
+      data: {
+        accountBalance: {
+          decrement: payoutAmount, // Reduce agent balance
+        },
+      },
+    });
+  }
 
      // Update the associated ApartmentLog to mark as completed and available
         const apartmentLog = await prisma.apartmentLog.updateMany({
@@ -94,6 +115,14 @@ class AgentCreditCron {
           },
         });  
 
+          await prisma.apartment.update({
+    where: { id: transaction.apartment_id },
+    data: {
+      isBooked: false,
+    },
+  });
+
+
         if (apartmentLog.count === 0) {
           logger.warn({
             message: 'No matching ApartmentLog found to update',
@@ -107,6 +136,7 @@ class AgentCreditCron {
             apartmentId: transaction.apartment_id,
           });
         }
+      
 
         logger.info({
           message: 'Agent credited successfully',
@@ -120,6 +150,7 @@ class AgentCreditCron {
         message: 'Agent crediting completed',
         creditedTransactions: transactions.length,
       });
+    }
     } catch (error) {
       logger.error({
         message: 'Error in agent crediting cron job',

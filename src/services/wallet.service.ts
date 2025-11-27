@@ -30,6 +30,34 @@ class WalletService {
             throw new Error(`${error.message}`)
         }
     }
+  
+async getSuccesfulPayout(){
+  try {
+    const payout = await prisma.payout.findMany({
+      where: {status: PayoutStatus.success},
+      include: {
+        agent: {
+          select: {
+            name: true,
+            id: true,
+          }
+        },
+                            transaction: {
+                      select: {
+                        status: true,
+                        amount: true,
+                        agentPercentage: true,
+                        mockupPrice: true,
+                        apartment: {select:{name: true}}
+                      }
+                    } 
+      }
+    })
+    return payout 
+  } catch (error: any) {
+    throw new Error(`${error.message}`)
+  }
+}
     
 async confirmPayout(payoutId: string, remark: string, files: Express.Multer.File[]) {
   try {
@@ -62,18 +90,6 @@ async confirmPayout(payoutId: string, remark: string, files: Express.Multer.File
   }
 }
 
-// async agentTransactions(agentId: string){
-//   try {
-//     const transactions = await prisma.payout.findMany({
-//       where:{agentId},
-//       include: {transaction: true}
-//     })
-//     if(!transactions) throw new Error(`No transaction for this user`)
-//       return transactions 
-//   } catch (error: any) {
-//     throw new Error(`${error.message}`)
-//   }
-// }
 
 async agentTransactions(agentId: string, status?: "pending" | "success") {
   try {
@@ -187,6 +203,42 @@ async agentPayoutById(agentId: string, payoutId: string, status?: "pending" | "s
 }
 
 
+// async payoutStatistics() {
+//   try {
+//     const [
+//       totalPayoutResult,
+//       totalPendingResult,
+//       totalVerifiedAgents,
+//       totalRevenueResult
+//     ] = await Promise.all([
+//       prisma.payout.aggregate({
+//         where: { status: 'success' },
+//         _sum: { amount: true },
+//       }),
+//       prisma.payout.aggregate({
+//         where: { status: 'pending' },
+//         _sum: { amount: true },
+//       }),
+//       prisma.agent.count({
+//         where: { status: 'VERIFIED' }, // Assuming AgentStatus enum includes 'VERIFIED'
+//       }),
+//       prisma.transaction.aggregate({
+//         _sum: { amount: true }, // Assumes Transaction model has an 'amount' field of type Float; filter further if needed (e.g., for positive/income transactions only)
+//       }),
+//     ]);
+
+//     return {
+//       totalPayout: totalPayoutResult._sum?.amount || 0,
+//       totalPendingPayout: totalPendingResult._sum?.amount || 0,
+//       totalVerifiedAgents,
+//       totalRevenue: totalRevenueResult._sum?.amount || 0,
+//     };
+//   } catch (error) {
+//     console.error('Error fetching payout statistics:', error);
+//     throw error; // Or handle as needed, e.g., return a default error response
+//   }
+// }
+
 async payoutStatistics() {
   try {
     const [
@@ -207,19 +259,26 @@ async payoutStatistics() {
         where: { status: 'VERIFIED' }, // Assuming AgentStatus enum includes 'VERIFIED'
       }),
       prisma.transaction.aggregate({
-        _sum: { amount: true }, // Assumes Transaction model has an 'amount' field of type Float; filter further if needed (e.g., for positive/income transactions only)
+        _sum: { amount: true }, // Assumes Transaction model has an 'amount' field
       }),
     ]);
 
+    const totalPayout = totalPayoutResult._sum?.amount || 0;
+    const totalRevenue = totalRevenueResult._sum?.amount || 0;
+
+    // Calculate company profit (app revenue)
+    const totalAppRevenue = totalRevenue - totalPayout;
+
     return {
-      totalPayout: totalPayoutResult._sum?.amount || 0,
+      totalPayout,
       totalPendingPayout: totalPendingResult._sum?.amount || 0,
       totalVerifiedAgents,
-      totalRevenue: totalRevenueResult._sum?.amount || 0,
+      totalRevenue,
+      totalAppRevenue, // <-- new field
     };
   } catch (error) {
     console.error('Error fetching payout statistics:', error);
-    throw error; // Or handle as needed, e.g., return a default error response
+    throw error; // Or handle as needed
   }
 }
 
