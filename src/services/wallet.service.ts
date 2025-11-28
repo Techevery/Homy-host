@@ -7,6 +7,7 @@ class WalletService {
     async getAllPayout(){
         try {
             const payout = await prisma.payout.findMany({
+              where:{status: "pending"},
                 include: {
                     agent: {
                         select: {
@@ -20,6 +21,10 @@ class WalletService {
                         amount: true,
                         agentPercentage: true,
                         mockupPrice: true,
+                        booking_end_date: true,
+                        booking_start_date: true,
+                        duration_days: true,
+                        date_paid: true,
                         apartment: {select:{name: true}}
                       }
                     }   
@@ -48,6 +53,10 @@ async getSuccesfulPayout(){
                         amount: true,
                         agentPercentage: true,
                         mockupPrice: true,
+                        date_paid: true,
+                        booking_end_date: true,
+                        booking_start_date: true,
+                         duration_days: true,
                         apartment: {select:{name: true}}
                       }
                     } 
@@ -71,7 +80,7 @@ async confirmPayout(payoutId: string, remark: string, files: Express.Multer.File
       where: { id: payoutId },
       data: {
         proof: imageUrl || undefined, // Only set if provided; Prisma will ignore undefined
-        status: PayoutStatus.success,
+        status: "success",
         remark,
       },
       include: { agent: true }, // Include agent to access email and name
@@ -203,42 +212,6 @@ async agentPayoutById(agentId: string, payoutId: string, status?: "pending" | "s
 }
 
 
-// async payoutStatistics() {
-//   try {
-//     const [
-//       totalPayoutResult,
-//       totalPendingResult,
-//       totalVerifiedAgents,
-//       totalRevenueResult
-//     ] = await Promise.all([
-//       prisma.payout.aggregate({
-//         where: { status: 'success' },
-//         _sum: { amount: true },
-//       }),
-//       prisma.payout.aggregate({
-//         where: { status: 'pending' },
-//         _sum: { amount: true },
-//       }),
-//       prisma.agent.count({
-//         where: { status: 'VERIFIED' }, // Assuming AgentStatus enum includes 'VERIFIED'
-//       }),
-//       prisma.transaction.aggregate({
-//         _sum: { amount: true }, // Assumes Transaction model has an 'amount' field of type Float; filter further if needed (e.g., for positive/income transactions only)
-//       }),
-//     ]);
-
-//     return {
-//       totalPayout: totalPayoutResult._sum?.amount || 0,
-//       totalPendingPayout: totalPendingResult._sum?.amount || 0,
-//       totalVerifiedAgents,
-//       totalRevenue: totalRevenueResult._sum?.amount || 0,
-//     };
-//   } catch (error) {
-//     console.error('Error fetching payout statistics:', error);
-//     throw error; // Or handle as needed, e.g., return a default error response
-//   }
-// }
-
 async payoutStatistics() {
   try {
     const [
@@ -286,7 +259,7 @@ async rejectPayout(payoutId: string, reason: string){
   try {
     const payout = await prisma.payout.update({
       where: {id: payoutId},
-      data:{status: PayoutStatus.cancelled, reason},
+      data:{status: "cancelled", reason},
       include: {agent: true}
     })
     const agentEmail = payout.agent.email;
