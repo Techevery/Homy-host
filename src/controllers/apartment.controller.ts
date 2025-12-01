@@ -82,8 +82,61 @@ export const createApartment = async (req: Request, res: Response) => {
 }; 
 
 
+// export const updateApartment = async (req: Request, res: Response) => {
+//   // Define Multer locally, matching createApartment config
+//   const upload = multer({
+//     storage: multer.memoryStorage(),
+//   }).array("images", 10);
+
+//   upload(req, res, async (err) => {
+//     try {
+//       if (err instanceof multer.MulterError) {
+//         return res.status(400).json({
+//           message: `File upload error: ${err.message}`,
+//         });
+//       } else if (err) {
+//         return res.status(500).json({
+//           message: "Unknown file upload error",
+//         });
+//       }
+
+//       const adminId = (req as any).admin.id;
+//       checkAdminAccess(res, adminId);
+
+//       const apartmentId = req.params.apartmentId;
+//       if (!apartmentId) {
+//         return res.status(400).json({
+//           message: "Apartment ID is required",
+//         });
+//       }
+
+//       // Schema now transforms price to number and deleteExistingImages to boolean
+//       const body: UpdateApartmentInput = updateApartmentSchema.parse(req.body);
+//       const files = req.files as Express.Multer.File[] | undefined; // Now correctly an array
+
+//       // eslint-disable-next-line @typescript-eslint/no-unused-vars
+//       const { deleteExistingImages: _, ...updateData } = body;
+
+//       const updatedApartment = await adminService.updateApartment( 
+//         apartmentId,
+//         updateData,
+//         files,
+//         body.deleteExistingImages // Use the transformed boolean from body
+//       );
+
+//       successResponse(
+//         res,
+//         200,
+//         "Apartment Updated Successfully",
+//         updatedApartment
+//       );
+//     } catch (error) {
+//       handleErrorReponse(res, error);
+//     }
+//   });
+// };
+
 export const updateApartment = async (req: Request, res: Response) => {
-  // Define Multer locally, matching createApartment config
   const upload = multer({
     storage: multer.memoryStorage(),
   }).array("images", 10);
@@ -91,47 +144,27 @@ export const updateApartment = async (req: Request, res: Response) => {
   upload(req, res, async (err) => {
     try {
       if (err instanceof multer.MulterError) {
-        return res.status(400).json({
-          message: `File upload error: ${err.message}`,
-        });
-      } else if (err) {
-        return res.status(500).json({
-          message: "Unknown file upload error",
-        });
+        return res.status(400).json({ message: err.message });
       }
 
       const adminId = (req as any).admin.id;
       checkAdminAccess(res, adminId);
 
       const apartmentId = req.params.apartmentId;
-      if (!apartmentId) {
-        return res.status(400).json({
-          message: "Apartment ID is required",
-        });
-      }
 
-      // Schema now transforms price to number and deleteExistingImages to boolean
-      const body: UpdateApartmentInput = updateApartmentSchema.parse(req.body);
-      const files = req.files as Express.Multer.File[] | undefined; // Now correctly an array
+      const updateData: UpdateApartmentInput = updateApartmentSchema.parse(req.body);
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { deleteExistingImages: _, ...updateData } = body;
+      const files = req.files as Express.Multer.File[] | undefined;
 
-      const updatedApartment = await adminService.updateApartment( 
+      const result = await adminService.updateApartment(
         apartmentId,
         updateData,
-        files,
-        body.deleteExistingImages // Use the transformed boolean from body
+        files
       );
 
-      successResponse(
-        res,
-        200,
-        "Apartment Updated Successfully",
-        updatedApartment
-      );
+      return successResponse(res, 200, "Apartment updated successfully", result);
     } catch (error) {
-      handleErrorReponse(res, error);
+      return handleErrorReponse(res, error);
     }
   });
 };

@@ -253,18 +253,7 @@ export const offlineBoking = async (req: Request, res: Response) => {
     throw error
   }
 }
-
-// edit offline booking 
-export const updateOflineBooking = async (req: Request, res: Response) => {
-  try {
-    const {bookingId} = req.params
-    const {startDate, endDate} = req.body
-    const result = await adminService.updateOflineBooking(bookingId, startDate, endDate)
-    res.status(200).json(result)
-  } catch (error: any) {
-    res.status(500).json(`${error.message}`)
-  } 
-}
+ 
 
 export const rejectAgent = async (req: Request, res: Response) => {
 try {

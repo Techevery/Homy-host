@@ -38,3 +38,38 @@ export const uploadImageToSupabase = async (
     throw new Error(`Failed to upload image to ${bucketName}`);
   }
 };
+
+
+export const deleteImageFromSupabase = async (imageUrl: string) => {
+  try {
+    if (!imageUrl) return;
+
+    // Example Supabase URL format:
+    // https://xyzcompany.supabase.co/storage/v1/object/public/homey-images/abc123.jpg
+
+    // Extract bucket + file path
+    const url = new URL(imageUrl);
+
+    // Path starts after `/object/`
+    const fullPath = url.pathname.split("/object/")[1]; 
+    // Example: "public/homey-images/abc123.jpg"
+
+    const parts = fullPath.split("/");
+    const bucket = parts[1]; // "homey-images"
+    const filePath = parts.slice(2).join("/"); // "abc123.jpg"
+
+    const { error } = await supabase.storage.from(bucket).remove([filePath]);
+
+    if (error) {
+      console.error("❌ Error deleting image from Supabase:", error);
+      return false;
+    }
+
+    console.log("🗑️ Deleted Supabase image:", filePath);
+    return true;
+  } catch (err) {
+    console.error("❌ Error in deleteImageFromSupabase:", err);
+    return false;
+  }
+};
+

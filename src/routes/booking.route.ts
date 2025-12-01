@@ -1,7 +1,6 @@
 import { Router } from "express";
-import { fetchAllBookings, fetchBookingDates, getBookingById, manageBooking } from "../controllers/booking.controller";
+import { deleteBooking, editBookingDates, fetchAllBookings, fetchBookingDates, getBookingById, manageBooking } from "../controllers/booking.controller";
 import { authenticateAdmin } from "../middlewares/Admin";
-import { updateOflineBooking } from "../controllers/admin.controller";
 
 const router = Router()
 
@@ -11,7 +10,7 @@ router.get("/manage-booking", manageBooking)
 router.get('/:id', authenticateAdmin, getBookingById)    
 
 // update admin booking     
-
-router.patch("/update/:bookingId", authenticateAdmin, updateOflineBooking)
-
+router.patch("/edit-booking/:bookingId", authenticateAdmin, editBookingDates)
+// delete booking 
+router.post("/delete-booking/:bookingId", authenticateAdmin, deleteBooking)
 export default router  

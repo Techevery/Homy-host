@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import prisma from "../core/utils/prisma";
 import Helper from "../core/helpers";
-import { uploadImageToSupabase } from "../core/utils/supabase";
+import { deleteImageFromSupabase, uploadImageToSupabase } from "../core/utils/supabase";
 import { getAgentById } from "../core/repositories/admin";
 import isEmail from "validator/lib/isEmail";
 import { deleteImageFromBucket } from "../core/functions";
@@ -185,102 +185,106 @@ class AdminService {
     }
   }
 
-  // async updateApartment(
-  //   apartmentId: string,
-  //   updateData: { 
-  //     name?: string;
-  //     address?: string;
-  //     type?: string;
-  //     servicing?: string;
-  //     bedroom?: string;
-  //     price?: number;
-  //     amenities: string;
-  //     agentPercentage: number;
-  //   },
-  //   files?: Express.Multer.File[],
-  //   deleteExistingImages: boolean = false
-  // ) {
-  //   try {
-  //         const existingApartment = await prisma.apartment.findUnique({
-  //     where: { id: apartmentId },
-  //   });
+// async updateApartment(
+//   apartmentId: string,
+//   updateData: UpdateApartmentInput,
+//   files?: Express.Multer.File[],
+//   deleteExistingImages?: boolean
+// ) {
+//   try {
+//     // Fetch existing apartment
+//     const existingApartment = await prisma.apartment.findUnique({
+//       where: { id: apartmentId },
+//     });     
+//     if (!existingApartment) {
+//       throw new Error("Apartment not found");
+//     }
 
-  //   if (!existingApartment) {
-  //     throw new Error("Apartment not found");
-  //   }
+//     // Handle image uploads and updates
+//     let images: string[] = existingApartment.images || [];
+//     if (files && files.length > 0) {
+//       const newImageUrls = await Promise.all(    
+//         files.map((file) => uploadImageToSupabase(file, "homey-images")) // Adjust to your upload function
+//       );
+//       images = deleteExistingImages ? newImageUrls : [...images, ...newImageUrls];
+//     }
 
-  //   // handle propert trtrthat has been booked and disawllow update
-  //   const booking = await prisma.apartmentLog.findFirst({
-  //     where: {apartment_id: apartmentId, status: "pending"}
-  //   })
+//     // Build conditional update data (only include provided fields)
+//     const data: any = {
+//       images, // Always update images if files provided or delete flag set
+//     };
 
-  //   if(booking) throw new Error("You cannot update appartment that has been booked!")
+//     if (updateData.name !== undefined) data.name = updateData.name;
+//     if (updateData.address !== undefined) data.address = updateData.address;
+//     if (updateData.type !== undefined) data.type = updateData.type;
+//     if (updateData.amenities !== undefined) data.amenities = updateData.amenities;
+//     if (updateData.agentPercentage !== undefined) data.agentPercentage = updateData.agentPercentage;
+//     if (updateData.servicing !== undefined) data.servicing = updateData.servicing;
+//     if (updateData.bedroom !== undefined) data.bedroom = updateData.bedroom;
+//     if (updateData.price !== undefined) data.price = updateData.price;
 
-  //   // Handle images updated if files are provided 
-  //   const updatedImages = await this.handleImageUpdates(
-  //     existingApartment.images || [],
-  //     files,
-  //     deleteExistingImages
-  //   );
+//     // If no fields to update (only images?), still proceed or add a check
+//     if (Object.keys(data).length === 0 && !files && !deleteExistingImages) {
+//       return existingApartment; // Or throw an error if no changes
+//     }
 
+//     const updatedApartment = await prisma.apartment.update({
+//       where: { id: apartmentId },
+//       data,
+//     });
 
-  //   // Perform the update
-  //   return await prisma.apartment.update({
-  //     where: { id: apartmentId },
-  //     data: {
-  //       ...updateData,
-  //       images: updatedImages,
-  //       updatedAt: new Date(),
-  //     },
-  //   });            
-  //   } catch (error) {
-  //     throw error 
-  //   }
-  // }
+//     return updatedApartment;
+//   } catch (error: any) {
+//     throw new Error(error.message);
+//   }
+// }
 
-  // In adminService.ts (or wherever updateApartment is defined)
 async updateApartment(
   apartmentId: string,
   updateData: UpdateApartmentInput,
-  files?: Express.Multer.File[],
-  deleteExistingImages?: boolean
+  files?: Express.Multer.File[]
 ) {
   try {
-    // Fetch existing apartment
     const existingApartment = await prisma.apartment.findUnique({
       where: { id: apartmentId },
-    });     
+    });
+
     if (!existingApartment) {
       throw new Error("Apartment not found");
     }
 
-    // Handle image uploads and updates
-    let images: string[] = existingApartment.images || [];
+    let images = existingApartment.images;
+
+    // --- NEW LOGIC ---
     if (files && files.length > 0) {
-      const newImageUrls = await Promise.all(    
-        files.map((file) => uploadImageToSupabase(file, "homey-images")) // Adjust to your upload function
+      // 1. Delete old images from Supabase (optional but recommended)
+      for (const oldImg of existingApartment.images) {
+        await deleteImageFromSupabase(oldImg); // comment this if not needed
+      }
+
+      // 2. Upload ONLY new images
+      const newImageUrls = await Promise.all(
+        files.map((file) => uploadImageToSupabase(file, "homey-images"))
       );
-      images = deleteExistingImages ? newImageUrls : [...images, ...newImageUrls];
+
+      // 3. Replace the images array
+      images = newImageUrls;
     }
 
-    // Build conditional update data (only include provided fields)
     const data: any = {
-      images, // Always update images if files provided or delete flag set
+      images,
     };
 
+    // --- Conditional update for other fields ---
     if (updateData.name !== undefined) data.name = updateData.name;
     if (updateData.address !== undefined) data.address = updateData.address;
     if (updateData.type !== undefined) data.type = updateData.type;
     if (updateData.amenities !== undefined) data.amenities = updateData.amenities;
-    if (updateData.agentPercentage !== undefined) data.agentPercentage = updateData.agentPercentage;
+    if (updateData.agentPercentage !== undefined)
+      data.agentPercentage = updateData.agentPercentage;
     if (updateData.servicing !== undefined) data.servicing = updateData.servicing;
     if (updateData.bedroom !== undefined) data.bedroom = updateData.bedroom;
     if (updateData.price !== undefined) data.price = updateData.price;
-
-    // If no fields to update (only images?), still proceed or add a check
-    if (Object.keys(data).length === 0 && !files && !deleteExistingImages) {
-      return existingApartment; // Or throw an error if no changes
-    }
 
     const updatedApartment = await prisma.apartment.update({
       where: { id: apartmentId },
