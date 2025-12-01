@@ -140,34 +140,44 @@ class BookingService{
         }
     }
 
-    // Get all bookings for an apartment in a date range
-// const bookings = await prisma.bookingPeriod.findMany({
-//   where: {
-//     apartment_id: apartmentId,
-//     start_date: { gte: startDate },
-//     end_date: { lte: endDate },
-//     transaction: { status: "success" }
-//   },
-//   include: {
-//     transaction: true
-//   }
-// });
+    // edit existing booking
+    async editBookingDates(bookingId: string, newStartDate: Date, newEndDate: Date) {
+        try {
+            const booking = await prisma.bookingPeriod.update({
+                where:{id: bookingId},
+                data:{
+                    new_start_date: newStartDate,
+                    new_end_date: newEndDate,
+                    isEdited: true
+                }
+            })
+            return booking
+        } catch (error) {
+            throw new Error ("Could not edit booking")
+        }
 
-// // Get availability for specific dates
-// const isAvailable = await prisma.bookingPeriod.findFirst({
-//   where: {
-//     apartment_id: apartmentId,
-//     transaction: { status: "success" },
-//     OR: [
-//       { start_date: { lte: checkInDate }, end_date: { gte: checkInDate } },
-//       { start_date: { lte: checkOutDate }, end_date: { gte: checkOutDate } },
-//       { 
-//         start_date: { gte: checkInDate }, 
-//         end_date: { lte: checkOutDate } 
-//       }
-//     ]
-//   }
-// }) === null;
+    }
+    // delete existing booking
+    async deleteBooking(bookingId: string) {
+        try {
+            // Mark the booking as deleted
+            const booking = await prisma.bookingPeriod.update({
+                where:{id: bookingId},
+                data:{
+                    isDeleted: true
+                }
+            })
+            const deleted = await prisma.deletedBooking.create({
+                data:{
+                    booking_period_id: bookingId
+                }
+            })
+
+            return booking;
+        } catch (error) {
+            throw new Error ("Could not delete booking")
+        }
+    }
 }
 
 export default new BookingService();

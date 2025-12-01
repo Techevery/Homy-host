@@ -43,4 +43,25 @@ export const manageBooking = async (req: Request, res: Response) => {
   }
 }
 
+export const editBookingDates = async (req: Request, res: Response) => {
+  try {
+    const { bookingId } = req.params;
+    const { newStartDate, newEndDate } = req.body;
+    const result = await bookingService.editBookingDates(bookingId, newStartDate, newEndDate);
+    res.status(200).json({ message: "Booking dates edited successfully", data: result });
+  } catch (error) {
+    console.error("Error editing booking dates:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
 
+export const deleteBooking = async (req: Request, res: Response) => {
+  try {
+    const { bookingId } = req.params;
+    const result = await bookingService.deleteBooking(bookingId);
+    res.status(200).json({ message: "Booking deleted successfully", data: result });
+  } catch (error) {
+    console.error("Error deleting booking:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}

@@ -188,16 +188,31 @@ model BookingPeriod {
   apartment        Apartment      @relation(fields: [apartment_id], references: [id])
   start_date       DateTime
   end_date         DateTime
+  new_start_date   DateTime?
+  new_end_date     DateTime?
+  isEdited         Boolean        @default(false)
+  isDeleted        Boolean        @default(false)
   duration_days    Int
   created_at       DateTime       @default(now())
   
   // Relation to ApartmentLog - this is correct
   apartment_logs   ApartmentLog[]  // Remove the @relation name here since it's the same relation
+  deleted_bookings DeletedBooking[]
 
   @@map("booking_periods")
   @@index([transaction_id])
   @@index([apartment_id])
   @@index([start_date, end_date])
+}
+
+model DeletedBooking {
+  id               String         @id @default(uuid())
+  booking_period_id String
+  booking_period   BookingPeriod @relation(fields: [booking_period_id], references: [id])
+  deleted_at       DateTime       @default(now())
+
+  @@map("deleted_bookings")
+  @@index([booking_period_id])
 }
 
 model ApartmentLog {
