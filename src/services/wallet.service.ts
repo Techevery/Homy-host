@@ -221,7 +221,7 @@ async payoutStatistics() {
       totalRevenueResult
     ] = await Promise.all([
       prisma.payout.aggregate({
-        where: { status: 'success' },
+        where: { status: 'success' },     
         _sum: { amount: true },
       }),
       prisma.payout.aggregate({

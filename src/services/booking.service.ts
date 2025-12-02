@@ -141,22 +141,33 @@ class BookingService{
     }
 
     // edit existing booking
-    async editBookingDates(bookingId: string, newStartDate: Date, newEndDate: Date) {
-        try {
-            const booking = await prisma.bookingPeriod.update({
-                where:{id: bookingId},
-                data:{
-                    new_start_date: newStartDate,
-                    new_end_date: newEndDate,
-                    isEdited: true
-                }
-            })
-            return booking
-        } catch (error) {
-            throw new Error ("Could not edit booking")
-        }
+   async editBookingDates(bookingId: string, newStartDate: Date, newEndDate: Date) {
+  try {
+    const existingBooking = await prisma.bookingPeriod.findUnique({
+      where: { id: bookingId },
+    });
 
+    if (!existingBooking) {
+      throw new Error("Booking not found");
     }
+
+    const booking = await prisma.bookingPeriod.update({
+      where: { id: bookingId },
+      data: {
+        new_start_date: newStartDate,
+        new_end_date: newEndDate,
+        isEdited: true
+      }
+    });
+
+    return booking;
+
+  } catch (error) {
+    console.error("Error editing booking dates:", error);
+    throw new Error("Could not edit booking");
+  }
+}
+
     // delete existing booking
     async deleteBooking(bookingId: string) {
         try {
