@@ -11,6 +11,16 @@ export const fetchAllBookings = async (req: Request, res: Response) => {
   }
 }; 
 
+export const bookingRequest = async (req: Request, res: Response) => {
+  try {
+    const bookings = await bookingService.bookingRequest();
+    res.json(bookings);
+  } catch (error) { 
+    console.error("Error fetching booking requests:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 export const getBookingById = async (req:Request, res:Response)=>{
   const {id} =  req.params 
   try { 
@@ -66,4 +76,22 @@ export const deleteBooking = async (req: Request, res: Response) => {
   }
 }
 
-// edit booking dates
+export const getDeletedBookings = async (req: Request, res: Response) => {
+  try {
+    const bookings = await bookingService.getDeletedBookings();
+    res.json(bookings);
+  } catch (error) {
+    console.error("Error fetching deleted bookings:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export const expiredBookings = async (req: Request, res: Response) => {
+  try {
+    const result = await bookingService.expireBookings();
+    res.status(200).json({ message: "Bookings expired successfully", data: result });
+  } catch (error) {
+    console.error("Error expiring bookings:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}

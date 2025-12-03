@@ -194,6 +194,7 @@ model BookingPeriod {
   isDeleted        Boolean        @default(false)
   duration_days    Int
   created_at       DateTime       @default(now())
+  expired         Boolean       @default(false)
   
   // Relation to ApartmentLog - this is correct
   apartment_logs   ApartmentLog[]  // Remove the @relation name here since it's the same relation

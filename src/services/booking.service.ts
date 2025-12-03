@@ -50,6 +50,27 @@ class BookingService{
         }
     }
 
+    async bookingRequest (){
+      try {
+        const booking = await prisma.bookingPeriod.findMany({
+          where: {isDeleted: false, expired: false},
+          include:{
+            apartment: {
+              select:{
+                name: true,
+                address: true,
+                id: true,
+              }
+            },
+            transaction: true,
+          }
+        })
+        return booking
+      } catch (error) {
+        throw new Error ("Could not fetch booking requests")
+      }
+    }
+
     async bookingById(id: string){
         try {
             const booking = await prisma.apartmentLog.findFirst({where: {id}})
@@ -189,6 +210,42 @@ class BookingService{
             throw new Error ("Could not delete booking")
         }
     }
+
+ async expireBookings() {
+  try {
+    const bookings = await prisma.bookingPeriod.findMany({
+      where: {
+        expired: true,
+        isDeleted: false
+      },
+      include: {
+        transaction: true
+      }
+    });
+
+    return bookings;
+  } catch (error) {
+    throw new Error("Could not fetch expired bookings");
+  }
+}
+
+async getDeletedBookings(){
+  try {
+    const bookings = await prisma.deletedBooking.findMany({
+      include: {
+        booking_period: {
+          include: {
+            transaction: true,
+            apartment: true
+          }
+        }
+      }
+    })
+    return bookings
+  } catch (error: any) {
+    throw new Error(`${error.message}`)
+  }
+}
 }
 
 export default new BookingService();

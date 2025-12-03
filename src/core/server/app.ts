@@ -9,6 +9,7 @@ import helmet from "helmet";
 import { logger } from "../helpers/logger";
 import { errorHandler } from "../../middlewares/error";
 import AgentCreditCron from "../../credeitAgetCron";
+import BookingExpirationCron from "../../bookingExpirationCron";
 
 export const CreateServer = async (): Promise<Express> => {    
   const app = express();
@@ -27,6 +28,8 @@ export const CreateServer = async (): Promise<Express> => {
 
   AgentCreditCron.schedule(); 
   logger.info("Agent crediting cron job scheduled");
+  BookingExpirationCron.schedule();
+  logger.info("Booking expiration cron job scheduled");
 
   app.use(     
     cors({
