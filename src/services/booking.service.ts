@@ -1,5 +1,6 @@
 import { logger } from "../core/helpers/logger";
 import prisma from "../core/utils/prisma";
+import { differenceInDays } from 'date-fns';
 
 class BookingService{
 
@@ -30,7 +31,8 @@ class BookingService{
                         select: {
                             start_date: true,
                             end_date: true,
-                            duration_days: true
+                            duration_days: true,
+                            id: true
                         }
                     },
                     apartment: {
@@ -53,7 +55,7 @@ class BookingService{
     async bookingRequest (){
       try {
         const booking = await prisma.bookingPeriod.findMany({
-          where: {isDeleted: false, expired: false},
+          where: {isDeleted: false, expired: false}, 
           include:{
             apartment: {
               select:{
@@ -65,6 +67,20 @@ class BookingService{
             transaction: true,
           }
         })
+        // add status to response base on upcoming, ongoing, completed 
+        let currentDate = new Date();
+        booking.forEach(bk => {
+          if(bk.start_date > currentDate){
+            (bk as any).status = "upcoming"
+          }else {
+            if(bk.end_date < currentDate){
+              (bk as any).status = "completed"
+            } else {
+              (bk as any).status = "ongoing"
+            }
+          }
+        });
+
         return booking
       } catch (error) {
         throw new Error ("Could not fetch booking requests")
@@ -162,7 +178,37 @@ class BookingService{
     }
 
     // edit existing booking
-   async editBookingDates(bookingId: string, newStartDate: Date, newEndDate: Date) {
+//    async editBookingDates(bookingId: string, newStartDate: Date, newEndDate: Date) {
+//   try {
+//     const existingBooking = await prisma.bookingPeriod.findUnique({
+//       where: { id: bookingId },
+//     });
+
+//     if (!existingBooking) {
+//       throw new Error("Booking not found");
+//     }
+
+//     // alss calculate number of data for new booking 
+//           // const totalDurationDays = existingBooking.reduce((total, period) => total + period.durationDays, 0);
+
+//     const booking = await prisma.bookingPeriod.update({
+//       where: { id: bookingId },
+//       data: {
+//         new_start_date: newStartDate,
+//         new_end_date: newEndDate,
+//         isEdited: true
+//       }
+//     });
+
+//     return booking;
+
+//   } catch (error) {
+//     console.error("Error editing booking dates:", error);
+//     throw new Error("Could not edit booking");
+//   }
+// }
+
+async editBookingDates(bookingId: string, newStartDate: Date, newEndDate: Date) {
   try {
     const existingBooking = await prisma.bookingPeriod.findUnique({
       where: { id: bookingId },
@@ -172,12 +218,16 @@ class BookingService{
       throw new Error("Booking not found");
     }
 
+    // Calculate the duration in days for the new booking period (inclusive)
+    const durationDays = differenceInDays(newEndDate, newStartDate) + 1;
+
     const booking = await prisma.bookingPeriod.update({
       where: { id: bookingId },
       data: {
         new_start_date: newStartDate,
         new_end_date: newEndDate,
-        isEdited: true
+        isEdited: true,
+        duration_days: durationDays
       }
     });
 
@@ -216,7 +266,7 @@ class BookingService{
     const bookings = await prisma.bookingPeriod.findMany({
       where: {
         expired: true,
-        isDeleted: false
+        isDeleted: true 
       },
       include: {
         transaction: true
