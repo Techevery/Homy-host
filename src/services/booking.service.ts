@@ -58,11 +58,14 @@ class BookingService{
           where: {isDeleted: false, expired: false}, 
           include:{
             apartment: {
-              select:{
+              select:{  
                 name: true,
                 address: true,
                 id: true,
-              }
+              },
+              include:{
+                agents: {select: {name: true, id: true}},
+              },
             },
             transaction: true,
           }

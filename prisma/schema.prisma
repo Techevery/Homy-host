@@ -224,7 +224,7 @@ model ApartmentLog {
   transaction      Transaction    @relation(fields: [transaction_id], references: [id])
   booking_period_id String?
   booking_period   BookingPeriod? @relation(fields: [booking_period_id], references: [id])
-  availability     Boolean
+  availability     Boolean 
   status           String
   created_at       DateTime       @default(now())
 
