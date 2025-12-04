@@ -14,7 +14,7 @@ class BookingService{
                     availability: true,
                     status: true,
                     created_at: true,
-                    transaction_id: true,
+                    transaction_id: true,   
                     transaction:{
                         select: {
                            reference: true,
@@ -178,36 +178,6 @@ class BookingService{
     }
 
     // edit existing booking
-//    async editBookingDates(bookingId: string, newStartDate: Date, newEndDate: Date) {
-//   try {
-//     const existingBooking = await prisma.bookingPeriod.findUnique({
-//       where: { id: bookingId },
-//     });
-
-//     if (!existingBooking) {
-//       throw new Error("Booking not found");
-//     }
-
-//     // alss calculate number of data for new booking 
-//           // const totalDurationDays = existingBooking.reduce((total, period) => total + period.durationDays, 0);
-
-//     const booking = await prisma.bookingPeriod.update({
-//       where: { id: bookingId },
-//       data: {
-//         new_start_date: newStartDate,
-//         new_end_date: newEndDate,
-//         isEdited: true
-//       }
-//     });
-
-//     return booking;
-
-//   } catch (error) {
-//     console.error("Error editing booking dates:", error);
-//     throw new Error("Could not edit booking");
-//   }
-// }
-
 async editBookingDates(bookingId: string, newStartDate: Date, newEndDate: Date) {
   try {
     const existingBooking = await prisma.bookingPeriod.findUnique({
@@ -261,12 +231,14 @@ async editBookingDates(bookingId: string, newStartDate: Date, newEndDate: Date) 
         }
     }
 
- async expireBookings() {
+async expireBookings() {
   try {
     const bookings = await prisma.bookingPeriod.findMany({
       where: {
-        expired: true,
-        isDeleted: true 
+        OR: [
+          { expired: true },
+          { isDeleted: true }
+        ]
       },
       include: {
         transaction: true

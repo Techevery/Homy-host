@@ -9,9 +9,9 @@ router.get("/booking-dates/:apartmentId", fetchBookingDates)
 router.get("/manage-booking", manageBooking) 
 
 // expoted booking 
-router.get("/expire-bookings", authenticateAdmin, expiredBookings)
+router.get("/expire-bookings", expiredBookings)
 // booking request 
-router.get("/request", bookingRequest)
+router.get("/request", authenticateAdmin, bookingRequest)
 // deleted bookings 
 router.get("/deleted-bookings", getDeletedBookings)
 router.get('/:id', authenticateAdmin, getBookingById)      
