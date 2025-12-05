@@ -52,43 +52,65 @@ class BookingService{
         }
     }
 
-    async bookingRequest (){
-      try {
-        const booking = await prisma.bookingPeriod.findMany({
-          where: {isDeleted: false, expired: false}, 
-          include:{
-            apartment: {
-              select:{  
-                name: true,
-                address: true,
-                id: true,
-              },
-              include:{
-                agents: {select: {name: true, id: true}},
-              },
-            },
-            transaction: true,
+async bookingRequest() {
+  try {
+    const bookings = await prisma.bookingPeriod.findMany({
+      where: { isDeleted: false, expired: false },
+      include: {
+        apartment: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            // agents: {
+            //   select: {
+            //     id: true,
+            //     name: true
+            //   }
+            // }
           }
-        })
-        // add status to response base on upcoming, ongoing, completed 
-        let currentDate = new Date();
-        booking.forEach(bk => {
-          if(bk.start_date > currentDate){
-            (bk as any).status = "upcoming"
-          }else {
-            if(bk.end_date < currentDate){
-              (bk as any).status = "completed"
-            } else {
-              (bk as any).status = "ongoing"
+        },
+        transaction: {
+          select: {
+            id: true,
+            email: true,
+            phone_number: true,
+            amount: true,
+            booking_start_date: true,
+            booking_end_date: true,
+            duration_days: true,
+            status: true,
+            agent: {
+              select: {
+                id: true,
+                name: true
+              }
             }
           }
-        });
-
-        return booking
-      } catch (error) {
-        throw new Error ("Could not fetch booking requests")
+        }
       }
-    }
+    });
+
+    const currentDate = new Date();
+
+    bookings.forEach(bk => {
+      if (bk.start_date > currentDate) {
+        (bk as any).status = "upcoming";
+      } else if (bk.end_date < currentDate) {
+        (bk as any).status = "completed";
+      } else {
+        (bk as any).status = "ongoing";
+      }
+    });
+
+    return bookings;
+
+  } catch (error) {
+    console.log(error);
+    throw new Error("Could not fetch booking requests");
+  }
+}
+
 
     async bookingById(id: string){
         try {
