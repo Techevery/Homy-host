@@ -80,6 +80,7 @@ async bookingRequest() {
             booking_end_date: true,
             duration_days: true,
             status: true,
+            metadata: true,
             agent: {
               select: {
                 id: true,
@@ -126,20 +127,16 @@ async bookingRequest() {
 
     async getBookingDates(apartmentId: string): Promise<any[]> {
         try {
-            const dates = await prisma.apartmentLog.findMany({
+            const dates = await prisma.bookingPeriod.findMany({
                 where: {
-                    status: 'booked',
-                    availability: false,
-                    apartment_id: apartmentId
+                    apartment_id: apartmentId,
+                    isDeleted: false,
+                    expired: false
                 },
-                include: { 
-                    booking_period: {
                         select: {
                             start_date: true,
                             end_date: true,
                         }
-                    }
-                }
             });
             return dates;
         } catch (error) {
@@ -266,8 +263,29 @@ async expireBookings() {
         ]
       },
       include: {
-        transaction: true
+        transaction: {
+          select: {
+            id: true,
+            email: true,
+            amount: true,
+            phone_number: true,
+            metadata: true,
+            agent: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              }
+            }
+        },
+      },
+      apartment: {
+        select: {
+          id: true,
+          name: true,
+      },
       }
+    }
     });
 
     return bookings;
@@ -293,6 +311,8 @@ async getDeletedBookings(){
     throw new Error(`${error.message}`)
   }
 }
+
+// agent booking 
 }
 
 export default new BookingService();

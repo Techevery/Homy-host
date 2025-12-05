@@ -11,6 +11,6 @@ router.get("/agent-transactions", authenticateAgent, agentTransactions)
 router.get("/payout-stats", authenticateAdmin, getPayoutStatistics)
 router.patch("/reject-payout", authenticateAdmin, rejectPayout)
 router.get("/agent/:payoutId", authenticateAgent, agentPayoutById) 
-router.get("/sucesful-payout", authenticateAdmin, getSucessfulPayout)
+router.get("/sucesful-payout", getSucessfulPayout)
  
 export default router     
