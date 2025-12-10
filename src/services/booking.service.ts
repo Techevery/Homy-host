@@ -1,6 +1,11 @@
 import { logger } from "../core/helpers/logger";
 import prisma from "../core/utils/prisma";
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, parseISO } from 'date-fns';
+
+interface BookingPeriod {
+  startDate: Date;
+  endDate: Date;
+}
 
 class BookingService{
 
@@ -210,16 +215,28 @@ async editBookingDates(bookingId: string, newStartDate: Date, newEndDate: Date) 
       throw new Error("Booking not found");
     }
 
+    const apartmentId = existingBooking.apartment_id;
+
+    // chack if the selected data is available for booking fr that apartment 
+    const bookingPeriod = await this.isApartmentBookedForPeriods(apartmentId, {
+      startDate: newStartDate,
+      endDate: newEndDate,
+    });
+
+    if (bookingPeriod) {
+      throw new Error("The selected dates are not available for booking");
+    }
+
     // Calculate the duration in days for the new booking period (inclusive)
     const durationDays = differenceInDays(newEndDate, newStartDate) + 1;
 
     const booking = await prisma.bookingPeriod.update({
       where: { id: bookingId },
       data: {
-        new_start_date: newStartDate,
-        new_end_date: newEndDate,
+        start_date: newStartDate,
+        end_date: newEndDate,
         isEdited: true,
-        duration_days: durationDays
+        newBookingDuration: durationDays
       }
     });
 
@@ -306,15 +323,51 @@ async getDeletedBookings(){
             apartment: true
           }
         }
-      }
+      } 
     })
     return bookings
   } catch (error: any) {
     throw new Error(`${error.message}`)
   }
 }
+  /**
+   * Check if apartment is booked for any of the periods
+   */
+  private async isApartmentBookedForPeriods(apartmentId: string, bookingPeriods: BookingPeriod): Promise<boolean> {
+    // for (const period of bookingPeriods) {
+      const isBooked = await this.isApartmentBooked(apartmentId, bookingPeriods.startDate, bookingPeriods.endDate);
+      if (isBooked) {
+        return true;
+      // }
+    }
+    return false;
+  }
 
-// agent booking 
+
+
+   private async isApartmentBooked(apartmentId: string, startDate: Date, endDate: Date): Promise<boolean> {
+    const existingBooking = await prisma.bookingPeriod.findFirst({
+      where: {
+        isDeleted: false,
+        expired: false,
+        apartment_id: apartmentId,  
+        transaction: {  
+          status: "success" // Only check successful transactions
+        },
+        apartment:{
+          isBooked: true
+        },
+        OR: [ 
+          {
+            start_date: { lte: endDate },
+            end_date: { gte: startDate },
+          },
+        ],
+      },
+    });
+  
+    return !!existingBooking;
+  }
 }
 
 export default new BookingService();

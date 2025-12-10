@@ -74,7 +74,9 @@ class AgentCreditCron {
 
 if (agentData) {
   // Deduct service fee
-  const serviceFee = 50; // Naira
+  // const serviceFee = 50; // Naira
+  const serviceFeeRecord = await prisma.charges.findFirst({where: {status: "active"}})
+  const serviceFee = serviceFeeRecord ? serviceFeeRecord.amount : 0;
   const payoutAmount = creditAmount - serviceFee;
 
   // Only create payout if agent has enough balance
@@ -88,6 +90,7 @@ if (agentData) {
         agent: { connect: { id: transaction.agent.id } },
         reference: transaction.reference,
         transaction: { connect: { id: transaction.id } },
+        charges : serviceFee,
       },
     });
 

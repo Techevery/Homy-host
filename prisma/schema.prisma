@@ -188,11 +188,10 @@ model BookingPeriod {
   apartment        Apartment      @relation(fields: [apartment_id], references: [id])
   start_date       DateTime
   end_date         DateTime
-  new_start_date   DateTime?
-  new_end_date     DateTime?
   isEdited         Boolean        @default(false)
   isDeleted        Boolean        @default(false)
   duration_days    Int
+  newBookingDuration Int?
   created_at       DateTime       @default(now())
   expired         Boolean       @default(false)
   
@@ -214,7 +213,7 @@ model Charges {
   created_at       DateTime       @default(now())
   updated_at       DateTime       @updatedAt
   @@map("charges")
-  @@index([status])
+  @@index([status]) 
 }
 
 model DeletedBooking {
