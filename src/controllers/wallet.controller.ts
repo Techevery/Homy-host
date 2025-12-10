@@ -135,3 +135,13 @@ export const agentPayoutById = async (req: Request, res: Response) => {
         res.status(400).json(`${error.message}`)
       }
     }
+  
+    export const createCharges = async (req: Request, res: Response) => {
+      try {
+        const { description, amount } = req.body;
+        const result = await walletService.createCharges(description, amount)
+        res.status(201).json(result)
+      } catch (error: any) {
+        res.status(400).json(`${error.message}`)
+      }
+    }

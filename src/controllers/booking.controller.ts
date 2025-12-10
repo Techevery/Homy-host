@@ -95,3 +95,7 @@ export const expiredBookings = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
+
+// rremove apartment true is the booking has expired 
+// for payout create a crude or charges       

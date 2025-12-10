@@ -245,7 +245,7 @@ async editBookingDates(bookingId: string, newStartDate: Date, newEndDate: Date) 
                 data:{
                     booking_period_id: bookingId
                 }
-            })
+            })  
 
             return booking;
         } catch (error) {
@@ -281,12 +281,14 @@ async expireBookings() {
       },
       apartment: {
         select: {
-          id: true,
+          id: true, 
           name: true,
       },
       }
     }
     });
+
+    // return completed and deleted bookings
 
     return bookings;
   } catch (error) {

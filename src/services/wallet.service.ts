@@ -273,6 +273,31 @@ async rejectPayout(payoutId: string, reason: string){
   }
 }
 
+async createCharges(description: string, amount: number){
+  try {
+    const charges = await prisma.charges.create({
+      data:{
+        description,
+        amount
+      }
+    });
+    return charges;
+  } catch (error) {
+    throw new Error (`Could not create charges: ${error.message}`)
+  }
+}
+
+async updateStatus(chargesId: string, status: "active" | "inactive"){
+  try {
+    const charges = await prisma.charges.update({
+      where:{id: chargesId},
+      data:{status}
+    });
+    return charges;
+  } catch (error) {
+    throw new Error (`Could not update charges status: ${error.message}`)
+  }
+}               
 // reject payout
 // agent payout     //  
 

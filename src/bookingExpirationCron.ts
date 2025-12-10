@@ -45,10 +45,17 @@ class BookingExpirationCron {
             },
           });
 
+          await prisma.apartment.updateMany({
+            where: { id: booking.apartment_id },
+            data: {
+              isBooked: false,
+            },
+          });
+
           expiredBookingIds.push(booking.id);
 
           logger.info({
-            message: 'Booking period expired',
+            message: 'Booking period expired', 
             bookingId: booking.id,
             effectiveEndDate: effectiveEndDate.toISOString(),
           });

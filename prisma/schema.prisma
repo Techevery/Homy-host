@@ -206,6 +206,17 @@ model BookingPeriod {
   @@index([start_date, end_date])
 }
 
+model Charges {
+  id               String         @id @default(uuid())
+  description      String
+  amount           Int
+  status          ChargesStatus   @default(inactive)
+  created_at       DateTime       @default(now())
+  updated_at       DateTime       @updatedAt
+  @@map("charges")
+  @@index([status])
+}
+
 model DeletedBooking {
   id               String         @id @default(uuid())
   booking_period_id String
@@ -304,6 +315,7 @@ model Payout {
   remark                String?
   transactionId         String 
   reason                String?
+  charges               Int?
   transaction           Transaction @relation(fields: [transactionId], references: [id])
   @@index([id, status, reference])
 }
@@ -314,4 +326,9 @@ enum PayoutStatus {
   success
 }
 
-// withdrawer 
+enum ChargesStatus {
+  active
+  inactive
+}
+
+// withdrawer
