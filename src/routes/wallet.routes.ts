@@ -13,6 +13,6 @@ router.patch("/reject-payout", authenticateAdmin, rejectPayout)
 router.get("/agent/:payoutId", authenticateAgent, agentPayoutById) 
 router.get("/successful-payout", authenticateAdmin, getSucessfulPayout)
 router.post("/charge", authenticateAdmin, createCharges)
-router.patch("/charge-approve", authenticateAdmin, approveCharges)
+router.patch("/charge-approve/:chargeId", authenticateAdmin, approveCharges)
  
 export default router
