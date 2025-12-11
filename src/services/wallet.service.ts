@@ -287,7 +287,7 @@ async createCharges(description: string, amount: number){
   }
 }
 
-async updateStatus(chargesId: string, status: "active" | "inactive"){
+async updateChargeStatus(chargesId: string, status: "active" | "inactive"){
   try {
     const charges = await prisma.charges.update({
       where:{id: chargesId},

@@ -135,7 +135,7 @@ class PaymentService {
       };
 
       // Initialize payment with Paystack
-      const { authorizationUrl, reference } = await Paystack.initializePayment(
+      const { authorizationUrl, reference, status } = await Paystack.initializePayment(
         {
         email,
         amount: totalAmount,
@@ -164,7 +164,6 @@ const transactionData = await prisma.transaction.create({
     amount: totalAmount,
     email,
     status: "pending",
-    // Store overall date range for backward compatibility
     booking_start_date: bookingPeriods[0].startDate,
     booking_end_date: bookingPeriods[bookingPeriods.length - 1].endDate,
     duration_days: totalDurationDays,
@@ -215,12 +214,13 @@ await prisma.transaction.update({
       return {
         paymentUrl: authorizationUrl,
         reference,
+        status,
         totalAmount,
         totalDurationDays,
         dailyPrice,
         isMarkedUp: agentListing.markedup_price !== null,
         bookingPeriods: metadata.bookingPeriods,
-        totalBookingPeriods: bookingPeriods.length
+        totalBookingPeriods: bookingPeriods.length 
       };
 
     } catch (error) {
@@ -324,21 +324,14 @@ await prisma.transaction.update({
    * Helper method to check if apartment is booked (existing method - keep as is)
    */
   private async isApartmentBooked(apartmentId: string, startDate: Date, endDate: Date): Promise<boolean> {
-  const existingBooking = await prisma.bookingPeriod.findFirst({
+  const existingBooking = await prisma.transaction.findFirst({
     where: {
-      isDeleted: false,
-      expired: false,
-      apartment_id: apartmentId,  
-      transaction: {  
-        status: "success" // Only check successful transactions
-      },
-      apartment:{
-        isBooked: true
-      },
+        apartment_id: apartmentId,  
+        status: "success", // Only check successful transactions
       OR: [ 
         {
-          start_date: { lte: endDate },
-          end_date: { gte: startDate },
+          booking_start_date: { lte: endDate },
+          booking_end_date: { gte: startDate },
         },
       ],
     },
@@ -416,8 +409,8 @@ async verifyPayment(
     }
 
     // Ensure status is success
-    if (verification.data.status !== 'success') {
-      throw new Error(`Payment not successful: ${verification.data.status}`);
+    if (verification.status !== true) {
+      throw new Error(`Payment not successful: ${verification.status}`);
     }
 
     // Check for existing pending transaction early
@@ -472,7 +465,7 @@ async verifyPayment(
     const transactionData = await prisma.transaction.update({
       where: { reference: verification.data.reference },
       data: {
-        status: verification.data.status,
+        status: "success",
         channel: verification.data.channel,
         amount: verification.data.amount / 100, // Paystack uses kobo, adjust if needed
         charge: verification.data.fee, // Or from feeDetails if structured differently
@@ -499,9 +492,9 @@ async verifyPayment(
     });
 
     // FIXED: Validate fetched booking periods (replaces metadata-based check)
-    if (!Array.isArray(fetchedBookingPeriods) || fetchedBookingPeriods.length === 0) {
-      throw new Error("No booking periods found for this transaction");
-    }
+    // if (!Array.isArray(fetchedBookingPeriods) || fetchedBookingPeriods.length === 0) {
+    //   throw new Error("No booking periods found for this transaction");
+    // }
 
     // FIXED: Calculate total duration_days by summing periods (or use transaction's if single; here for multiple)
     const totalDurationDays = fetchedBookingPeriods.reduce((sum, period) => sum + period.duration_days, 0);
@@ -563,10 +556,6 @@ async verifyPayment(
 
     // Attempt to update to failed if possible (fallback)
     try {
-      await prisma.transaction.update({
-        where: { reference },
-        data: { status: "failed" },
-      });
     } catch (updateError) {
       logger.error({
         message: "Failed to update transaction to failed",

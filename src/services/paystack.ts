@@ -117,6 +117,7 @@ class Paystack {
       return {
         authorizationUrl: response.data.data.authorization_url,
         reference: response.data.data.reference,
+        status: response.data.data.status  
       };
     } catch (error) {
       console.error("Error initializing Payment:", error);

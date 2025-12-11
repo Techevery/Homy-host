@@ -124,24 +124,26 @@ async bookingRequest() {
             if(!booking) return "No booking found!"
             return booking
         } catch (error) {
-            throw new Error ("cooould noot fetch booking")
+            throw new Error ("could noot fetch booking")
         }
     }
 
     // list of data booked for an aprtment 
-
     async getBookingDates(apartmentId: string): Promise<any[]> {
         try {
-            const dates = await prisma.bookingPeriod.findMany({
+            const dates = await prisma.apartmentLog.findMany({
                 where: {
                     apartment_id: apartmentId,
-                    isDeleted: false,
-                    expired: false
+                    status: "booked"
                 },
-                        select: {
-                            start_date: true,
-                            end_date: true,
-                        }
+                include: {
+                  booking_period: {
+                    select: {
+                      start_date: true,
+                      end_date: true
+                    }
+                  }
+                }
             });
             return dates;
         } catch (error) {
@@ -149,6 +151,7 @@ async bookingRequest() {
             throw new Error("Could not fetch booking dates"); 
         }
     }
+
     async manageBooking(email: string, phoneNumber: string) {
         try {
             // Implement your booking management logic here

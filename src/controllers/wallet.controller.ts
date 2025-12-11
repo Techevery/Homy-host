@@ -145,3 +145,14 @@ export const agentPayoutById = async (req: Request, res: Response) => {
         res.status(400).json(`${error.message}`)
       }
     }
+
+    export const approveCharges = async (req: Request, res: Response) => {
+      try {
+        const {status} = req.body
+        const {chargeId} = req.params 
+        const result = await walletService.updateChargeStatus(chargeId, status)
+        res.status(200).json(result)
+      } catch (error) {
+        res.status(500).json(`${error.message}`)
+      }
+    }
