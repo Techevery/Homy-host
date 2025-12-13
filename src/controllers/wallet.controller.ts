@@ -19,26 +19,24 @@ export const getAllPayout = async (req: Request, res: Response) => {
     }
 }
 
-export const confirmPayout = async (req: Request, res: Response) => {
+export const confirmPayout = async (req: Request, res: Response) => {   
   upload(req, res, async (err) => {
     try {
       if (err instanceof multer.MulterError) {
         res.status(400).json({
-          message: `File upload error: ${err.message}`,
+          message: `File upload error: ${err.message}`, 
             });
-    
+         
             return;
           } else if (err) {
-            res.status(500).json({
+            res.status(500).json({     
               message: "Unknown file upload error",
             });
-    
+          
             return;
           }
     
-          const { payoutId, remark } = req.body;
-          console.log("file", req.files, "body", req.body)
-    
+          const { payoutId, remark } = req.body;    
     
           const apartment = await WalletService.confirmPayout(
             payoutId,

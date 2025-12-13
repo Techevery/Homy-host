@@ -149,7 +149,7 @@ class PaymentService {
 
       logger.info({
         message: "Payment initialized successfully",
-        params: { authorizationUrl, reference, totalAmount, bookingPeriods: metadata.bookingPeriods },
+        params: { authorizationUrl, totalAmount, },
       });
 
       // Save pending transaction
@@ -207,8 +207,6 @@ await prisma.transaction.update({
       logger.info({
         message: "Pending transaction record created successfully",
         transactionId: transactionData.id,
-        reference,
-        bookingPeriodsCount: bookingPeriods.length,
       });
 
       return {
@@ -228,10 +226,6 @@ await prisma.transaction.update({
       logger.error({
         message: "Error initiating payment",
         error: error instanceof Error ? error.message : 'Unknown error',
-        agentId,
-        apartmentId,
-        startDates,
-        endDates
       });
       throw error;
     }
