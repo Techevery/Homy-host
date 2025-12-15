@@ -67,12 +67,6 @@ async bookingRequest() {
             id: true,
             name: true,
             address: true,
-            // agents: {
-            //   select: {
-            //     id: true,
-            //     name: true
-            //   }
-            // }
           }
         },
         transaction: {
@@ -316,6 +310,20 @@ async expireBookings() {
   }
 }
 
+ async agentBookingDetails(agentId: string){
+  try {
+    const bookings = await prisma.apartmentLog.findMany({where: {
+      agentId, status: "booked",
+    },
+    include: {transaction: true},
+  })
+  if(!bookings) throw new Error (`No kkookings found for this agent!`)
+    return bookings 
+  } catch (error) {
+    throw new Error(`${error.message}`)
+  }
+ }
+
 async getDeletedBookings(){
   try {
     const bookings = await prisma.deletedBooking.findMany({
@@ -333,9 +341,7 @@ async getDeletedBookings(){
     throw new Error(`${error.message}`)
   }
 }
-  /**
-   * Check if apartment is booked for any of the periods
-   */
+
   private async isApartmentBookedForPeriods(apartmentId: string, bookingPeriods: BookingPeriod): Promise<boolean> {
     // for (const period of bookingPeriods) {
       const isBooked = await this.isApartmentBooked(apartmentId, bookingPeriods.startDate, bookingPeriods.endDate);

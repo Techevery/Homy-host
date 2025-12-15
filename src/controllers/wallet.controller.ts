@@ -126,8 +126,8 @@ export const agentPayoutById = async (req: Request, res: Response) => {
 
     export const rejectPayout = async (req: Request, res: Response) => {
       try {
-        const {reasson, payoutId} = req.body
-        const result = await walletService.rejectPayout(payoutId, reasson)
+        const {reason, payoutId} = req.body
+        const result = await walletService.rejectPayout(payoutId, reason)
         res.status(200).json(result)
       } catch (error: any) {
         res.status(400).json(`${error.message}`)
@@ -154,3 +154,13 @@ export const agentPayoutById = async (req: Request, res: Response) => {
         res.status(500).json(`${error.message}`)
       }
     }
+
+export const agentPayout = async (req: Request, res: Response) => {
+  try {
+    const agentId = (req as any).agent.id
+    const result = await walletService.agentPayoutDetails(agentId)
+    res.status(200).json(result)
+  } catch (error) {
+   throw new Error(`${error.message}`) 
+  }
+}

@@ -58,6 +58,7 @@ model Agent {
   Wallet            Wallet[]
   AgentBanner       AgentBanner[]
   payout            Payout[]
+  apartmentLog      ApartmentLog[]
   slug              String        @unique
 
   @@map("agents")
@@ -234,6 +235,8 @@ model ApartmentLog {
   transaction      Transaction    @relation(fields: [transaction_id], references: [id])
   booking_period_id String?
   booking_period   BookingPeriod? @relation(fields: [booking_period_id], references: [id])
+  agentId          String? 
+  agent            Agent? @relation(fields: [agentId], references: [id]) 
   availability     Boolean 
   status           String
   created_at       DateTime       @default(now())

@@ -77,15 +77,15 @@ async confirmPayout(payoutId: string, remark: string, files: Express.Multer.File
     }
 
     const payout = await prisma.payout.update({
-      where: { id: payoutId },
-      data: {
+      where: { id: payoutId },  
+      data: {  
         proof: imageUrl || undefined, // Only set if provided; Prisma will ignore undefined
         status: "success",
         remark,
       },
-      include: { agent: true }, // Include agent to access email and name
+      include: { agent: {select: {name: true, email: true, id: true} }}, // Include agent to access email and name
     });
-
+    
     // Extract agent details for email
     const agentEmail = payout.agent.email;
     const agentName = payout.agent.name;
@@ -260,14 +260,14 @@ async rejectPayout(payoutId: string, reason: string){
     const payout = await prisma.payout.update({
       where: {id: payoutId},
       data:{status: "cancelled", reason},
-      include: {agent: true}
+      include: {agent: {select: {name: true, id: true, email: true}}}
     })
     const agentEmail = payout.agent.email;
     const agentName = payout.agent.name;
 
     // Send confirmation mail to agent using remark as success details
     await rejectPayoutMail(agentEmail, agentName, reason);
-    return `Payout successfully rejected!`
+    return {message: "Payout successfully rejected!", payout}
   } catch (error: any) {
     throw new Error(`${error.message}`)
   }
@@ -297,9 +297,17 @@ async updateChargeStatus(chargesId: string, status: "active" | "inactive"){
   } catch (error) {
     throw new Error (`Could not update charges status: ${error.message}`)
   }
-}               
-// reject payout
-// agent payout     //  
+}
+
+ async agentPayoutDetails(agentId: string){
+  try {
+    const payout = await prisma.payout.findMany({where: {agentId}})
+    if(!payout) return []
+    return payout 
+  } catch (error) {
+    throw new Error(`${error.message}`)
+  }
+ }
 
 }
 

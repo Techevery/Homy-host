@@ -1,12 +1,16 @@
 import { Router } from "express";
-import { bookingRequest, deleteBooking, editBookingDates, expiredBookings, fetchAllBookings, fetchBookingDates, getBookingById, getDeletedBookings, manageBooking } from "../controllers/booking.controller";
+import { agentBookings, bookingRequest, deleteBooking, editBookingDates, expiredBookings, fetchAllBookings, fetchBookingDates, getBookingById, getDeletedBookings, manageBooking } from "../controllers/booking.controller";
 import { authenticateAdmin } from "../middlewares/Admin";
+import { authenticateAgent } from "../middlewares/Agent";
 
 const router = Router()
 
 router.get("/", authenticateAdmin, fetchAllBookings)
 router.get("/booking-dates/:apartmentId", fetchBookingDates) 
 router.get("/manage-booking", manageBooking) 
+
+// agent bookings 
+router.get("/agent-booking", authenticateAgent, agentBookings)
 
 // expoted booking 
 router.get("/expire-bookings",authenticateAdmin, expiredBookings)

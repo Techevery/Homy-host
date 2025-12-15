@@ -485,10 +485,6 @@ async verifyPayment(
       },
     });
 
-    // FIXED: Validate fetched booking periods (replaces metadata-based check)
-    // if (!Array.isArray(fetchedBookingPeriods) || fetchedBookingPeriods.length === 0) {
-    //   throw new Error("No booking periods found for this transaction");
-    // }
 
     // FIXED: Calculate total duration_days by summing periods (or use transaction's if single; here for multiple)
     const totalDurationDays = fetchedBookingPeriods.reduce((sum, period) => sum + period.duration_days, 0);
@@ -515,6 +511,7 @@ async verifyPayment(
           booking_period_id: bookingPeriod.id,
           availability: false,
           status: "booked",
+          agentId: transactionData.agent_id
         },
       });
 

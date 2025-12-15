@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import bookingService from "../services/booking.service";
+import walletService from "../services/wallet.service";
 
 export const fetchAllBookings = async (req: Request, res: Response) => {
   try {
@@ -50,6 +51,16 @@ export const manageBooking = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error managing booking:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export const agentBookings = async (req: Request, res: Response) => {
+  try {
+    const agentId = (req as any).agent.id
+    const result = await bookingService.agentBookingDetails(agentId)
+    res.status(200).json(result)
+  } catch (error) {
+    res.status(500).json(`${error.message}`)
   }
 }
 
