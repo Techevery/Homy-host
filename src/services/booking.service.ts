@@ -123,28 +123,35 @@ async bookingRequest() {
     }
 
     // list of data booked for an aprtment 
-    async getBookingDates(apartmentId: string): Promise<any[]> {
-        try {
-            const dates = await prisma.apartmentLog.findMany({
-                where: {
-                    apartment_id: apartmentId,
-                    status: "booked"
-                },
-                include: {
-                  booking_period: {
-                    select: {
-                      start_date: true,
-                      end_date: true
-                    }
-                  }
-                }
-            });
-            return dates;
-        } catch (error) {
-            logger.error("Error fetching booking dates:");
-            throw new Error("Could not fetch booking dates"); 
-        }
-    }
+    async getBookingDates(apartmentId: string): Promise<{ start_date: Date; end_date: Date }[]> {
+  try {
+    const dates = await prisma.apartmentLog.findMany({
+      where: {
+        apartment_id: apartmentId,
+        status: "booked",
+      },
+      select: {
+        booking_period: {
+          select: {
+            start_date: true,
+            end_date: true,
+          },
+        },
+      },
+    });
+
+    // flatten the response
+    return dates.map(item => ({
+      start_date: item.booking_period.start_date,
+      end_date: item.booking_period.end_date,
+    }));
+
+  } catch (error: any) {
+    logger.error("Error fetching booking dates:");
+    throw new Error("Could not fetch booking dates");
+  }
+}
+
 
     async manageBooking(email: string, phoneNumber: string) {
         try {
@@ -315,12 +322,12 @@ async expireBookings() {
     const bookings = await prisma.apartmentLog.findMany({where: {
       agentId, status: "booked",
     },
-    include: {transaction: true},
+    include: {transaction: true},  
   })
-  if(!bookings) throw new Error (`No kkookings found for this agent!`)
+  if(!bookings) throw new Error (`No bookings found for this agent!`)
     return bookings 
   } catch (error) {
-    throw new Error(`${error.message}`)
+    throw new Error(`${error.message}`)      
   }
  }
 

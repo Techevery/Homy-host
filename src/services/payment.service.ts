@@ -321,7 +321,7 @@ await prisma.transaction.update({
   const existingBooking = await prisma.transaction.findFirst({
     where: {
         apartment_id: apartmentId,  
-        status: "success", // Only check successful transactions
+        status: "success",
       OR: [ 
         {
           booking_start_date: { lte: endDate },
