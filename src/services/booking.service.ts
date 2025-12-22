@@ -127,16 +127,21 @@ async bookingRequest() {
   try {
     const dates = await prisma.apartmentLog.findMany({
       where: {
-        apartment_id: apartmentId,
-        status: "booked",
+       apartment_id: apartmentId,
+      status: 'booked',
+      availability: false,
+      booking_period: {
+        isDeleted: false,
+        expired: false,
       },
-      select: {
-        booking_period: {
-          select: {
-            start_date: true,
-            end_date: true,
-          },
+    },
+    include: {
+      booking_period: {
+        select: {
+          start_date: true,
+          end_date: true,
         },
+      },
       },
     });
 
@@ -150,7 +155,7 @@ async bookingRequest() {
     logger.error("Error fetching booking dates:");
     throw new Error("Could not fetch booking dates");
   }
-}
+} 
 
 
     async manageBooking(email: string, phoneNumber: string) {

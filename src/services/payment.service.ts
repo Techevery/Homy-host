@@ -317,17 +317,17 @@ await prisma.transaction.update({
   /**
    * Helper method to check if apartment is booked (existing method - keep as is)
    */
-  private async isApartmentBooked(apartmentId: string, startDate: Date, endDate: Date): Promise<boolean> {
-  const existingBooking = await prisma.transaction.findFirst({
+ private async isApartmentBooked(apartmentId: string, startDate: Date, endDate: Date): Promise<boolean> {
+  const existingBooking = await prisma.bookingPeriod.findFirst({
     where: {
-        apartment_id: apartmentId,  
+      apartment_id: apartmentId,
+      isDeleted: false,
+      expired: false,
+      start_date: { lte: endDate },
+      end_date: { gte: startDate },
+      transaction: {
         status: "success",
-      OR: [ 
-        {
-          booking_start_date: { lte: endDate },
-          booking_end_date: { gte: startDate },
-        },
-      ],
+      },
     },
   });
 
