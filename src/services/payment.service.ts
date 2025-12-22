@@ -421,9 +421,6 @@ async verifyPayment(
 
     const metadata = existingTransaction.metadata || {};
 
-    // without touching the commented destructuring
-    // const bookingPeriods = metadata.bookingPeriods || [];
-    // const dailyPrice = existingTransaction.dailyPrice;
     const durationDays = existingTransaction.duration_days;
     const isMarkedUp = existingTransaction.mockupPrice;
     const apartmentId = existingTransaction.apartment_id; // Use direct field from transaction
@@ -585,22 +582,67 @@ async handlePaystackWebhook(req: any, res: any): Promise<void> {
 
     logger.info({ event: event.event }, 'Received Paystack webhook');
 
+    const data = event.data;
+
     // 2. Handle only relevant events (e.g., charge.success)
-    if (event.event !== 'charge.success') {
-      logger.info({ event: event.event }, 'Ignoring non-success event');
-      res.status(200).send('OK'); // Acknowledge anyway
+    if (event.event === 'charge.success') {
+      logger.info({ event: event.event }, 'Processing successful payment event');
+
+      // Fetch the transaction with related booking periods
+      const transaction = await prisma.transaction.findUnique({
+        where: { reference: data.reference },
+        include: {
+          bookingPeriods: true, // Include related booking periods (handles multiple if any)
+        },
+      });
+
+      if (!transaction) {
+        logger.error({ reference: data.reference }, 'Transaction not found');
+        res.status(404).send('Transaction not found');
+        return;
+      }
+
+      // 3. Update transaction status and set payment date
+      await prisma.transaction.update({
+        where: { id: transaction.id },
+        data: {
+          status: 'success',
+          date_paid: new Date(),
+        },
+      });
+
+      logger.info({ transactionId: transaction.id }, 'Transaction updated to success');
+
+      // 4. Create ApartmentLog entries for each booking period
+      const createdLogs: any[] = []; // Array to track created logs (optional, for logging/batching)
+      for (const bookingPeriod of transaction.bookingPeriods) {
+        const apartmentLog = await prisma.apartmentLog.create({
+          data: {
+            apartment_id: transaction.apartment_id,
+            transaction_id: transaction.id,
+            booking_period_id: bookingPeriod.id,
+            availability: false,
+            status: 'booked',
+            agentId: transaction.agent_id,
+          },
+        });
+        createdLogs.push(apartmentLog);
+        logger.info({ logId: apartmentLog.id }, 'ApartmentLog created');
+      }
+
+      if (createdLogs.length === 0) {
+        logger.warn({ transactionId: transaction.id }, 'No booking periods found; no ApartmentLogs created');
+      }
+
+      // 5. Acknowledge success
+      res.status(200).send('OK');
+      return;
+    } else {
+      // Log other events but acknowledge to avoid retries
+      logger.info({ event: event.event }, 'Unhandled Paystack event (acknowledged)');
+      res.status(200).send('OK');
       return;
     }
-
-    // 3. Extract reference and fetch verification (best practice: re-verify via API)
-    const reference = event.data.reference;
-    const verificationData = await Paystack.verifyPayment(reference); // Fetch full details
-
-    // 4. Process the verification (reuses the updated verifyPayment)
-    await this.verifyPayment(reference, verificationData.data); // Pass data to avoid double-fetch
-
-    // 5. Acknowledge success
-    res.status(200).send('OK');
   } catch (error) {
     logger.error({
       message: 'Error in Paystack webhook handler',
@@ -609,8 +651,6 @@ async handlePaystackWebhook(req: any, res: any): Promise<void> {
     res.status(500).send('Webhook processing failed'); // Don't retry on server error
   }
 }
-
-// verify payment via webhook 
 
   private validateChannels(channels: PaymentChannels[]): PaymentChannels[] {
     const validChannels: PaymentChannels[] = [

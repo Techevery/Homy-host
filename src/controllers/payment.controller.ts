@@ -58,10 +58,10 @@ export const initiatePayment = async (req: Request, res: Response) => {
 
 export const verifyPayment = async (req: Request, res: Response) => {
   try {
-    const { reference } = req.body;
-    const result = await paymentService.verifyPayment(reference);
 
-    res.status(HttpStatusCode.HTTP_OK).json({
+    const result = await paymentService.handlePaystackWebhook(req, res);
+
+    res.status(HttpStatusCode.HTTP_OK).json({     
       message: "Payment verified successfully",
       data: result,
     });
