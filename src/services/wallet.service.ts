@@ -4,37 +4,39 @@ import { uploadImageToSupabase } from "../core/utils/supabase";
 import { confirmPayoutMail, rejectPayoutMail } from "../email/notification";
 
 class WalletService {
-    async getAllPayout(){
-        try {
-            const payout = await prisma.payout.findMany({
-              where:{status: "pending"},
-                include: {
-                    agent: {
-                        select: {
-                            id: true,
-                            name: true,
-                        },
-                    },
-                    transaction: {
-                      select: {
-                        status: true,
-                        amount: true,
-                        agentPercentage: true,
-                        mockupPrice: true,
-                        booking_end_date: true,
-                        booking_start_date: true,
-                        duration_days: true,
-                        date_paid: true,
-                        apartment: {select:{name: true}}
-                      }
-                    }   
-                },
-            });
-            return payout 
-        } catch (error: any) {
-            throw new Error(`${error.message}`)
-        }
-    }
+   async getPayoutRequest() {
+  try {
+    const payout = await prisma.payout.findMany({
+      where: {
+        status: { in: ["pending", "cancelled"] }, // Updated: Now includes both "pending" and "cancelled"
+      },
+      include: {
+        agent: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        transaction: {
+          select: {
+            status: true,
+            amount: true,
+            agentPercentage: true,
+            mockupPrice: true,
+            booking_end_date: true,
+            booking_start_date: true,
+            duration_days: true,
+            date_paid: true,
+            apartment: { select: { name: true } },
+          },
+        },
+      },
+    });
+    return payout;
+  } catch (error: any) {
+    throw new Error(`${error.message}`);
+  }
+}
   
 async getSuccesfulPayout(){
   try {
@@ -212,7 +214,7 @@ async agentPayoutById(agentId: string, payoutId: string, status?: "pending" | "s
 }
 
 
-async payoutStatistics() {
+async payoutStatistics() { 
   try {
     const [
       totalPayoutResult,

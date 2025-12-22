@@ -185,60 +185,6 @@ class AdminService {
     }
   }
 
-// async updateApartment(
-//   apartmentId: string,
-//   updateData: UpdateApartmentInput,
-//   files?: Express.Multer.File[],
-//   deleteExistingImages?: boolean
-// ) {
-//   try {
-//     // Fetch existing apartment
-//     const existingApartment = await prisma.apartment.findUnique({
-//       where: { id: apartmentId },
-//     });     
-//     if (!existingApartment) {
-//       throw new Error("Apartment not found");
-//     }
-
-//     // Handle image uploads and updates
-//     let images: string[] = existingApartment.images || [];
-//     if (files && files.length > 0) {
-//       const newImageUrls = await Promise.all(    
-//         files.map((file) => uploadImageToSupabase(file, "homey-images")) // Adjust to your upload function
-//       );
-//       images = deleteExistingImages ? newImageUrls : [...images, ...newImageUrls];
-//     }
-
-//     // Build conditional update data (only include provided fields)
-//     const data: any = {
-//       images, // Always update images if files provided or delete flag set
-//     };
-
-//     if (updateData.name !== undefined) data.name = updateData.name;
-//     if (updateData.address !== undefined) data.address = updateData.address;
-//     if (updateData.type !== undefined) data.type = updateData.type;
-//     if (updateData.amenities !== undefined) data.amenities = updateData.amenities;
-//     if (updateData.agentPercentage !== undefined) data.agentPercentage = updateData.agentPercentage;
-//     if (updateData.servicing !== undefined) data.servicing = updateData.servicing;
-//     if (updateData.bedroom !== undefined) data.bedroom = updateData.bedroom;
-//     if (updateData.price !== undefined) data.price = updateData.price;
-
-//     // If no fields to update (only images?), still proceed or add a check
-//     if (Object.keys(data).length === 0 && !files && !deleteExistingImages) {
-//       return existingApartment; // Or throw an error if no changes
-//     }
-
-//     const updatedApartment = await prisma.apartment.update({
-//       where: { id: apartmentId },
-//       data,
-//     });
-
-//     return updatedApartment;
-//   } catch (error: any) {
-//     throw new Error(error.message);
-//   }
-// }
-
 async updateApartment(
   apartmentId: string,
   updateData: UpdateApartmentInput,

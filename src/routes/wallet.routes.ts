@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { agentPayout, agentPayoutById, agentTransactions, approveCharges, confirmPayout, createCharges, getAllPayout, getPayoutStatistics, getSucessfulPayout, rejectPayout } from "../controllers/wallet.controller";
+import { agentPayout, agentPayoutById, agentTransactions, approveCharges, confirmPayout, createCharges, getPayoutRequest, getPayoutStatistics, getSucessfulPayout, rejectPayout } from "../controllers/wallet.controller";
 import { authenticateAdmin } from "../middlewares/Admin";
 import { authenticateAgent } from "../middlewares/Agent";
 
 const router = Router()
 
-router.get("/", getAllPayout)
+router.get("/", getPayoutRequest)
 router.post("/confirm-payout", authenticateAdmin, confirmPayout)
 router.get("/agent-transactions", authenticateAgent, agentTransactions)
 router.get("/payout-stats", authenticateAdmin, getPayoutStatistics)

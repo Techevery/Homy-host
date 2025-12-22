@@ -10,9 +10,9 @@ const upload = multer({
 }).array("image", 1);
 
 
-export const getAllPayout = async (req: Request, res: Response) => {
+export const getPayoutRequest = async (req: Request, res: Response) => {
     try {
-        const result = await WalletService.getAllPayout()
+        const result = await WalletService.getPayoutRequest()
         res.status(200).json(result)
     } catch (error: any) { 
         throw new Error(`${error.message}`)

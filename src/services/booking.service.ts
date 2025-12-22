@@ -17,7 +17,7 @@ class BookingService{
                     id: true,
                     apartment_id: true, 
                     availability: true,
-                    status: true,
+                    status: true, 
                     created_at: true,
                     transaction_id: true,   
                     transaction:{
@@ -262,11 +262,14 @@ async editBookingDates(bookingId: string, newStartDate: Date, newEndDate: Date) 
                     isDeleted: true
                 }
             })
+            if(!booking) return 
             const deleted = await prisma.deletedBooking.create({
                 data:{
-                    booking_period_id: bookingId
+                    booking_period_id: bookingId 
                 }
             })  
+
+          await prisma.apartmentLog.updateMany({where: {apartment_id: booking.apartment_id}, data: {status: "unavailable"}})
 
             return booking;
         } catch (error) {
