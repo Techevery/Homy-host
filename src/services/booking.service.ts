@@ -6,7 +6,7 @@ interface BookingPeriod {
   startDate: Date;
   endDate: Date;
 }
-
+ 
 class BookingService{
 
     async getAllBookingsForAdmin(): Promise<any[]> {

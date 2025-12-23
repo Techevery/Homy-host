@@ -734,14 +734,14 @@ async updateOflineBooking(
       const parsedStartDate = parseISO(startDate);
       const parsedEndDate = parseISO(endDate);
 
-      if (parsedStartDate >= parsedEndDate) {
-        throw new Error(`End date must be after start date for period ${i + 1}`);
-      }
+      // if (parsedStartDate >= parsedEndDate) {
+      //   throw new Error(`End date must be after start date for period ${i + 1}`);
+      // }
 
       const durationDays = differenceInDays(parsedEndDate, parsedStartDate);
-      if (durationDays <= 0) {
-        throw new Error(`Booking duration must be at least 1 day for period ${i + 1}`);
-      }
+      // if (durationDays <= 0) {
+      //   throw new Error(`Booking duration must be at least 1 day for period ${i + 1}`);
+      // }
 
       // Check for overlapping periods within the same booking request
       for (const existingPeriod of bookingPeriods) {
