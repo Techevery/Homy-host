@@ -1,178 +1,301 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
-  url      = env("DATABASE_URL")
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 model Admin {
-  id                String        @id @default(uuid())
-  name              String      
-  email             String        @unique
-  password          String 
-  address           String
-  phone_number      String        @unique @default("08080000000")
-  gender            String
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  apartments        Apartment[]   @relation("AdminApartments") // Admin creates apartments
+  id           String      @id @default(uuid())
+  name         String
+  email        String      @unique
+  password     String
+  address      String
+  gender       String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  phone_number String      @unique @default("08080000000")
+  apartments   Apartment[] @relation("AdminApartments")
 
   @@map("admins")
 }
- 
+
 model Agent {
-  id                String          @id @default(uuid())
-  name              String
-  email             String        @unique
-  address           String
-  password          String
-  phone_number      String        @unique
-  bank_name         String       
-  account_number    String        @unique
-  gender            String   
-  profile_picture   String?
-  personalUrl       String   // Add this field
-  status            AgentStatus   @default(UNVERIFIED)
-  id_card           String?
-  accountBalance    Int? @default(0)
-  apartment        Apartment[]     @relation("AgentApartments") // Agents list apartments
-  nextOfKinName    String?
-  nextOfKinPhone   String?
-  nextOfKinAddress String?  
-  nextOfKinEmail   String?
-  nextOfKinStatus  String?
-  nextOfKinOccupation String?    
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  suspended         Boolean      @default(false)
-  Transaction       Transaction[]
-  Wallet            Wallet[]
-  AgentBanner       AgentBanner[]
-  payout            Payout[]
-  apartmentLog      ApartmentLog[]
-  slug              String        @unique
+  id                  String              @id @default(uuid())
+  name                String
+  email               String              @unique
+  address             String
+  password            String
+  phone_number        String              @unique
+  bank_name           String
+  account_number      String              @unique
+  gender              String
+  status              AgentStatus         @default(UNVERIFIED)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  profile_picture     String?
+  id_card             String?
+  slug                String              @unique
+  personalUrl         String
+  accountBalance      Int?                @default(0)
+  nextOfKinAddress    String?
+  nextOfKinEmail      String?
+  nextOfKinName       String?
+  nextOfKinOccupation String?
+  nextOfKinPhone      String?
+  nextOfKinStatus     String?
+  suspended           Boolean             @default(false)
+  payout              Payout[]
+  Wallet              Wallet[]
+  AgentBanner         AgentBanner[]
+  AgentListing        AgentListing[]
+  apartmentLog        ApartmentLog[]
+  FailedTransaction   FailedTransaction[]
+  Transaction         Transaction[]
+  apartment           Apartment[]         @relation("AgentApartments")
 
   @@map("agents")
-  AgentListing AgentListing[]
-  FailedTransaction FailedTransaction[]
 }
 
 model Apartment {
-  id          String      @id @default(uuid())
-  name        String  
-  address     String 
-  type        String
-  servicing   String
-  amenities   String?
-  bedroom     String  
-  price       Int
-  images      String[]  @default([])
-  video_link  String?
-  createdBy   Admin     @relation("AdminApartments", fields: [adminId], references: [id]) // Admin ownership
-  adminId     String
-  agentPercentage Int? 
-  isBooked        Boolean @default(false)
-
-  agents      Agent[]   @relation("AgentApartments") // Agents listing this apartment
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  Transaction Transaction[]
-  ApartmentLog ApartmentLog[]
-  bookingPeriods BookingPeriod[]
+  id                String              @id @default(uuid())
+  name              String
+  address           String
+  type              String
+  servicing         String
+  bedroom           String
+  price             Int
+  images            String[]            @default([])
+  adminId           String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  video_link        String?
+  agentPercentage   Int?
+  amenities         String?
+  isBooked          Boolean             @default(false)
+  AgentListing      AgentListing[]
+  createdBy         Admin               @relation("AdminApartments", fields: [adminId], references: [id])
+  ApartmentLog      ApartmentLog[]
+  bookingPeriods    BookingPeriod[]
+  FailedTransaction FailedTransaction[]
+  Transaction       Transaction[]
+  agents            Agent[]             @relation("AgentApartments")
 
   @@map("apartment")
-  AgentListing AgentListing[] 
-  FailedTransaction FailedTransaction[]
 }
 
 model Transaction {
-  id           String     @id @default(uuid()) 
-  email        String   
-  phone_number String?
-  status       String  
-  amount       Int     
-  channel      String?  
-  charge       Int?     // Fee charged by Paystack
-  metadata     Json?  // Optional metadata for additional data
-  reference    String  @unique   // Unique reference from paystack
-  date_paid    DateTime? // Set only when payment is successful
-  payment_month Decimal?       // Extracted month of payment for filtering (1-12)
-  payment_year  Int?     // Extracted year of payment for filtering 
-  credited      Boolean @default(false) 
+  id                 String           @id @default(uuid())
+  email              String
+  status             String
+  amount             Int
+  channel            String?
+  charge             Int?
+  metadata           Json?
+  reference          String           @unique
+  date_paid          DateTime?
+  apartment_id       String
+  agent_id           String
+  created_at         DateTime         @default(now())
+  updated_at         DateTime         @updatedAt
+  booking_end_date   DateTime?
+  booking_start_date DateTime?
+  duration_days      Int
+  phone_number       String?
+  payment_month      Decimal?
+  payment_year       Int?
+  credited           Boolean          @default(false)
+  agentPercentage    Int?
+  mockupPrice        Int?
+  payout             Payout[]
+  ApartmentLog       ApartmentLog[]
+  bookingPeriods     BookingPeriod[]
+  TransactionLog     TransactionLog[]
+  agent              Agent            @relation(fields: [agent_id], references: [id])
+  apartment          Apartment        @relation(fields: [apartment_id], references: [id])
 
-  agentPercentage Int?
-  mockupPrice     Int?
-
-  apartment_id String
-  apartment    Apartment @relation(fields: [apartment_id], references: [id])
-
-  agent_id     String
-  agent        Agent   @relation(fields: [agent_id], references: [id])
-    
-  booking_start_date  DateTime?
-  booking_end_date    DateTime?
-  duration_days       Int
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
-
-  TransactionLog TransactionLog[]
-  bookingPeriods BookingPeriod[]
-  payout        Payout[]
-
+  @@index([status], map: "status_idx")
+  @@index([agent_id], map: "agent_idx")
+  @@index([apartment_id], map: "apartment_log_apartment_idx")
+  @@index([payment_month, payment_year], map: "date_idx")
   @@map("transactions")
-  @@index([status], name:"status_idx")
-  @@index([agent_id], name:"agent_idx")
-  @@index([apartment_id], name:"apartment_log_apartment_idx")
-  @@index([payment_month, payment_year], name:"date_idx")  // optimized for date-based queries
-  ApartmentLog ApartmentLog[]
 }
 
-model Banner{
-  id            String @id @default(uuid())
-  name          String
-  description   String?
-  image_url     String 
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+model Banner {
+  id          String   @id @default(uuid())
+  image_url   String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  description String?
+  name        String
 }
 
 model AgentBanner {
-  id                  String @id @default(uuid())
-  name                String
-  description         String?
-  agent               Agent   @relation(fields: [agentId], references: [id])
-  agentId             String
-  image_url           String
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  agentId     String
+  image_url   String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  agent       Agent    @relation(fields: [agentId], references: [id])
 
+  @@index([agentId], map: "agent_banner_agent_idx")
   @@map("agent_banners")
-  @@index([agentId], name:"agent_banner_agent_idx")
 }
 
 model TransactionLog {
-  id              String    @id @default(uuid())
-  transaction_id  String 
-  transaction     Transaction  @relation(fields: [transaction_id], references: [id])
+  id             String      @id @default(uuid())
+  transaction_id String
+  action         String
+  changed_by     String?
+  old_values     Json?
+  new_values     Json?
+  created_at     DateTime    @default(now())
+  transaction    Transaction @relation(fields: [transaction_id], references: [id])
 
-  action          String     
-  changed_by      String?     
-  old_values      Json?     
-  new_values      Json?       
-
-  created_at      DateTime  @default(now())
-
+  @@index([transaction_id], map: "apartment_log_transaction_idx")
   @@map("transaction_logs")
-  @@index([transaction_id], name:"apartment_log_transaction_idx")
+}
+
+model BookingPeriod {
+  id                 String           @id @default(uuid())
+  transaction_id     String
+  apartment_id       String
+  start_date         DateTime
+  end_date           DateTime
+  duration_days      Int
+  created_at         DateTime         @default(now())
+  isDeleted          Boolean          @default(false)
+  isEdited           Boolean          @default(false)
+  expired            Boolean          @default(false)
+  newBookingDuration Int?
+  apartment_logs     ApartmentLog[]
+  apartment          Apartment        @relation(fields: [apartment_id], references: [id])
+  transaction        Transaction      @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
+  deleted_bookings   DeletedBooking[]
+
+  @@index([transaction_id])
+  @@index([apartment_id])
+  @@index([start_date, end_date])
+  @@map("booking_periods")
+}
+
+model Charges {
+  id          String        @id @default(uuid())
+  description String
+  amount      Int
+  status      ChargesStatus @default(inactive)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+
+  @@index([status])
+  @@map("charges")
+}
+
+model DeletedBooking {
+  id                String        @id @default(uuid())
+  booking_period_id String
+  deleted_at        DateTime      @default(now())
+  booking_period    BookingPeriod @relation(fields: [booking_period_id], references: [id])
+
+  @@index([booking_period_id])
+  @@map("deleted_bookings")
+}
+
+model ApartmentLog {
+  id                String         @id @default(uuid())
+  apartment_id      String
+  transaction_id    String
+  availability      Boolean
+  status            String
+  created_at        DateTime       @default(now())
+  booking_period_id String?
+  agentId           String?
+  agent             Agent?         @relation(fields: [agentId], references: [id])
+  apartment         Apartment      @relation(fields: [apartment_id], references: [id])
+  booking_period    BookingPeriod? @relation(fields: [booking_period_id], references: [id])
+  transaction       Transaction    @relation(fields: [transaction_id], references: [id])
+
+  @@index([apartment_id])
+  @@index([transaction_id])
+  @@index([booking_period_id])
+  @@map("apartment_logs")
+}
+
+model AgentListing {
+  id                       String    @id @default(uuid())
+  agent_id                 String
+  apartment_id             String
+  base_price               Int
+  markedup_price           Int?
+  price_changed_by         String?
+  price_changed_at         DateTime  @default(now())
+  updated_at               DateTime  @updatedAt
+  agent_commission_percent Int?
+  agent                    Agent     @relation(fields: [agent_id], references: [id])
+  apartment                Apartment @relation(fields: [apartment_id], references: [id])
+
+  @@unique([agent_id, apartment_id], name: "unique_Agent_apartment")
+  @@map("agent_listings")
+}
+
+model FailedTransaction {
+  id             String    @id @default(uuid())
+  email          String
+  phone_number   String
+  amount         String
+  channel        String
+  charge         String
+  metadata       String
+  reference      String    @unique
+  failure_reason String?
+  error_code     String?
+  attempted_at   DateTime  @default(now())
+  payment_month  Decimal
+  payment_year   Int
+  apartment_id   String
+  agent_id       String
+  agent          Agent     @relation(fields: [agent_id], references: [id])
+  apartment      Apartment @relation(fields: [apartment_id], references: [id])
+
+  @@index([reference], map: "failed_tx_ref_idx")
+  @@index([agent_id], map: "failed_agent_idx")
+  @@index([apartment_id], map: "failed_apartment_idx")
+  @@index([payment_month, payment_year], map: "failed_date_idx")
+  @@map("failed_transactions")
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  agentId   String
+  balance   Int      @default(0)
+  createdAt DateTime @default(now())
+  agent     Agent    @relation(fields: [agentId], references: [id])
+}
+
+model Payout {
+  id            String       @id @default(uuid())
+  agentId       String
+  accountNumber String
+  accountName   String
+  bankName      String
+  status        PayoutStatus @default(pending)
+  createdAt     DateTime     @default(now())
+  amount        Float
+  proof         String?
+  reference     String
+  remark        String?
+  transactionId String
+  reason        String?
+  charges       Int?
+  agent         Agent        @relation(fields: [agentId], references: [id])
+  transaction   Transaction  @relation(fields: [transactionId], references: [id])
+
+  @@index([id, status, reference])
 }
 
 enum AgentStatus {
@@ -180,151 +303,9 @@ enum AgentStatus {
   UNVERIFIED
 }
 
-
-model BookingPeriod {
-  id               String         @id @default(uuid())
-  transaction_id   String
-  transaction      Transaction    @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
-  apartment_id     String
-  apartment        Apartment      @relation(fields: [apartment_id], references: [id])
-  start_date       DateTime
-  end_date         DateTime
-  isEdited         Boolean        @default(false)
-  isDeleted        Boolean        @default(false)
-  duration_days    Int
-  newBookingDuration Int?
-  created_at       DateTime       @default(now())
-  expired         Boolean       @default(false)
-  
-  // Relation to ApartmentLog - this is correct
-  apartment_logs   ApartmentLog[]  // Remove the @relation name here since it's the same relation
-  deleted_bookings DeletedBooking[]
-
-  @@map("booking_periods")
-  @@index([transaction_id])
-  @@index([apartment_id])
-  @@index([start_date, end_date])
-}
-
-model Charges {
-  id               String         @id @default(uuid())
-  description      String
-  amount           Int
-  status          ChargesStatus   @default(inactive)
-  created_at       DateTime       @default(now())
-  updated_at       DateTime       @updatedAt
-  @@map("charges")
-  @@index([status]) 
-}
-
-model DeletedBooking {
-  id               String         @id @default(uuid())
-  booking_period_id String
-  booking_period   BookingPeriod @relation(fields: [booking_period_id], references: [id])
-  deleted_at       DateTime       @default(now())
-
-  @@map("deleted_bookings")
-  @@index([booking_period_id])
-}
-
-model ApartmentLog {
-  id               String         @id @default(uuid())
-  apartment_id     String
-  apartment        Apartment      @relation(fields: [apartment_id], references: [id])
-  transaction_id   String
-  transaction      Transaction    @relation(fields: [transaction_id], references: [id])
-  booking_period_id String?
-  booking_period   BookingPeriod? @relation(fields: [booking_period_id], references: [id])
-  agentId          String? 
-  agent            Agent? @relation(fields: [agentId], references: [id]) 
-  availability     Boolean 
-  status           String
-  created_at       DateTime       @default(now())
-
-  @@map("apartment_logs")
-  @@index([apartment_id])
-  @@index([transaction_id])
-  @@index([booking_period_id])
-}
- 
-model AgentListing {
-  id                 String    @id @default(uuid())
-  agent_id           String
-  apartment_id       String
-  agent              Agent     @relation(fields: [agent_id], references: [id])
-  apartment          Apartment @relation(fields: [apartment_id], references: [id])
-  base_price         Int         // The original aprtment price
-  markedup_price     Int?       // Proce set by the agent
-  agent_commission_percent Int?
-  price_changed_by   String?   // Id of the agent who last changed the price 
-  price_changed_at   DateTime   @default(now())
-  updated_at         DateTime   @updatedAt
-
-  @@unique([agent_id, apartment_id], name: "unique_Agent_apartment")
-  @@map("agent_listings")
-}
-
-model FailedTransaction {
-  id                  String      @id @default(uuid())
-  email               String
-  phone_number        String
-  amount              String
-  channel             String
-  charge              String
-  metadata            String
-  reference           String     @unique
-  failure_reason      String?
-  error_code          String?
-  attempted_at        DateTime   @default(now())
-  payment_month       Decimal
-  payment_year        Int
-
-  apartment_id        String
-  apartment           Apartment  @relation(fields: [apartment_id], references: [id])
-
-  agent_id        String
-  agent           Agent     @relation(fields: [agent_id], references: [id])
-
-  @@map("failed_transactions")
-  @@index([reference], name: "failed_tx_ref_idx")
-  @@index([agent_id], name: "failed_agent_idx")
-  @@index([apartment_id], name: "failed_apartment_idx")
-  @@index([payment_month, payment_year], name: "failed_date_idx")
-
-}
-
-
-model Wallet{
-  id            String @id @default(uuid())
-  agentId       String
-  agent         Agent @relation(fields: [agentId], references: [id])
-  balance       Int @default(0)
-  createdAt     DateTime @default(now())
-}
-
-model Payout {
-  id                    String @id @default(uuid())
-  agentId               String
-  agent                 Agent @relation(fields: [agentId], references: [id])
-  accountNumber         String
-  accountName           String
-  bankName              String 
-  amount                Float
-  status                PayoutStatus @default(pending)
-  createdAt             DateTime @default(now())
-  reference             String 
-  proof                 String?
-  remark                String?
-  transactionId         String 
-  reason                String?
-  charges               Int?
-  transaction           Transaction @relation(fields: [transactionId], references: [id])
-  @@index([id, status, reference])
-}
- 
 enum PayoutStatus {
   pending
-  cancelled
+  rejected
   success
 }
 
@@ -332,5 +313,3 @@ enum ChargesStatus {
   active
   inactive
 }
-
-// withdrawer

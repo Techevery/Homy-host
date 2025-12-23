@@ -8,7 +8,7 @@ class WalletService {
   try {
     const payout = await prisma.payout.findMany({
       where: {
-        status: { in: ["pending", "cancelled"] }, // Updated: Now includes both "pending" and "cancelled"
+        status: { in: ["pending", "rejected"] }, // Updated: Now includes both "pending" and "cancelled"
       },
       include: {
         agent: {
@@ -261,7 +261,7 @@ async rejectPayout(payoutId: string, reason: string){
   try {
     const payout = await prisma.payout.update({
       where: {id: payoutId},
-      data:{status: "cancelled", reason},
+      data:{status: "rejected", reason},
       include: {agent: {select: {name: true, id: true, email: true}}}
     })
     const agentEmail = payout.agent.email;
