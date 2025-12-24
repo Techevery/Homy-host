@@ -10,7 +10,7 @@ router.get("/booking-dates/:apartmentId", fetchBookingDates)
 router.get("/manage-booking", manageBooking) 
 
 // agent bookings 
-router.get("/agent-booking", authenticateAgent, agentBookings)
+router.get("/agent-booking", authenticateAgent, agentBookings)  
 
 // expoted booking 
 router.get("/expire-bookings",authenticateAdmin, expiredBookings)

@@ -632,7 +632,7 @@ async updateOfflineBooking(
     if (!agentList) {
       throw new Error("No agent listing for this apartment");
     }
-
+   
     const booking = await this.validateAndParseBookingPeriods(startDate, endDate);
 
     // Check conflicts, excluding current booking

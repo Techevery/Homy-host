@@ -24,7 +24,7 @@ class BookingService{
                         select: {
                            reference: true,
                            email: true,
-                           amount: true,
+                           amount: true, 
                            phone_number: true,
                            metadata: true,
                            agent: { 
@@ -123,38 +123,19 @@ async bookingRequest() {
     }
 
     // list of data booked for an aprtment 
-    async getBookingDates(apartmentId: string): Promise<{ start_date: Date; end_date: Date }[]> {
-  try {
-    const dates = await prisma.apartmentLog.findMany({
-      where: {
-       apartment_id: apartmentId,
-      status: 'booked',
-      availability: false,
-      booking_period: {
-        isDeleted: false,
-        expired: false,
-      },
-    },
-    include: {
-      booking_period: {
+  async getBookingDates(apartmentId: string): Promise<{ start_date: Date; end_date: Date }[]> {
+    try {
+      const booking = await prisma.bookingPeriod.findMany({
+        where: {apartment_id: apartmentId, isDeleted: false, expired: false},
         select: {
           start_date: true,
           end_date: true,
-        },
-      },
-      },
-    });
-
-    // flatten the response
-    return dates.map(item => ({
-      start_date: item.booking_period.start_date,
-      end_date: item.booking_period.end_date,
-    }));
-
-  } catch (error: any) {
-    logger.error("Error fetching booking dates:");
-    throw new Error("Could not fetch booking dates");
-  }
+        }
+      })
+      return booking 
+    } catch (error) {
+      throw new Error(`${error.message}`)
+    }
 } 
 
 
@@ -183,7 +164,7 @@ async bookingRequest() {
       where: whereClause,
       include: {
         apartment: {
-          select: {
+          select: { 
             id: true, 
             name: true,
             address: true,
@@ -274,7 +255,7 @@ async editBookingDates(bookingId: string, newStartDate: Date, newEndDate: Date) 
                 }
             })  
 
-          await prisma.apartmentLog.updateMany({where: {apartment_id: booking.apartment_id}, data: {status: "unavailable"}})
+          await prisma.apartmentLog.updateMany({where: {apartment_id: booking.apartment_id}, data: {status: "available"}})
 
             return booking;
         } catch (error) {
