@@ -231,7 +231,52 @@ await prisma.transaction.update({
     }
   }
 
-  private validateAndParseBookingPeriods(startDates: string[], endDates: string[]): BookingPeriod[] {
+  // private validateAndParseBookingPeriods(startDates: string[], endDates: string[]): BookingPeriod[] {
+  //   const bookingPeriods: BookingPeriod[] = [];
+
+  //   for (let i = 0; i < startDates.length; i++) {
+  //     const startDate = startDates[i];
+  //     const endDate = endDates[i];
+
+  //     if (!startDate || !endDate) {
+  //       throw new Error("All start dates and end dates are required");
+  //     }
+
+  //     const parsedStartDate = parseISO(startDate);
+  //     const parsedEndDate = parseISO(endDate);
+
+  //     if (parsedStartDate >= parsedEndDate) {
+  //       throw new Error(`End date must be after start date for period ${i + 1}`);
+  //     }
+
+  //     const durationDays = differenceInDays(parsedEndDate, parsedStartDate);
+  //     if (durationDays <= 0) {
+  //       throw new Error(`Booking duration must be at least 1 day for period ${i + 1}`);
+  //     }
+
+  //     // Check for overlapping periods within the same booking request
+  //     for (const existingPeriod of bookingPeriods) {
+  //       if (
+  //         (parsedStartDate >= existingPeriod.startDate && parsedStartDate <= existingPeriod.endDate) ||
+  //         (parsedEndDate >= existingPeriod.startDate && parsedEndDate <= existingPeriod.endDate) ||
+  //         (parsedStartDate <= existingPeriod.startDate && parsedEndDate >= existingPeriod.endDate)
+  //       ) {
+  //         throw new Error(`Booking periods cannot overlap. Period ${i + 1} overlaps with another period`);
+  //       }
+  //     }
+
+  //     bookingPeriods.push({
+  //       startDate: parsedStartDate,
+  //       endDate: parsedEndDate,
+  //       durationDays
+  //     });
+  //   }
+
+  //   // Sort periods by start date
+  //   return bookingPeriods.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  // }
+
+    private validateAndParseBookingPeriods(startDates: string[], endDates: string[]): BookingPeriod[] {
     const bookingPeriods: BookingPeriod[] = [];
 
     for (let i = 0; i < startDates.length; i++) {
@@ -245,14 +290,12 @@ await prisma.transaction.update({
       const parsedStartDate = parseISO(startDate);
       const parsedEndDate = parseISO(endDate);
 
-      if (parsedStartDate >= parsedEndDate) {
-        throw new Error(`End date must be after start date for period ${i + 1}`);
+      if (parsedStartDate > parsedEndDate) {
+        throw new Error(`End date must be on or after start date for period ${i + 1}`);
       }
 
-      const durationDays = differenceInDays(parsedEndDate, parsedStartDate);
-      if (durationDays <= 0) {
-        throw new Error(`Booking duration must be at least 1 day for period ${i + 1}`);
-      }
+      const diff = differenceInDays(parsedEndDate, parsedStartDate);
+      const durationDays = Math.max(1, diff);
 
       // Check for overlapping periods within the same booking request
       for (const existingPeriod of bookingPeriods) {
@@ -275,7 +318,7 @@ await prisma.transaction.update({
     // Sort periods by start date
     return bookingPeriods.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
   }
-
+  
   /**
    * Check if apartment is booked for any of the periods
    */
@@ -283,7 +326,7 @@ await prisma.transaction.update({
     for (const period of bookingPeriods) {
       const isBooked = await this.isApartmentBooked(apartmentId, period.startDate, period.endDate);
       if (isBooked) {
-        return true;
+        return true; 
       }
     }
     return false;

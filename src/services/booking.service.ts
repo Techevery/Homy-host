@@ -74,7 +74,7 @@ async bookingRequest() {
           select: {
             id: true,
             email: true,
-            phone_number: true,
+            phone_number: true, 
             amount: true,
             booking_start_date: true,
             booking_end_date: true,
