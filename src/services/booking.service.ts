@@ -61,6 +61,7 @@ async bookingRequest() {
   try {
     const bookings = await prisma.bookingPeriod.findMany({
       where: { isDeleted: false, expired: false },
+      orderBy: {created_at: "desc"},
       include: {
         apartment: {
           select: {
@@ -295,7 +296,8 @@ async expireBookings() {
           name: true,
       },
       }
-    }
+    },
+    orderBy: {created_at: "desc"}
     });
 
     // return completed and deleted bookings
@@ -311,7 +313,8 @@ async expireBookings() {
     const bookings = await prisma.apartmentLog.findMany({where: {
       agentId, status: "booked",
     },
-    include: {transaction: true},  
+    include: {transaction: true}, 
+    orderBy: {created_at: "desc"} 
   })
   if(!bookings) throw new Error (`No bookings found for this agent!`)
     return bookings 
@@ -330,7 +333,8 @@ async getDeletedBookings(){
             apartment: true
           }
         }
-      } 
+      },
+      orderBy: {created_at: "desc"} 
     })
     return bookings
   } catch (error: any) {

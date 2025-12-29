@@ -34,6 +34,7 @@ static async checkAndExpireBookings(): Promise<void> {
           where: { id: booking.id },
           data: {
             expired: true,
+            status: "expired"
           },
         });
 

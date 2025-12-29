@@ -597,8 +597,10 @@ async addPropertyToListing(
   async fetchBanner(agentId: any) {
       try {
           const banners = await prisma.agentBanner.findMany({
-            where: { agentId }
+            where: { agentId },
+            orderBy: {created_at: "desc"}
           })
+
           return banners
       } catch (error: any) {
           throw new Error(`${error.message}`)

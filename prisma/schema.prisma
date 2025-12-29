@@ -202,6 +202,7 @@ model DeletedBooking {
   booking_period_id String
   deleted_at        DateTime      @default(now())
   booking_period    BookingPeriod @relation(fields: [booking_period_id], references: [id])
+  created_at        DateTime      @default(now())
 
   @@index([booking_period_id])
   @@map("deleted_bookings")
