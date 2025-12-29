@@ -172,6 +172,7 @@ model BookingPeriod {
   isDeleted          Boolean          @default(false)
   isEdited           Boolean          @default(false)
   expired            Boolean          @default(false)
+  status             BookingStatus    @default(pending)
   newBookingDuration Int?
   apartment_logs     ApartmentLog[]
   apartment          Apartment        @relation(fields: [apartment_id], references: [id])
@@ -312,4 +313,10 @@ enum PayoutStatus {
 enum ChargesStatus {
   active
   inactive
+}
+
+enum BookingStatus {
+  booked 
+  pending
+  expired
 }

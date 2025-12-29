@@ -335,6 +335,110 @@ await prisma.transaction.update({
 }
 
 // New webhook handler (Express-style; adapt to your framework)
+// async handlePaystackWebhook(req: any, res: any): Promise<void> {
+//   try {
+//     const event: PaystackWebhookEvent = req.body;
+//     const signature = req.headers['x-paystack-signature'];
+
+//     // 1. Verify the signature for security
+//     const secretKey = process.env.PAYSTACK_SECRET_KEY; // Ensure this is set
+//     if (!secretKey) {
+//       logger.error('Paystack secret key not configured');
+//       res.status(500).send('Server error');
+//       return;
+//     }
+
+//     const hash = crypto
+//       .createHmac('sha512', secretKey)
+//       .update(JSON.stringify(event))
+//       .digest('hex');
+//       console.log(hash)
+
+//     if (hash !== signature) {
+//       logger.error('Invalid Paystack signature');
+//       res.status(400).send('Invalid signature');
+//       return;
+//     }
+
+//     logger.info({ event: event.event }, 'Received Paystack webhook');
+
+//     const data = event.data;
+
+//     // 2. Handle only relevant events (e.g., charge.success)
+//     if (event.event === 'charge.success') {
+//       logger.info({ event: event.event }, 'Processing successful payment event');
+
+//       // Fetch the transaction with related booking periods
+//       const transaction = await prisma.transaction.findUnique({
+//         where: { reference: data.reference },
+//         include: {
+//           bookingPeriods: true, // Include related booking periods (handles multiple if any)
+//         },
+//       });
+
+//       if (!transaction) {
+//         logger.error({ reference: data.reference }, 'Transaction not found');
+//         res.status(404).send('Transaction not found');
+//         return;
+//       }
+
+//       // 3. Update transaction status and set payment date
+//       await prisma.transaction.update({
+//         where: { id: transaction.id },
+//         data: {
+//           status: 'success',
+//           date_paid: new Date(),
+//         },
+//       });
+
+//       // update booking period status 
+
+//       await prisma.bookingPeriod.updateMany({
+//   where: { transaction_id: transaction.id },
+//   data: { status: "booked" }
+// });
+
+//       logger.info({ transactionId: transaction.id }, 'Transaction updated to success');
+
+//       // 4. Create ApartmentLog entries for each booking period
+//       const createdLogs: any[] = []; // Array to track created logs (optional, for logging/batching)
+//       for (const bookingPeriod of transaction.bookingPeriods) {
+//         const apartmentLog = await prisma.apartmentLog.create({
+//           data: {
+//             apartment_id: transaction.apartment_id,
+//             transaction_id: transaction.id,
+//             booking_period_id: bookingPeriod.id,
+//             availability: false,
+//             status: 'booked',
+//             agentId: transaction.agent_id,
+//           },
+//         });
+//         createdLogs.push(apartmentLog);
+//         logger.info({ logId: apartmentLog.id }, 'ApartmentLog created');
+//       }
+
+//       if (createdLogs.length === 0) {
+//         logger.warn({ transactionId: transaction.id }, 'No booking periods found; no ApartmentLogs created');
+//       }
+
+//       // 5. Acknowledge success
+//       res.status(200).send('OK');
+//       return;
+//     } else {
+//       // Log other events but acknowledge to avoid retries
+//       logger.info({ event: event.event }, 'Unhandled Paystack event (acknowledged)');
+//       res.status(200).send('OK');
+//       return;
+//     }
+//   } catch (error) { 
+//     logger.error({
+//       message: 'Error in Paystack webhook handler',
+//       error: error instanceof Error ? error.message : error,
+//     });
+//     res.status(500).send('Webhook processing failed'); // Don't retry on server error
+//   }
+// }
+
 async handlePaystackWebhook(req: any, res: any): Promise<void> {
   try {
     const event: PaystackWebhookEvent = req.body;
@@ -352,6 +456,7 @@ async handlePaystackWebhook(req: any, res: any): Promise<void> {
       .createHmac('sha512', secretKey)
       .update(JSON.stringify(event))
       .digest('hex');
+    console.log(hash)
 
     if (hash !== signature) {
       logger.error('Invalid Paystack signature');
@@ -367,17 +472,38 @@ async handlePaystackWebhook(req: any, res: any): Promise<void> {
     if (event.event === 'charge.success') {
       logger.info({ event: event.event }, 'Processing successful payment event');
 
-      // Fetch the transaction with related booking periods
+      // Fetch the transaction (no need for bookingPeriods include yet, as they don't exist)
       const transaction = await prisma.transaction.findUnique({
         where: { reference: data.reference },
-        include: {
-          bookingPeriods: true, // Include related booking periods (handles multiple if any)
-        },
       });
 
       if (!transaction) {
         logger.error({ reference: data.reference }, 'Transaction not found');
         res.status(404).send('Transaction not found');
+        return;
+      }
+
+      // Optional: Re-check availability before creating bookings (to handle any race conditions)
+      // Extract booking periods from metadata
+      const metadata = transaction.metadata as any;
+      const metadataBookingPeriods = metadata?.bookingPeriods || [];
+      if (metadataBookingPeriods.length === 0) {
+        logger.error({ transactionId: transaction.id }, 'No booking periods in metadata');
+        res.status(500).send('Invalid transaction metadata');
+        return;
+      }
+
+      const bookingPeriodsToCreate = metadataBookingPeriods.map((p: any) => ({
+        startDate: new Date(p.startDate),
+        endDate: new Date(p.endDate),
+        durationDays: p.durationDays,
+      }));
+
+      // Re-validate availability (using your existing method)
+      const hasConflict = await this.isApartmentBookedForPeriods(transaction.apartment_id, bookingPeriodsToCreate);
+      if (hasConflict) {
+        logger.error({ transactionId: transaction.id }, 'Availability conflict detected on payment confirmation');
+        res.status(500).send('Availability changed; booking failed');
         return;
       }
 
@@ -390,14 +516,35 @@ async handlePaystackWebhook(req: any, res: any): Promise<void> {
         },
       });
 
-      logger.info({ transactionId: transaction.id }, 'Transaction updated to success');
+      // 4. Create BookingPeriod records from metadata
+      const createdBookingPeriods = [];
+      for (const periodData of metadataBookingPeriods) {
+        const bookingPeriod = await prisma.bookingPeriod.create({
+          data: {
+            transaction_id: transaction.id,
+            apartment_id: transaction.apartment_id,
+            start_date: new Date(periodData.startDate),
+            end_date: new Date(periodData.endDate),
+            duration_days: periodData.durationDays,
+            status: 'booked', // Set directly to booked since payment succeeded
+          },
+        });
+        createdBookingPeriods.push(bookingPeriod);
+        logger.info({ bookingPeriodId: bookingPeriod.id }, 'BookingPeriod created');
+      }
 
-      // 4. Create ApartmentLog entries for each booking period
-      const createdLogs: any[] = []; // Array to track created logs (optional, for logging/batching)
-      for (const bookingPeriod of transaction.bookingPeriods) {
+      if (createdBookingPeriods.length === 0) {
+        logger.error({ transactionId: transaction.id }, 'Failed to create booking periods');
+        res.status(500).send('Failed to create bookings');
+        return;
+      }
+
+      // 5. Create ApartmentLog entries for each booking period
+      const createdLogs: any[] = [];
+      for (const bookingPeriod of createdBookingPeriods) {
         const apartmentLog = await prisma.apartmentLog.create({
           data: {
-            apartment_id: transaction.apartment_id,
+            apartment_id: transaction.apartment_id, // Or bookingPeriod.apartment_id if different
             transaction_id: transaction.id,
             booking_period_id: bookingPeriod.id,
             availability: false,
@@ -410,10 +557,12 @@ async handlePaystackWebhook(req: any, res: any): Promise<void> {
       }
 
       if (createdLogs.length === 0) {
-        logger.warn({ transactionId: transaction.id }, 'No booking periods found; no ApartmentLogs created');
+        logger.warn({ transactionId: transaction.id }, 'No ApartmentLogs created');
       }
 
-      // 5. Acknowledge success
+      logger.info({ transactionId: transaction.id }, 'Transaction processed successfully: bookings and logs created');
+
+      // 6. Acknowledge success
       res.status(200).send('OK');
       return;
     } else {
@@ -422,7 +571,7 @@ async handlePaystackWebhook(req: any, res: any): Promise<void> {
       res.status(200).send('OK');
       return;
     }
-  } catch (error) {
+  } catch (error) { 
     logger.error({
       message: 'Error in Paystack webhook handler',
       error: error instanceof Error ? error.message : error,
