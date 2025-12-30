@@ -265,3 +265,20 @@ try {
   res.status(500).json(`${error.message}`)
 }
 }
+
+export const agenProfileDetails = async (req: Request, res: Response) => {
+  try {
+    const adminId = (req as any).admin.id;
+    const {status} = req.query as {status?: "info" | "payout" | "properties"}
+    const {agentId} = req.body;
+
+    checkAdminAccess(res, adminId);
+    const agentProfile = await adminService.getAgentProfileDetails(agentId, status);
+    res.status(200).json({
+      message: "Agent Profile successfully fetched",
+      data: agentProfile,
+    });
+  } catch (error) {
+    handleErrorReponse(res, error);
+  }
+}

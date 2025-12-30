@@ -9,6 +9,7 @@ import { differenceInDays, isSameDay, parseISO } from "date-fns";
 import { UpdateApartmentInput } from "../schema/apartment";
 import { AgentStatus } from "@prisma/client";
 import { sendRejectionMail } from "../email/notification";
+import { logger } from "../core/helpers/logger";
 // import { sendRejectionMail } from "../email/notification";
  
 class AdminService {
@@ -812,6 +813,135 @@ private validateAndParseBookingPeriods(startDates: string[], endDates: string[])
   
     return !!existingBooking;
   }
+
+async getAgentProfileDetails(agentId: string, status?: "info" | "payout" | "properties") {
+  try {
+    // Fetch the agent profile (always, for totals and info)
+    const agent = await prisma.agent.findUnique({
+      where: { id: agentId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        address: true,
+        phone_number: true,
+        bank_name: true,
+        account_number: true,
+        gender: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        profile_picture: true,
+        id_card: true,
+        slug: true,
+        personalUrl: true,
+        accountBalance: true,
+        nextOfKinAddress: true,
+        nextOfKinEmail: true,
+        nextOfKinName: true,
+        nextOfKinOccupation: true,
+        nextOfKinPhone: true,
+        nextOfKinStatus: true,
+        suspended: true,
+        // Exclude password
+      },
+    });
+
+    if (!agent) {
+      throw new Error("Agent not found");
+    }
+
+    // Calculate totals (always returned)
+    // Total Balance: from agent's accountBalance
+    const totalBalance = agent.accountBalance || 0;
+
+    // Total Pending: sum of pending payout amounts
+    const totalPendingAgg = await prisma.payout.aggregate({
+      _sum: { amount: true },
+      where: { agentId, status: "pending" },
+    });
+    const totalPending = totalPendingAgg._sum?.amount || 0;
+
+    // Total Earning: sum of successful payout amounts
+    const totalEarningAgg = await prisma.payout.aggregate({
+      _sum: { amount: true },
+      where: { agentId, status: "success" },
+    });
+    const totalEarning = totalEarningAgg._sum?.amount || 0;
+
+    // Total Active Properties: count of AgentListing for this agent (assuming all are active)
+    const totalActiveProperties = await prisma.agentListing.count({
+      where: { agent_id: agentId },
+    });
+
+    // Prepare data based on filter (or default to "info" if no status)
+    const effectiveStatus = status || "info";
+    let data = [];
+
+    if (effectiveStatus === "info") {
+      // Return agent profile details (exclude password)
+      data = [agent];
+    } else if (effectiveStatus === "payout") {
+      // Fetch all payouts for the agent, with transaction and booking periods
+      data = await prisma.payout.findMany({
+        where: { agentId },
+        include: {
+          transaction: {
+            include: {
+              bookingPeriods: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+    } else if (effectiveStatus === "properties") {
+      // Fetch all active listings with apartment details
+      data = await prisma.agentListing.findMany({
+        where: { agent_id: agentId },
+        include: {
+          apartment: {
+            select: {
+              id: true,
+              name: true,
+              address: true,
+              type: true,
+              servicing: true,
+              bedroom: true,
+              price: true,
+              images: true,
+              video_link: true,
+              agentPercentage: true,
+              amenities: true,
+              isBooked: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+        orderBy: { updated_at: "desc" },
+      });
+    }
+
+    // If no data for the filter, still return empty array
+    if (data.length === 0 && effectiveStatus !== "info") {
+      // Optional: Log or handle, but return empty
+    }
+
+    return {
+      totals: {
+        totalBalance,
+        totalPending,
+        totalEarning,
+        totalActiveProperties,
+      },
+      data, // Filtered data (or profile for "info")
+    };
+
+  } catch (error: any) {
+    logger.error({ agentId, status, error: error.message }, "Error fetching agent profile details");
+    throw new Error(error.message || "Failed to fetch agent profile details");
+  }
+}
 
 }
 
