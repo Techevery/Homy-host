@@ -200,7 +200,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
   } catch (error) {
     handleErrorReponse(res, error);
   }
-};
+};  
 
 // TODO: add legal name, preferred name, phone number, email, address, gender, profile picture, to admin login response object,
 

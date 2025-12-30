@@ -72,7 +72,7 @@ export const confirmPayout = async (req: Request, res: Response) => {
     const agentId = (req as any).agent.id;
 
     // Read optional query param: ?status=pending or ?status=success
-    const { status } = req.query as { status?: "pending" | "success" };
+    const { status } = req.query as { status?: "pending" | "success" | "upcoming" };
 
     // Call service with or without status
     const result = await walletService.agentTransactions(agentId, status);

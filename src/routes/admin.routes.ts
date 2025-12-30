@@ -24,7 +24,7 @@ router.get(
 router.post("/book", authenticateAdmin, adminController.offlineBoking )
 router.get("/list-agents", authenticateAdmin, adminController.listAgents);
 
-router.get("/agents-profile", Admin.getAgentProfile);
+router.get("/agents-profile", authenticateAdmin, Admin.getAgentProfile);
 
 router.get("/admin-profile", authenticateAdmin, adminController.adminProfile);
 

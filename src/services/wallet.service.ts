@@ -101,60 +101,111 @@ async confirmPayout(payoutId: string, remark: string, files: Express.Multer.File
   }
 }
 
-
-async agentTransactions(agentId: string, status?: "pending" | "success") {
+async agentTransactions(agentId: string, status?: "pending" | "success" | "upcoming") {
   try {
-    // Optional filter
-    const payoutFilter = status ? { status } : {};
+    const currentDate = new Date(); // Current date: Dec 30, 2025
 
-    // Fetch transactions + payout + booking periods
-    const payouts = await prisma.payout.findMany({
+    // Determine payout filter: for "upcoming", skip payout fetch; otherwise, filter if status provided
+    const payoutFilter = status && status !== "upcoming" ? { status } : {};
+    let payouts = [];
+    if (status !== "upcoming") {
+      // Fetch existing payouts + related transaction + booking periods
+      payouts = await prisma.payout.findMany({
+        where: {
+          agentId,
+          ...payoutFilter, // Optionally filter by status (pending/success)
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+    }
+
+    // Always fetch upcoming transactions (successful, not credited, future bookings)
+    // If status === "upcoming", this will be the main "payouts" data
+    const upcomingTransactions = await prisma.transaction.findMany({
       where: {
-        agentId,
-        ...payoutFilter, // optionally filter by status
+        agent_id: agentId,
+        status: 'success',
+        credited: false,
+        booking_start_date: { gt: currentDate },
       },
       include: {
-        transaction: {
-          include: {
-            bookingPeriods: true,
-          },
-        },
+        bookingPeriods: true,
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { created_at: 'desc' }
     });
 
-    if (!payouts || payouts.length === 0) {
+    // Transform upcoming transactions into "upcoming payout" objects
+    const allUpcomingPayouts = upcomingTransactions.map((transaction) => {
+      // Calculate agent commission (adjust formula as needed)
+      const commissionAmount = transaction.agentPercentage 
+        ? (transaction.agentPercentage / 100) * transaction.amount 
+        : 0;
+
       return {
-        message: "No transaction for this agent",
+        id: `upcoming-${transaction.id}`,
+        agentId: transaction.agent_id,
+        amount: commissionAmount,
+        status: 'upcoming' as const,
+        createdAt: transaction.created_at,
+        reference: transaction.reference,
+        transactionId: transaction.id,
+        bookingStartDate: transaction.booking_start_date,
+        bookingEndDate: transaction.booking_end_date,
+        durationDays: transaction.duration_days,
+      };
+    });
+
+    // For "upcoming" filter, use allUpcomingPayouts as the main data list
+    const filteredUpcomingPayouts = status === "upcoming" ? allUpcomingPayouts : [];
+
+    // Early return if no data at all
+    if (payouts.length === 0 && allUpcomingPayouts.length === 0) {
+      return {
+        message: "No transactions or upcoming payouts for this agent",
         payouts: [],
-        totalEarnings: 0,
-        totalPending: 0,
-        totalSuccess: 0
+        upcomingPayouts: [],
+        totals: {
+          totalPending: 0,
+          totalSuccess: 0,
+          totalUpcoming: 0,
+          totalPayout: 0 // Alias for totalSuccess
+        }
       };
     }
 
-    // Calculate totals
-    const totalEarnings = await prisma.payout.aggregate({
-      _sum: { amount: true },
-      where: { agentId, status: "success" }
-    });
-
-    const totalPending = await prisma.payout.aggregate({
+    // Calculate unfiltered totals
+    // Total Pending: sum of all pending payout amounts
+    const totalPendingAgg = await prisma.payout.aggregate({
       _sum: { amount: true },
       where: { agentId, status: "pending" }
     });
+    const totalPending = totalPendingAgg._sum?.amount || 0;
 
-    const totalSuccess = await prisma.payout.aggregate({
+    // Total Success (total earnings/payouts): sum of all successful payout amounts
+    const totalSuccessAgg = await prisma.payout.aggregate({
       _sum: { amount: true },
       where: { agentId, status: "success" }
     });
+    const totalSuccess = totalSuccessAgg._sum?.amount || 0;
+
+    // Total Upcoming: sum of all calculated commissions from upcoming transactions
+    const totalUpcoming = allUpcomingPayouts.reduce((sum, payout) => sum + payout.amount, 0);
 
     return {
-      payouts,
+      // Main filtered data: payouts (for pending/success/no filter) or upcomingPayouts (for upcoming filter)
+      data: status === "upcoming" ? filteredUpcomingPayouts : payouts,
+      // Always include full upcoming for reference (empty array if no upcoming)
+      upcomingPayouts: allUpcomingPayouts,
+      // Always include full payouts if not filtered to upcoming (for consistency)
+      allPayouts: status === "upcoming" ? await prisma.payout.findMany({
+        where: { agentId },
+        orderBy: { createdAt: 'desc' }
+      }) : payouts,
       totals: {
-        totalEarnings: totalEarnings._sum.amount || 0,
-        totalPending: totalPending._sum.amount || 0,
-        totalSuccess: totalSuccess._sum.amount || 0,
+        totalPending,
+        totalSuccess,
+        totalUpcoming,
+        totalPayout: totalSuccess // Assuming "total payout" means total successful payouts
       }
     };
 
@@ -162,7 +213,6 @@ async agentTransactions(agentId: string, status?: "pending" | "success") {
     throw new Error(error.message);
   }
 }
-
 
 async agentPayoutById(agentId: string, payoutId: string, status?: "pending" | "success") {
   try {

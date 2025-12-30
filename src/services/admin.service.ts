@@ -438,7 +438,7 @@ async rejectAgent(agentId: string, reason: string) {
     const personalizedURL = `${process.env.AGENT_BASE_URL}/${agent.slug}/properties`;
 
     return {
-      agentName: agent.name,
+      agentName: agent.name, 
       agentEmail: agent.email,
       agentPhone: agent.phone_number,
       agentURL: personalizedURL,
