@@ -287,6 +287,32 @@ export const getUnlistedApartmentsCtrl = async (
 };
 
 
+export const forgetPassword = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    const result = await agentService.initiatePasswordReset(email);
+    res.status(200).json({
+      message: "Password reset initiated",
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(500).json(`${error.message}`);
+  }
+}
+
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    const result = await agentService.resetPassword(token, newPassword);
+    res.status(200).json({
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(500).json(`${error.message}`);
+  }
+}
+
 function handleErrorResponse(res: Response, error: unknown) {
   console.error(error);
 

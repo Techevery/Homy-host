@@ -56,6 +56,7 @@ model Agent {
   FailedTransaction   FailedTransaction[]
   Transaction         Transaction[]
   apartment           Apartment[]         @relation("AgentApartments")
+  forgetPassword      ForgetPassword?
 
   @@map("agents")
 }
@@ -277,6 +278,16 @@ model Wallet {
   balance   Int      @default(0)
   createdAt DateTime @default(now())
   agent     Agent    @relation(fields: [agentId], references: [id])
+}
+
+model ForgetPassword {
+  id        String   @id @default(uuid())
+  agentId   String   @unique
+  token     String   @unique
+  createdAt DateTime @default(now())
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([token])
 }
 
 model Payout {

@@ -5,6 +5,7 @@ import Helper from "../core/helpers";
 import isEmail from "validator/lib/isEmail";
 import account_number from "validator/lib/isNumeric";
 import { findBankByName } from "../core/functions/bank";
+import { sendResetPasswordMail } from "../email/notification";
 // import * as validator from "../core/utils/validator";
 
 interface UpdateBannerParams {
@@ -593,7 +594,7 @@ async addPropertyToListing(
       throw new Error(`Something went wrong. ${error instanceof Error ? error.message : ''}`);
     }
   }
-
+ 
   async fetchBanner(agentId: any) {
       try {
           const banners = await prisma.agentBanner.findMany({
@@ -728,6 +729,48 @@ async getUnlistedApartments(
         hasMore,
       },
     };
+  }
+
+  async initiatePasswordReset(email: string) {
+    const agent = await prisma.agent.findUnique({ where: { email } });
+    if (!agent) {
+      throw new Error("Agent with this email does not exist");
+    }
+    // set up reset password link and send email logic here
+    const token = Helper.signToken({ id: agent.id, email: agent.email });
+    const resetLink = `${process.env.APP_URL}/reset-password?token=${token}`;
+
+    const hashToken = await Helper.hash(token, 10);
+    // save the token in the databse 
+    await prisma.forgetPassword.upsert({
+      where: { agentId: agent.id },
+      update: { token: hashToken, createdAt: new Date() },
+      create: { agentId: agent.id, token: hashToken },
+    }); 
+    
+    // send email with resetLink
+    await sendResetPasswordMail(
+      agent.email,
+      agent.name,
+      resetLink
+    );
+    return { resetLink };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const tokenMatch = Helper.verifyToken(token) as { id: string; email: string };
+    if (!tokenMatch || !tokenMatch.id) {
+      throw new Error("Invalid or expired token");
+    }
+    const hashedPassword = Helper.hash(newPassword);
+    await prisma.agent.update({
+      where: { id: tokenMatch.id },
+      data: { password: hashedPassword },
+    });
+    await prisma.forgetPassword.delete({
+      where: { agentId: tokenMatch.id },
+    });
+    return { message: "Password reset successful" };
   }
 }
 

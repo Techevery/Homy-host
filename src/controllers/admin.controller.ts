@@ -268,7 +268,7 @@ try {
 
 export const agenProfileDetails = async (req: Request, res: Response) => {
   try {
-    const adminId = (req as any).admin.id;
+    const adminId = (req as any).admin.id;  
     const {status} = req.query as {status?: "info" | "payout" | "properties"}
     const {agentId} = req.body;
 
