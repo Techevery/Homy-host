@@ -134,6 +134,12 @@ async agentTransactions(agentId: string, status?: "pending" | "success" | "upcom
       orderBy: { created_at: 'desc' }
     });
 
+    const totalActiveListings = await prisma.apartmentLog.count({
+      where: {
+        agentId,
+      },
+    });
+
     // Transform upcoming transactions into "upcoming payout" objects
     const allUpcomingPayouts = upcomingTransactions.map((transaction) => {
       // Calculate agent commission (adjust formula as needed)
@@ -168,7 +174,8 @@ async agentTransactions(agentId: string, status?: "pending" | "success" | "upcom
           totalPending: 0,
           totalSuccess: 0,
           totalUpcoming: 0,
-          totalPayout: 0 // Alias for totalSuccess
+          totalPayout: 0, // Alias for totalSuccess
+          activeListing: 0
         }
       };
     }
@@ -205,7 +212,8 @@ async agentTransactions(agentId: string, status?: "pending" | "success" | "upcom
         totalPending,
         totalSuccess,
         totalUpcoming,
-        totalPayout: totalSuccess // Assuming "total payout" means total successful payouts
+        totalPayout: totalSuccess, // Assuming "total payout" means total successful payouts
+        activeListing: totalActiveListings
       }
     };
 
