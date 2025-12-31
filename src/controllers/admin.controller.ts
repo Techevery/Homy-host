@@ -270,10 +270,13 @@ export const agenProfileDetails = async (req: Request, res: Response) => {
   try {
     const adminId = (req as any).admin.id;  
     const {status} = req.query as {status?: "info" | "payout" | "properties"}
-    const {agentId} = req.body;
+    const {agentId} = req.params;
 
-    checkAdminAccess(res, adminId);
+    if(!agentId) return res.status(400).json({message: "Agent ID is required"})
+
+    // checkAdminAccess(res, adminId);
     const agentProfile = await adminService.getAgentProfileDetails(agentId, status);
+    console.log(`AGENT PROFILE SERVICE: ${agentProfile}`)
     res.status(200).json({
       message: "Agent Profile successfully fetched",
       data: agentProfile,

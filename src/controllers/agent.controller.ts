@@ -305,8 +305,8 @@ export const resetPassword = async (req: Request, res: Response) => {
     const { token, newPassword } = req.body;
 
     const result = await agentService.resetPassword(token, newPassword);
-    res.status(200).json({
-      data: result,
+    res.status(200).json({ 
+      data: result,  
     });
   } catch (error: any) {
     res.status(500).json(`${error.message}`);

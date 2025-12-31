@@ -41,7 +41,7 @@ class WalletService {
 async getSuccesfulPayout(){
   try {
     const payout = await prisma.payout.findMany({
-      where: {status: PayoutStatus.success},
+      where: {status: PayoutStatus.success },
       include: {
         agent: {
           select: {
