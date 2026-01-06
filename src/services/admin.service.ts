@@ -799,6 +799,7 @@ private validateAndParseBookingPeriods(startDates: string[], endDates: string[])
     const existingBooking = await prisma.bookingPeriod.findFirst({
       where: {
         apartment_id: apartmentId, 
+        isDeleted: false,
         transaction: {
           status: "success" // Only check successful transactions
         },

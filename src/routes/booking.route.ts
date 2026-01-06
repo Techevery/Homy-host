@@ -5,16 +5,16 @@ import { authenticateAgent } from "../middlewares/Agent";
 
 const router = Router()
 
-router.get("/", authenticateAdmin, fetchAllBookings)
+router.get("/", authenticateAdmin, fetchAllBookings)     
 router.get("/booking-dates/:apartmentId", fetchBookingDates) 
 router.get("/manage-booking", manageBooking) 
 
 // agent bookings 
 router.get("/agent-booking", authenticateAgent, agentBookings)  
-
+     
 // expoted booking 
 router.get("/expire-bookings",authenticateAdmin, expiredBookings)
-// booking request 
+// booking request      
 router.get("/request", authenticateAdmin, bookingRequest)
 // deleted bookings 
 router.get("/deleted-bookings", authenticateAdmin, getDeletedBookings)

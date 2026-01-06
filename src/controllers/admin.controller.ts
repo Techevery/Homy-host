@@ -279,9 +279,9 @@ export const agenProfileDetails = async (req: Request, res: Response) => {
     console.log(`AGENT PROFILE SERVICE: ${agentProfile}`)
     res.status(200).json({
       message: "Agent Profile successfully fetched",
-      data: agentProfile,
-    });
-  } catch (error) {
+      data: agentProfile, 
+    });  
+  } catch (error) {     
     handleErrorReponse(res, error);
   }
 }

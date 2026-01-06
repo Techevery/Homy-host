@@ -129,7 +129,7 @@ async bookingRequest() {
       const booking = await prisma.bookingPeriod.findMany({
         where: {apartment_id: apartmentId, isDeleted: false, expired: false},
         select: {
-          start_date: true,
+          start_date: true, 
           end_date: true,
         }
       })

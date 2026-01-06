@@ -17,6 +17,8 @@ export const initiatePayment = async (req: Request, res: Response) => {
     fullName,
   } = req.body;
 
+  console.log(startDates, endDates, "initial dates")
+
   try {
     const result = await paymentService.initiatePayment(
       email,
@@ -61,7 +63,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
 
     const result = await paymentService.handlePaystackWebhook(req, res);
 
-    res.status(HttpStatusCode.HTTP_OK).json({     
+    res.status(200).json({     
       message: "Payment verified successfully",
       data: result,
     });
@@ -69,7 +71,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
     return;
   } catch (error) {
     if (error instanceof Error) {
-      res.status(HttpStatusCode.HTTP_BAD_REQUEST).json({
+      res.status(500).json({
         message: error.message,
       });
 
