@@ -513,7 +513,7 @@ async offlineBookings(apartmentId: string, startDate: string[], endDate: string[
     const agent = await prisma.admin.findUnique({ where: { id: adminId } });
     if (!agent) throw new Error(`No agent found for this apartment`);
 
-    const adminListing = await prisma.apartment.findFirst({ where: { adminId } });
+    const adminListing = await prisma.apartment.findFirst({ where: { adminId } });  
     if (!adminListing) throw new Error(`No agent found for this listing`);
 
     const booking = await this.validateAndParseBookingPeriods(startDate, endDate);

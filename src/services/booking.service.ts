@@ -1,6 +1,6 @@
 import { logger } from "../core/helpers/logger";
 import prisma from "../core/utils/prisma";
-import { differenceInDays, parseISO } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 
 interface BookingPeriod {
   startDate: Date;
@@ -128,10 +128,11 @@ async bookingRequest() {
     try {
       const booking = await prisma.bookingPeriod.findMany({
         where: {apartment_id: apartmentId, isDeleted: false, expired: false},
+        orderBy: { start_date: "desc" },
         select: {
           start_date: true, 
           end_date: true,
-        }
+        },
       })
       return booking 
     } catch (error) {

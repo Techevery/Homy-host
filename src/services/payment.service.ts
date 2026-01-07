@@ -70,7 +70,6 @@ class PaymentService {
       }
 
       // Validate and parse booking periods
-      console.log(startDates, endDates, "inital dates!")
       const bookingPeriods = this.validateAndParseBookingPeriods(startDates, endDates);
 
       // Get agent listing with pricing
