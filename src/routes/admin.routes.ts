@@ -31,7 +31,7 @@ router.get("/agents-profile", authenticateAdmin, Admin.getAgentProfile);
 
 router.get("/admin-profile", authenticateAdmin, adminController.adminProfile);
 
-router.patch(
+router.patch( 
   "/edit-profile",
   authenticateAdmin,
   adminController.editAdminProfile

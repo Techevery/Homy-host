@@ -15,6 +15,7 @@ import {
   getUnlistedApartmentsCtrl,
   forgetPassword,
   resetPassword,
+  updateAgentProfile,
 } from "../controllers/agent.controller";
 
 const router = express.Router();
@@ -24,6 +25,8 @@ router.get("/public-properties", publicProperties);
 
 router.post("/forget-password", forgetPassword); 
 router.post("/reset-password", resetPassword); 
+
+router.patch("/update-profile", authenticateAgent, updateAgentProfile) 
 
 // agent profile   
 router.get("/profile", authenticateAgent, agentprofileDetails)

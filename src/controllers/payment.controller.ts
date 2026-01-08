@@ -63,7 +63,6 @@ export const verifyPayment = async (req: Request, res: Response) => {
 
     res.status(200).json({     
       message: "Payment verified successfully", 
-      data: result,
     });
 
     return;

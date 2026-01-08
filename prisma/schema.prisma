@@ -8,6 +8,11 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum Role {
+ Admin 
+ Super_Admin
+}
+
 model Admin {
   id           String      @id @default(uuid())
   name         String
@@ -19,6 +24,7 @@ model Admin {
   updatedAt    DateTime    @updatedAt
   phone_number String      @unique @default("08080000000")
   apartments   Apartment[] @relation("AdminApartments")
+  role         Role?
 
   @@map("admins")
 }

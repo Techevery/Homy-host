@@ -257,6 +257,130 @@ async updateAgentProfile(
   } 
 }
 
+async updateAgent(
+  agentId: string,
+  agentData: Partial<{
+    name: string;
+    email: string;
+    password: string;
+    address: string; 
+    gender: string; 
+    phone_number: string;
+    bank_name: string;
+    account_number: string;
+    personalUrl: string;
+    nextOfKinName: string;
+    nextOfKinPhone: string;
+    nextOfKinAddress: string;
+    nextOfKinEmail: string;
+    nextOfKinStatus: string;
+    nextOfKinOccupation: string;  
+  }>,
+  files?: {
+    profile_picture?: Express.Multer.File[];
+  }
+) { 
+  try {
+    // Fetch existing agent first
+    const existingAgent = await prisma.agent.findUnique({
+      where: { id: agentId },
+    });
+
+    if (!existingAgent) {
+      throw new Error("Agent not found");
+    }
+
+    // Validate and prepare data only for provided fields
+    const updateData: any = { ...agentData };
+
+    // Email validation and uniqueness (only if email is provided and changed)
+    if (agentData.email && agentData.email !== existingAgent.email) {
+      if (!isEmail(agentData.email)) {
+        throw new Error("Invalid Email format");
+      }
+      const emailInUse = await prisma.agent.findUnique({
+        where: { email: agentData.email },
+      });
+      if (emailInUse && emailInUse.id !== agentId) {
+        throw new Error("Email already in use by another agent");
+      }
+      updateData.email = agentData.email;
+    }
+
+    // Bank validation (only if bank_name provided)
+    if (agentData.bank_name) {
+      const bank = findBankByName(agentData.bank_name);
+      if (!bank) {
+        throw new Error("Invalid Bank name, Please provide a valid Nigerian Bank");
+      }
+    }
+
+    // Account number validation (only if account_number provided)
+    if (agentData.account_number) {
+      if (!account_number(agentData.account_number)) {
+        throw new Error("Account number must be 10 digits long");
+      }
+    }
+
+    // Password hashing (only if password provided)
+    if (agentData.password) {
+      updateData.password = Helper.hash(agentData.password);
+    } else {
+      // Exclude password from update if not provided
+      delete updateData.password;
+    }
+
+    // Handle personalUrl and slug (only if personalUrl provided and changed)
+    if (agentData.personalUrl && agentData.personalUrl !== existingAgent.personalUrl.split('/').pop()) { // Rough check for change
+      const slug = await generateUniqueSlug(agentData.personalUrl);
+      const personalUrl = `${process.env.AGENT_BASE_URL}/${slug}`;
+      // Check if new slug/personalUrl is unique (excluding current agent)
+      const slugInUse = await prisma.agent.findFirst({
+        where: { 
+          slug,
+          id: { not: agentId }
+        },
+      });
+      if (slugInUse) {
+        throw new Error("Personal URL already in use");
+      }
+      updateData.personalUrl = personalUrl;
+      updateData.slug = slug;
+    }
+
+    // Handle file uploads (only if files provided)
+    let imageUrl: string | undefined = existingAgent.profile_picture;
+    let kycUrl: string | undefined = existingAgent.id_card;
+
+    if (files?.profile_picture?.[0]) {
+      // Optionally delete old image from Supabase if needed (implement if required)
+      imageUrl = await uploadImageToSupabase(files.profile_picture[0], "agents");
+    }
+
+    // Add file URLs to update data if changed
+    if (imageUrl !== existingAgent.profile_picture) {
+      updateData.profile_picture = imageUrl;
+    }
+    if (kycUrl !== existingAgent.id_card) {
+      updateData.id_card = kycUrl;
+    }
+
+    // Perform the update with only provided/changed fields
+    const agent = await prisma.agent.update({ 
+      where: { id: agentId },
+      data: updateData,
+    });
+
+    // Remove password from response
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...agentWithoutPassword } = agent;
+    return agentWithoutPassword;
+
+  } catch (error: any) {  
+    throw new Error(`Something went wrong. ${error instanceof Error ? error.message : ''}`);
+  } 
+}
+
   async getAllPublicProperties(page: number, limit: number) {
     const properties = await prisma.apartment.findMany({
       skip: (page - 1) * limit,

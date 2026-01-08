@@ -55,7 +55,7 @@ export const adminLogin = async (req: Request, res: Response) => {
 export const createAgent = async (req: Request, res: Response) => {
   upload(req, res, async (err) => {
     try {
-      if (err instanceof multer.MulterError) {
+      if (err instanceof multer.MulterError) {  
         return res
           .status(400)
           .json({ message: `File upload error: ${err.message}` });
