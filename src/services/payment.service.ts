@@ -1,4 +1,4 @@
-import { differenceInDays, parseISO } from "date-fns";
+import { differenceInDays, isSameDay, parseISO } from "date-fns";
 import Paystack from "./paystack";
 import { PaymentChannels, Currency } from "./paystack";
 import prisma from "../core/utils/prisma";
@@ -229,74 +229,31 @@ await prisma.transaction.update({
     }
   }
 
-  private validateAndParseBookingPeriods(startDates: string[], endDates: string[]): BookingPeriod[] {
+  // private validateAndParseBookingPeriods(startDates: string[], endDates: string[]): BookingPeriod[] {
     
-    const bookingPeriods: BookingPeriod[] = [];
-
-    for (let i = 0; i < startDates.length; i++) {
-      const startDate = startDates[i];
-      const endDate = endDates[i];
-
-      if (!startDate || !endDate) {
-        throw new Error("All start dates and end dates are required");
-      }
-
-      const parsedStartDate = parseISO(startDate + 'T00:00:00Z');
-      const parsedEndDate = parseISO(endDate + 'T00:00:00Z');
-
-      console.log(parsedStartDate, parsedEndDate, "parsed dates")
-
-      // if (parsedStartDate >= parsedEndDate) {
-      //   throw new Error(`End date must be after start date for period ${i + 1}`);
-      // }
-
-      const durationDays = differenceInDays(parsedEndDate, parsedStartDate);
-      if (durationDays <= 0) {
-        throw new Error(`Booking duration must be at least 1 day for period ${i + 1}`);
-      }
-
-      // Check for overlapping periods within the same booking request
-      for (const existingPeriod of bookingPeriods) {
-        if (
-          (parsedStartDate >= existingPeriod.startDate && parsedStartDate <= existingPeriod.endDate) ||
-          (parsedEndDate >= existingPeriod.startDate && parsedEndDate <= existingPeriod.endDate) ||
-          (parsedStartDate <= existingPeriod.startDate && parsedEndDate >= existingPeriod.endDate)
-        ) {
-          throw new Error(`Booking periods cannot overlap. Period ${i + 1} overlaps with another period`);
-        }
-      }
-
-      bookingPeriods.push({
-        startDate: parsedStartDate,
-        endDate: parsedEndDate,
-        durationDays
-      });
-    }
-
-    // Sort periods by start date
-    return bookingPeriods.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-  }
-
-  //   private validateAndParseBookingPeriods(startDates: string[], endDates: string[]): BookingPeriod[] {
   //   const bookingPeriods: BookingPeriod[] = [];
 
   //   for (let i = 0; i < startDates.length; i++) {
   //     const startDate = startDates[i];
   //     const endDate = endDates[i];
- 
+
   //     if (!startDate || !endDate) {
   //       throw new Error("All start dates and end dates are required");
   //     }
 
-  //     const parsedStartDate = parseISO(startDate);
-  //     const parsedEndDate = parseISO(endDate);
+  //     const parsedStartDate = parseISO(startDate + 'T00:00:00Z');
+  //     const parsedEndDate = parseISO(endDate + 'T00:00:00Z');
 
-  //     if (parsedStartDate > parsedEndDate) {
-  //       throw new Error(`End date must be on or after start date for period ${i + 1}`);
+  //     console.log(parsedStartDate, parsedEndDate, "parsed dates")
+
+  //     // if (parsedStartDate >= parsedEndDate) {
+  //     //   throw new Error(`End date must be after start date for period ${i + 1}`);
+  //     // }
+
+  //     const durationDays = differenceInDays(parsedEndDate, parsedStartDate);
+  //     if (durationDays <= 0) {
+  //       throw new Error(`Booking duration must be at least 1 day for period ${i + 1}`);
   //     }
-
-  //     const diff = differenceInDays(parsedEndDate, parsedStartDate);
-  //     const durationDays = Math.max(1, diff);
 
   //     // Check for overlapping periods within the same booking request
   //     for (const existingPeriod of bookingPeriods) {
@@ -313,12 +270,63 @@ await prisma.transaction.update({
   //       startDate: parsedStartDate,
   //       endDate: parsedEndDate,
   //       durationDays
-  //     }); 
+  //     });
   //   }
 
   //   // Sort periods by start date
   //   return bookingPeriods.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
   // }
+
+  private validateAndParseBookingPeriods(startDates: string[], endDates: string[]): BookingPeriod[] {
+    const bookingPeriods: BookingPeriod[] = [];
+  
+    for (let i = 0; i < startDates.length; i++) {
+      const startDateStr = startDates[i];
+      const endDateStr = endDates[i];
+  
+      if (!startDateStr || !endDateStr) {
+        throw new Error("All start dates and end dates are required");
+      }
+  
+      // Parse as UTC midnight to preserve exact calendar date in storage
+      const parsedStartDate = parseISO(startDateStr + 'T00:00:00Z');
+      const parsedEndDate = parseISO(endDateStr + 'T00:00:00Z');
+  
+      if (parsedStartDate > parsedEndDate) {
+        throw new Error(`End date must be on or after start date for period ${i + 1}`);
+      }
+  
+      let durationDays: number;
+      if (isSameDay(parsedStartDate, parsedEndDate)) {
+        durationDays = 1;
+      } else {
+        durationDays = differenceInDays(parsedEndDate, parsedStartDate);
+        if (durationDays < 1) {
+          throw new Error(`Booking duration must be at least 1 day for period ${i + 1}`);
+        }
+      }
+  
+      // Check for overlapping periods within the same booking request
+      for (const existingPeriod of bookingPeriods) { 
+        if (
+          (parsedStartDate >= existingPeriod.startDate && parsedStartDate <= existingPeriod.endDate) ||
+          (parsedEndDate >= existingPeriod.startDate && parsedEndDate <= existingPeriod.endDate) ||
+          (parsedStartDate <= existingPeriod.startDate && parsedEndDate >= existingPeriod.endDate)
+        ) {
+          throw new Error(`Booking periods cannot overlap. Period ${i + 1} overlaps with another period`);
+        }
+      }
+  
+      bookingPeriods.push({
+        startDate: parsedStartDate,
+        endDate: parsedEndDate,
+        durationDays,
+      });
+    }
+  
+    // Sort periods by start date
+    return bookingPeriods.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  }
 
   /**
    * Check if apartment is booked for any of the periods
@@ -418,8 +426,6 @@ async handlePaystackWebhook(req: any, res: any): Promise<void> {
         where: { reference: data.reference },
       });
 
-      console.log(transaction, "Transaction")
-
       if (!transaction) {
         logger.error({ reference: data.reference }, 'Transaction not found');
         res.status(404).send('Transaction not found'); 
@@ -441,8 +447,6 @@ async handlePaystackWebhook(req: any, res: any): Promise<void> {
         endDate: new Date(p.endDate),
         durationDays: p.durationDays,
       }));
-
-      console.log(bookingPeriodsToCreate, "Booking to create")
 
       // Re-validate availability (using your existing method)
       const hasConflict = await this.isApartmentBookedForPeriods(transaction.apartment_id, bookingPeriodsToCreate);
