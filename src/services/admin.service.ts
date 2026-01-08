@@ -577,8 +577,6 @@ async offlineBookings(apartmentId: string, startDate: string[], endDate: string[
         }
       });
       createdBookingPeriods.push(bookingPeriod);
-
-      console.log(JSON.stringify(createdBookingPeriods, null, 2))
     
       // Also create apartment log for each period
       await prisma.apartmentLog.create({

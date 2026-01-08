@@ -230,6 +230,7 @@ await prisma.transaction.update({
   }
 
   private validateAndParseBookingPeriods(startDates: string[], endDates: string[]): BookingPeriod[] {
+    
     const bookingPeriods: BookingPeriod[] = [];
 
     for (let i = 0; i < startDates.length; i++) {
@@ -240,8 +241,10 @@ await prisma.transaction.update({
         throw new Error("All start dates and end dates are required");
       }
 
-      const parsedStartDate = parseISO(startDate);
-      const parsedEndDate = parseISO(endDate);
+      const parsedStartDate = parseISO(startDate + 'T00:00:00Z');
+      const parsedEndDate = parseISO(endDate + 'T00:00:00Z');
+
+      console.log(parsedStartDate, parsedEndDate, "parsed dates")
 
       // if (parsedStartDate >= parsedEndDate) {
       //   throw new Error(`End date must be after start date for period ${i + 1}`);
@@ -475,7 +478,7 @@ async handlePaystackWebhook(req: any, res: any): Promise<void> {
         logger.info({ bookingPeriodId: bookingPeriod.id }, 'BookingPeriod created');
       }
  
-      console.log(createdBookingPeriods, "created periods")
+      console.log(JSON.stringify(createdBookingPeriods, null, 2))
 
       if (createdBookingPeriods.length === 0) {
         logger.error({ transactionId: transaction.id }, 'Failed to create booking periods');
