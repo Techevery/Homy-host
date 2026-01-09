@@ -127,8 +127,8 @@ class AdminService {
       bedroom: string;
       price: number;
       amenities: string,
-      loction: string
-      agentPercentage: number
+      agentPercentage: number,
+      location: string
     },
     files?: Express.Multer.File[]
   ) {

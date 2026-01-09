@@ -62,8 +62,8 @@ export const createApartment = async (req: Request, res: Response) => {
           bedroom,
           price: parsedPrice,   
           amenities,
-          location,
-          agentPercentage: parsedPercentage
+          agentPercentage: parsedPercentage,
+          location
         },
         req.files as Express.Multer.File[]
       );
