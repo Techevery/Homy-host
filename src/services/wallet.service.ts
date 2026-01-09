@@ -11,7 +11,7 @@ class WalletService {
         status: { in: ["pending", "rejected"] }, // Updated: Now includes both "pending" and "cancelled"
       },
       include: {
-        agent: {
+        agent: { 
           select: {
             id: true,
             name: true,

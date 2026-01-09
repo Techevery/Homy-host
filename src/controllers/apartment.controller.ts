@@ -39,7 +39,7 @@ export const createApartment = async (req: Request, res: Response) => {
       const adminId = (req as any).admin.id;
       checkAdminAccess(res, adminId);
 
-      const { name, address, type, servicing, bedroom, price, amenities, agentPercentage } = req.body;
+      const { name, address, type, servicing, bedroom, price, amenities, agentPercentage, location } = req.body;
 
       const parsedPrice = parseInt(price, 10);
       const parsedPercentage = parseInt(agentPercentage, 10)
@@ -62,6 +62,7 @@ export const createApartment = async (req: Request, res: Response) => {
           bedroom,
           price: parsedPrice,   
           amenities,
+          location,
           agentPercentage: parsedPercentage
         },
         req.files as Express.Multer.File[]
@@ -80,61 +81,6 @@ export const createApartment = async (req: Request, res: Response) => {
     }   
   }); 
 }; 
-
-
-// export const updateApartment = async (req: Request, res: Response) => {
-//   // Define Multer locally, matching createApartment config
-//   const upload = multer({
-//     storage: multer.memoryStorage(),
-//   }).array("images", 10);
-
-//   upload(req, res, async (err) => {
-//     try {
-//       if (err instanceof multer.MulterError) {
-//         return res.status(400).json({
-//           message: `File upload error: ${err.message}`,
-//         });
-//       } else if (err) {
-//         return res.status(500).json({
-//           message: "Unknown file upload error",
-//         });
-//       }
-
-//       const adminId = (req as any).admin.id;
-//       checkAdminAccess(res, adminId);
-
-//       const apartmentId = req.params.apartmentId;
-//       if (!apartmentId) {
-//         return res.status(400).json({
-//           message: "Apartment ID is required",
-//         });
-//       }
-
-//       // Schema now transforms price to number and deleteExistingImages to boolean
-//       const body: UpdateApartmentInput = updateApartmentSchema.parse(req.body);
-//       const files = req.files as Express.Multer.File[] | undefined; // Now correctly an array
-
-//       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-//       const { deleteExistingImages: _, ...updateData } = body;
-
-//       const updatedApartment = await adminService.updateApartment( 
-//         apartmentId,
-//         updateData,
-//         files,
-//         body.deleteExistingImages // Use the transformed boolean from body
-//       );
-
-//       successResponse(
-//         res,
-//         200,
-//         "Apartment Updated Successfully",
-//         updatedApartment
-//       );
-//     } catch (error) {
-//       handleErrorReponse(res, error);
-//     }
-//   });
-// };
 
 export const updateApartment = async (req: Request, res: Response) => {
   const upload = multer({

@@ -82,6 +82,7 @@ model Apartment {
   video_link        String?
   agentPercentage   Int?
   amenities         String?
+  location          String?
   isBooked          Boolean             @default(false)
   AgentListing      AgentListing[]
   createdBy         Admin               @relation("AdminApartments", fields: [adminId], references: [id])

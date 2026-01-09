@@ -60,7 +60,7 @@ export const confirmPayout = async (req: Request, res: Response) => {
   
     export const getSucessfulPayout = async (req: Request, res: Response) => {
       try {
-        const result = await walletService.getSuccesfulPayout()
+        const result = await walletService.getPayoutHistory()
         res.status(200).json(result)
       } catch (error: any) {
         res.status(500).json(`${error.message}`)
