@@ -229,54 +229,6 @@ await prisma.transaction.update({
     }
   }
 
-  // private validateAndParseBookingPeriods(startDates: string[], endDates: string[]): BookingPeriod[] {
-    
-  //   const bookingPeriods: BookingPeriod[] = [];
-
-  //   for (let i = 0; i < startDates.length; i++) {
-  //     const startDate = startDates[i];
-  //     const endDate = endDates[i];
-
-  //     if (!startDate || !endDate) {
-  //       throw new Error("All start dates and end dates are required");
-  //     }
-
-  //     const parsedStartDate = parseISO(startDate + 'T00:00:00Z');
-  //     const parsedEndDate = parseISO(endDate + 'T00:00:00Z');
-
-  //     console.log(parsedStartDate, parsedEndDate, "parsed dates")
-
-  //     // if (parsedStartDate >= parsedEndDate) {
-  //     //   throw new Error(`End date must be after start date for period ${i + 1}`);
-  //     // }
-
-  //     const durationDays = differenceInDays(parsedEndDate, parsedStartDate);
-  //     if (durationDays <= 0) {
-  //       throw new Error(`Booking duration must be at least 1 day for period ${i + 1}`);
-  //     }
-
-  //     // Check for overlapping periods within the same booking request
-  //     for (const existingPeriod of bookingPeriods) {
-  //       if (
-  //         (parsedStartDate >= existingPeriod.startDate && parsedStartDate <= existingPeriod.endDate) ||
-  //         (parsedEndDate >= existingPeriod.startDate && parsedEndDate <= existingPeriod.endDate) ||
-  //         (parsedStartDate <= existingPeriod.startDate && parsedEndDate >= existingPeriod.endDate)
-  //       ) {
-  //         throw new Error(`Booking periods cannot overlap. Period ${i + 1} overlaps with another period`);
-  //       }
-  //     }
-
-  //     bookingPeriods.push({
-  //       startDate: parsedStartDate,
-  //       endDate: parsedEndDate,
-  //       durationDays
-  //     });
-  //   }
-
-  //   // Sort periods by start date
-  //   return bookingPeriods.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-  // }
-
   private validateAndParseBookingPeriods(startDates: string[], endDates: string[]): BookingPeriod[] {
     const bookingPeriods: BookingPeriod[] = [];
   
@@ -405,8 +357,6 @@ async handlePaystackWebhook(req: any, res: any): Promise<void> {
       .update(JSON.stringify(event))
       .digest('hex'); 
  
-      console.log(hash)      
-
     if (hash !== signature) {
       logger.error('Invalid Paystack signature');
       res.status(400).send('Invalid signature');
@@ -475,15 +425,13 @@ async handlePaystackWebhook(req: any, res: any): Promise<void> {
             start_date: new Date(periodData.startDate),
             end_date: new Date(periodData.endDate),
             duration_days: periodData.durationDays,
-            status: 'booked', // Set directly to booked since payment succeeded
+            status: 'booked',
           },
         });
         createdBookingPeriods.push(bookingPeriod);
         logger.info({ bookingPeriodId: bookingPeriod.id }, 'BookingPeriod created');
       }
  
-      console.log(JSON.stringify(createdBookingPeriods, null, 2))
-
       if (createdBookingPeriods.length === 0) {
         logger.error({ transactionId: transaction.id }, 'Failed to create booking periods');
         res.status(500).send('Failed to create bookings');

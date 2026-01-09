@@ -107,7 +107,7 @@ export const updateAgent = async (req: Request, res: Response) => {
       } else if (err) {
         return res.status(500).json({ message: "Unknown file upload error" });
       }
-
+ 
     const agentId = (req as any).agent.id;
       
       const agent = await agentService.updateAgentProfile(

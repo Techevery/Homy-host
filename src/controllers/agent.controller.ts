@@ -137,18 +137,6 @@ export const getPropertiesBySlug = async (req: Request, res: Response) => {
   }
 };
 
-export const updateProfile = async (req:Request, res:Response) => {
-  try {
-      const agentId = (req as any).agent.id;
-    checkAgentAccess(res, agentId);
-    const {personalUrl} = req.body
-    // const result = await this.agentService.updateAgentProfile(agentId, )
-    // res.ststus(200).json(result)
-  } catch (error: any) {
-    res.status(400).json(`${error.message}`)
-  }
-}
-
 export const createAgentBanner = async (req: Request, res: Response) => {
   try {
     const agentId = (req as any).agent.id;
@@ -313,41 +301,6 @@ export const resetPassword = async (req: Request, res: Response) => {
   }
 }
 
-export const updateAgentProfile = async (req: Request, res: Response) => {
-  upload(req, res, async (err) => {
-    try {
-      if (err instanceof multer.MulterError) {  
-        return res
-          .status(400)
-          .json({ message: `File upload error: ${err.message}` });
-      } else if (err) {
-        return res.status(500).json({ message: "Unknown file upload error" });
-      }
-
-              const agentId = (req as any).agent.id;
-      if (!agentId) {
-        return res.status(400).json({ message: "Agent ID is required" });
-      }
-
-      const agentData = req.body; // Partial data from request body
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const files = req.files as any;
-
-      const agent = await agentService.updateAgent(
-        agentId,
-        agentData,
-        files
-      );
-
-      return res.status(200).json({
-        message: "Agent profile updated successfully",
-        data: agent,
-      });
-    } catch (error) {
-      handleErrorResponse(res, error); // Fixed typo from original
-    }  
-  });
-};
 
 function handleErrorResponse(res: Response, error: unknown) {
   console.error(error);
