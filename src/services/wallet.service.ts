@@ -38,10 +38,10 @@ class WalletService {
   }
 }
   
-async getSuccesfulPayout(){
+async getPayoutHistory(){
   try {
     const payout = await prisma.payout.findMany({
-      where: {status: PayoutStatus.success },
+      where: {status: { in: ["success", "rejected"],  }},
       include: {
         agent: {
           select: {
@@ -323,7 +323,7 @@ async rejectPayout(payoutId: string, reason: string){
       include: {agent: {select: {name: true, id: true, email: true}}}
     })
     const agentEmail = payout.agent.email;
-    const agentName = payout.agent.name;
+    const agentName = payout.agent.name; 
 
     // Send confirmation mail to agent using remark as success details
     await rejectPayoutMail(agentEmail, agentName, reason);

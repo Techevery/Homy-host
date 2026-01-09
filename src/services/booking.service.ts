@@ -309,15 +309,26 @@ async expireBookings() {
   }
 }
 
- async agentBookingDetails(agentId: string){
+async agentBookingDetails(agentId: string){
   try {
-    const bookings = await prisma.apartmentLog.findMany({where: {
-      agentId, status: "booked",
-    },
-    include: {transaction: true}, 
-    orderBy: {created_at: "desc"} 
-  })
-  if(!bookings) throw new Error (`No bookings found for this agent!`)
+    const bookings = await prisma.apartmentLog.findMany({
+      where: {
+        agentId,
+        status: "booked",
+      },
+      include: {
+        transaction: true,
+        apartment: {
+          select: {
+            name: true,
+            address: true,
+            type: true
+          }
+        }
+      },
+      orderBy: {created_at: "desc"}
+    });
+    if(!bookings) throw new Error (`No bookings found for this agent!`)
     return bookings 
   } catch (error) {
     throw new Error(`${error.message}`)      
