@@ -81,7 +81,7 @@ async confirmPayout(payoutId: string, remark: string, files: Express.Multer.File
     const payout = await prisma.payout.update({
       where: { id: payoutId },  
       data: {  
-        proof: imageUrl || undefined, // Only set if provided; Prisma will ignore undefined
+        proof: imageUrl,
         status: "success",
         remark,
       },

@@ -171,6 +171,9 @@ async bookingRequest() {
             name: true,
             address: true,
             price: true,
+            location: true,
+            type: true,
+            servicing: true,
           },
         },
         transaction: {
@@ -185,6 +188,14 @@ async bookingRequest() {
             duration_days: true,
           },
         },
+        agent:{
+          select: {
+            id: true,
+            name: true,   
+            email: true,
+            phone_number: true,
+          }
+        }
       },
       orderBy: { created_at: 'desc' },
     });
@@ -322,7 +333,8 @@ async agentBookingDetails(agentId: string){
           select: {
             name: true,
             address: true,
-            type: true
+            type: true,
+            location: true
           }
         }
       },
@@ -339,7 +351,7 @@ async getDeletedBookings(){
   try {
     const bookings = await prisma.deletedBooking.findMany({
       include: {
-        booking_period: {
+        booking_period: {  
           include: {
             transaction: true,
             apartment: true

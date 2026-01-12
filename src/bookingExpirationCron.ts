@@ -13,7 +13,7 @@ static async checkAndExpireBookings(): Promise<void> {
     const bookings = await prisma.bookingPeriod.findMany({
       where: {
         expired: false,
-        isDeleted: false,
+        isDeleted: false, 
       },
     });
 
