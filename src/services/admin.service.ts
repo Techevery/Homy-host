@@ -234,6 +234,7 @@ async updateApartment(
     if (updateData.servicing !== undefined) data.servicing = updateData.servicing;
     if (updateData.bedroom !== undefined) data.bedroom = updateData.bedroom;
     if (updateData.price !== undefined) data.price = updateData.price;
+    if (updateData.location !== undefined) data.location = updateData.location;
 
     const updatedApartment = await prisma.apartment.update({
       where: { id: apartmentId },
@@ -268,6 +269,7 @@ async updateApartment(
         bedroom: true,
         price: true,
         images: true,
+        location: true,
         video_link: true,
         adminId: true,
         agentPercentage: true,

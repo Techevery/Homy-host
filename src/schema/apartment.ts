@@ -6,6 +6,7 @@ export const updateApartmentSchema = z
     address: z.string().optional(),
     type: z.enum(["Flat", "House", "Apartment", "Villa"]).optional(),
     amenities: z.string().optional(),
+    location: z.string().optional(),
     agentPercentage: z.string()
       .regex(/^\d+$/, "Agent percentage must be a valid non-negative integer")
       .transform((val) => parseInt(val, 10))
