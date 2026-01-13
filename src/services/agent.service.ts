@@ -530,6 +530,7 @@ async addPropertyToListing(
             bedroom: true,
             amenities: true,
             price: true, // base price
+            location: true,
             images: true,
             createdAt: true,
             updatedAt: true,
