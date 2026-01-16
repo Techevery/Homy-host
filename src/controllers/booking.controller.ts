@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import bookingService from "../services/booking.service";
-import walletService from "../services/wallet.service";
 
 export const fetchAllBookings = async (req: Request, res: Response) => {
   try {

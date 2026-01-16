@@ -128,7 +128,7 @@ async bookingRequest() {
     try {
       const booking = await prisma.bookingPeriod.findMany({
         where: {apartment_id: apartmentId, isDeleted: false, expired: false},
-        orderBy: { start_date: "desc" },
+        orderBy: { start_date: "desc" }, 
         select: {
           start_date: true, 
           end_date: true,
@@ -149,7 +149,7 @@ async bookingRequest() {
             const whereClause: any = {
       AND: [],
     };
-
+   
     if (email) {
       whereClause.AND.push({
         transaction: { email: email.toLowerCase() },
