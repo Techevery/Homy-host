@@ -799,7 +799,7 @@ private validateAndParseBookingPeriods(startDates: string[], endDates: string[])
     if (isSameDay(parsedStartDate, parsedEndDate)) {
       durationDays = 1;
     } else {
-      durationDays = differenceInDays(parsedEndDate, parsedStartDate);
+      durationDays = differenceInDays(parsedEndDate, parsedStartDate) + 1;
       if (durationDays < 1) {
         throw new Error(`Booking duration must be at least 1 day for period ${i + 1}`);
       }
@@ -837,7 +837,7 @@ private validateAndParseBookingPeriods(startDates: string[], endDates: string[])
     }
     return false;
   }
-
+ 
   private async getConflictingPeriods(apartmentId: string, bookingPeriods: BookingPeriod[]): Promise<BookingPeriod[]> {
     const conflictingPeriods: BookingPeriod[] = [];
 

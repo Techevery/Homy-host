@@ -156,6 +156,9 @@ async updateAgentProfile(
     nextOfKinEmail?: string;
     nextOfKinStatus?: string; 
     nextOfKinOccupation?: string;  
+    phone_number: string;
+    bank_name: string;
+    account_number: string;
   },
   files?: {
     profile_picture?: Express.Multer.File[];
