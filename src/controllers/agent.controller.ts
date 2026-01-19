@@ -133,7 +133,7 @@ export const getPropertiesBySlug = async (req: Request, res: Response) => {
   } catch (error) {
     handleErrorResponse(res, error);
 
-    return;
+    return; 
   }
 };
 
@@ -298,6 +298,14 @@ export const resetPassword = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     res.status(500).json(`${error.message}`);
+  }
+}
+
+export const createAdmin = async (req: Request, res: Response) => {
+  try {
+     
+  } catch (error) {
+    
   }
 }
 

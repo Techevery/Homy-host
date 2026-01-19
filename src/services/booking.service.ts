@@ -187,7 +187,7 @@ async bookingRequest() {
             booking_end_date: true,
             duration_days: true,
             agent: {
-              select: {name: true, id: true, phone_number: true}
+              select: {name: true, id: true, phone_number: true, email: true}
             }
           },
         },

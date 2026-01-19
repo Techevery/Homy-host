@@ -877,7 +877,7 @@ async getAgentProfileDetails(agentId: string, status?: "info" | "payout" | "prop
     const agent = await prisma.agent.findUnique({
       where: { id: agentId },
       select: {
-        id: true,
+        id: true,      
         name: true,
         email: true,
         address: true,
