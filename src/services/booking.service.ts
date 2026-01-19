@@ -162,7 +162,7 @@ async bookingRequest() {
       });
     }
 
-    const bookings = await prisma.apartmentLog.findMany({
+    const bookings = await prisma.bookingPeriod.findMany({
       where: whereClause,
       include: {
         apartment: {
@@ -186,16 +186,11 @@ async bookingRequest() {
             booking_start_date: true,
             booking_end_date: true,
             duration_days: true,
+            agent: {
+              select: {name: true, id: true, phone_number: true}
+            }
           },
         },
-        agent:{
-          select: {
-            id: true,
-            name: true,   
-            email: true,
-            phone_number: true,
-          }
-        }
       },
       orderBy: { created_at: 'desc' },
     });

@@ -375,7 +375,7 @@ async rejectAgent(agentId: string, reason: string) {
 
     const [agents, totalCount] = await Promise.all([
       prisma.agent.findMany({
-        skip,
+        skip,  
         take: pageSize,
         select: {
           id: true,
