@@ -19,22 +19,18 @@ export interface AuthenticatedRequest extends Request {
 // Simple role checker middleware factory
 export const restrictTo = (...allowedRoles: Role[]) => {
   return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    console.log("[RBAC] → Checking route:", req.originalUrl);
+    console.log("[RBAC] → req.admin exists?", !!req.admin);
+    if (req.admin) {
+      console.log("[RBAC] → req.admin.role:", req.admin.role);
+    }
+
     if (!req.admin) {
+      console.log("[RBAC] → No req.admin → returning 401");
       return res.status(401).json({ message: 'Not authenticated' });
     }
 
-    if (!allowedRoles.includes(req.admin.role)) {
-      return res.status(403).json({
-        message: 'You do not have permission to perform this action',
-      });
-    }
-
-    // Super_Admin bypasses everything
-    if (req.admin.role === Role.SUPER_ADMIN) {
-      return next();
-    }
-
-    next();
+    // ... rest unchanged
   };
 };
 

@@ -64,7 +64,7 @@ class AdminService {
 
     if (!isPasswordValid) throw new Error("Invalid credentials");
 
-    const token = Helper.signToken({ id: admin.id, email: admin.email });
+    const token = Helper.signToken({ id: admin.id, email: admin.email, role: admin.role });
 
     return {
       token,

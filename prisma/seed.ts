@@ -8,7 +8,7 @@ async function main() {
     console.log("....Seeding Admin....")
 
     const admin = await prisma.admin.findFirst({
-      where: { email: "admin@dev.com" },
+      where: { email: "techeveryng@gmail.com" },
     });
   
     const hashedPassword = Helper.hash("adminpassword", 10);

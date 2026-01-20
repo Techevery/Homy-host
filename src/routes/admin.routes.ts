@@ -3,15 +3,14 @@ import * as Admin from "../controllers/admin.controller";
 import { authenticateAdmin } from "../middlewares/Admin";
 import * as adminController from "../controllers/admin.controller";
 import * as apartmentController from "../controllers/apartment.controller";
-import { attachAdminToRequest } from "../middlewares/roles";
+import { restrictTo, Role } from "../middlewares/roles";
 // import { restrictTo, Role, attachAdminToRequest } from '../middlewares/role.middleware';
 const router = express.Router();
 
-router.use(attachAdminToRequest); // ← attach admin info to every request
-
-router.post(
+router.post( 
   "/upload-property",
-  authenticateAdmin, 
+  authenticateAdmin,
+  restrictTo(Role.SUPER_ADMIN),
   apartmentController.createApartment
 ); 
 
@@ -20,12 +19,13 @@ router.put("/verify-agent", authenticateAdmin, adminController.verifyAgent);
 router.get( 
   "/list-apartments",
   authenticateAdmin,
+  restrictTo(Role.SUPER_ADMIN),
   adminController.listProperties
 );
 
 // offline booking ,
 router.post("/book", authenticateAdmin, adminController.offlineBoking )
-router.get("/list-agents", authenticateAdmin, adminController.listAgents);
+router.get("/list-agents",authenticateAdmin, adminController.listAgents);
 
 // agent profile 
 router.get("/agent-profile/:agentId", authenticateAdmin, Admin.agenProfileDetails)
@@ -46,24 +46,27 @@ router.get(
   apartmentController.searchApartment
 );
 
-router.get("/stats", authenticateAdmin, adminController.getDashboardStats);
+router.get("/stats",  authenticateAdmin, adminController.getDashboardStats);
 
 // suspend agent 
 router.patch(
-  "/suspend-agent", 
-  authenticateAdmin,
+  "/suspend-agent",
+  authenticateAdmin, 
+    restrictTo(Role.SUPER_ADMIN),
   adminController.suspendAgentToggle 
 );
 
 router.delete(
-  "/:apartmentId",  
-  authenticateAdmin,
+  "/:apartmentId",
+  authenticateAdmin,  
+    restrictTo(Role.SUPER_ADMIN),
   apartmentController.deleteApartment
 );   
 
 router.post(
   "/get-transaction-details",
   authenticateAdmin,
+    restrictTo(Role.SUPER_ADMIN),
   adminController.getTransactionDetailsByYear
 );  
 

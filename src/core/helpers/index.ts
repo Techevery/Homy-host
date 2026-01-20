@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { logger } from "./logger";
 import { randomUUID } from "crypto";
 import path from "path";
+import { Role } from "@prisma/client";
 
 export default class Helper {
   private static getSecretKey():string {
@@ -15,10 +16,10 @@ export default class Helper {
     return secret;
   };
 
-  static signToken(payload: { id: string | undefined; email: string | undefined }): string {
+  static signToken(payload: { id: string | undefined; email: string | undefined; role?: String | undefined; }): string {
     const token = jwt.sign(payload, this.getSecretKey(),{
       expiresIn:"7d",
-    });
+    }); 
 
     return token;
   }
