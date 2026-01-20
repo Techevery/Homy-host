@@ -9,8 +9,8 @@ datasource db {
 }
 
 enum Role {
- Admin 
- Super_Admin
+ ADMIN
+ SUPER_ADMIN
 }
 
 model Admin {
@@ -24,8 +24,7 @@ model Admin {
   updatedAt    DateTime    @updatedAt
   phone_number String      @unique @default("08080000000")
   apartments   Apartment[] @relation("AdminApartments")
-  role         Role?
-
+  role         Role        @default(ADMIN) 
   @@map("admins")
 }
 

@@ -323,7 +323,7 @@ async agentBookingDetails(agentId: string){
         status: "booked",
       },
       include: {
-        transaction: true,
+        transaction: true, 
         apartment: {
           select: {
             name: true,

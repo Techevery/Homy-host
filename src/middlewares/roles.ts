@@ -1,0 +1,78 @@
+import { Request, Response, NextFunction } from 'express';
+import { PrismaClient, Role as PrismaRole } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+export enum Role {
+  ADMIN = 'ADMIN',
+  SUPER_ADMIN = 'SUPER_ADMIN',
+}
+
+export interface AuthenticatedRequest extends Request {
+  admin?: {
+    id: string;
+    email: string;
+    role: Role;
+  };
+}
+
+// Simple role checker middleware factory
+export const restrictTo = (...allowedRoles: Role[]) => {
+  return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (!req.admin) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    if (!allowedRoles.includes(req.admin.role)) {
+      return res.status(403).json({
+        message: 'You do not have permission to perform this action',
+      });
+    }
+
+    // Super_Admin bypasses everything
+    if (req.admin.role === Role.SUPER_ADMIN) {
+      return next();
+    }
+
+    next();
+  };
+};
+
+export function asAppRole(prismaRole: PrismaRole): Role {
+  // Safe because values are identical
+  return prismaRole as unknown as Role;
+}
+
+// Optional: middleware to attach admin to req (after JWT/auth middleware)
+export const attachAdminToRequest = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  // Assuming you already have JWT verification middleware that puts adminId in req.user or similar
+  const adminId = (req as any).user?.id; // adjust according to your JWT payload
+
+  if (!adminId) {
+    return res.status(401).json({ message: 'Not authenticated' });
+  }
+
+  try {
+    const admin = await prisma.admin.findUnique({
+      where: { id: adminId },
+      select: { id: true, email: true, role: true },
+    });
+
+    if (!admin) {
+      return res.status(401).json({ message: 'Admin not found' });
+    }
+
+    req.admin = {
+  id: admin.id,
+  email: admin.email,
+  role: asAppRole(admin.role),   // convert once
+};
+    next();
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};

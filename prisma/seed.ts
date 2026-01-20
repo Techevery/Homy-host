@@ -1,6 +1,7 @@
 import prisma from "../src/core/utils/prisma";
 // import { info, error as logError } from "../src/core/helpers/logger";
 import Helper from "../src/core/helpers";
+import { Role } from "@prisma/client";
 
 async function main() {
   try {   
@@ -16,10 +17,11 @@ async function main() {
       const adminData = await prisma.admin.create({
         data: {
           name: "Super Admin",
-          email: "admin@dev.com",  
+          email: "techeveryng@gmail.com",  
           password: hashedPassword,
           address: "Admin's office",
           gender: "Male",
+          role: "SUPER_ADMIN"
         },
       });
   

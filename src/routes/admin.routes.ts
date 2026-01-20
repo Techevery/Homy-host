@@ -3,8 +3,11 @@ import * as Admin from "../controllers/admin.controller";
 import { authenticateAdmin } from "../middlewares/Admin";
 import * as adminController from "../controllers/admin.controller";
 import * as apartmentController from "../controllers/apartment.controller";
-
+import { attachAdminToRequest } from "../middlewares/roles";
+// import { restrictTo, Role, attachAdminToRequest } from '../middlewares/role.middleware';
 const router = express.Router();
+
+router.use(attachAdminToRequest); // ← attach admin info to every request
 
 router.post(
   "/upload-property",
