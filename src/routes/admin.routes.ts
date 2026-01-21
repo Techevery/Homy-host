@@ -10,7 +10,7 @@ const router = express.Router();
 router.post( 
   "/upload-property",
   authenticateAdmin,
-  restrictTo(Role.SUPER_ADMIN),
+  // restrictTo(Role.SUPER_ADMIN),
   apartmentController.createApartment
 ); 
 
