@@ -25,7 +25,7 @@ router.get(
 
 // offline booking ,
 router.post("/book", authenticateAdmin, adminController.offlineBoking )
-router.get("/list-agents",authenticateAdmin, adminController.listAgents);
+router.get("/list-agents",authenticateAdmin, adminController.listAgents); 
 
 // agent profile 
 router.get("/agent-profile/:agentId", authenticateAdmin, Admin.agenProfileDetails)

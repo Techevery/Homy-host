@@ -8,9 +8,8 @@ import { deleteImageFromBucket } from "../core/functions";
 import { differenceInDays, isSameDay, parseISO } from "date-fns";
 import { UpdateApartmentInput } from "../schema/apartment";
 import { AgentStatus } from "@prisma/client";
-import { sendRejectionMail } from "../email/notification";
 import { logger } from "../core/helpers/logger";
-// import { sendRejectionMail } from "../email/notification";
+import { sendRejectionMail } from "../email/notification";
  
 class AdminService {
   async createAdmin(adminData: { 
@@ -78,7 +77,7 @@ class AdminService {
       },
     };
   }
-
+ 
   async getAdminProfile(adminId: string) {
     const admin = await prisma.admin.findUnique({
       where: { id: adminId },
@@ -370,43 +369,143 @@ async rejectAgent(agentId: string, reason: string) {
     });
   }
 
-  async listAgents(page: number = 1, pageSize: number = 10) {
-    const skip = (page - 1) * pageSize;
+  // async listAgents(page: number = 1, pageSize: number = 10) {
+  //   const skip = (page - 1) * pageSize;
 
-    const [agents, totalCount] = await Promise.all([
-      prisma.agent.findMany({
-        skip,  
-        take: pageSize,
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          status: true,
-          phone_number: true,
-          gender: true,
-          address: true,
-          bank_name: true, 
-          account_number: true,
-          profile_picture: true,
-          id_card: true,
-          slug: true,
-          createdAt: true,
-          updatedAt: true, 
+  //   const [agents, totalCount] = await Promise.all([ 
+  //     prisma.agent.findMany({
+  //       skip,  
+  //       take: pageSize,
+  //       select: {
+  //         id: true,
+  //         name: true,
+  //         email: true,
+  //         status: true,
+  //         phone_number: true,
+  //         gender: true,
+  //         address: true,
+  //         bank_name: true, 
+  //         account_number: true,
+  //         profile_picture: true,
+  //         id_card: true,
+  //         slug: true,
+  //         createdAt: true,
+  //         updatedAt: true, 
+  //       },
+  //     }),
+  //     prisma.agent.count(),
+  //   ]);
+
+  //   return {
+  //     agents,
+  //     pagination: {
+  //       totalAgents: totalCount,
+  //       totalPages: Math.ceil(totalCount / pageSize),
+  //       currentPage: page,
+  //       itemsPerPage: pageSize,
+  //     },
+  //   };
+  // }
+
+async listAgents(page: number = 1, pageSize: number = 10) {
+  const skip = (page - 1) * pageSize;
+
+  const [agentsRaw, totalCount] = await Promise.all([
+    prisma.agent.findMany({
+      skip,
+      take: pageSize,
+      orderBy: { createdAt: 'desc' }, // ← usually helpful
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        status: true,
+        phone_number: true,
+        gender: true,
+        address: true,
+        bank_name: true,
+        account_number: true,
+        profile_picture: true,
+        id_card: true,
+        slug: true,
+        createdAt: true,
+        updatedAt: true,
+
+        // ── required for totals ────────────────────────────────────
+        accountBalance: true,
+
+        // Count of listings
+        _count: {
+          select: {
+            AgentListing: true,     // ← note: use the relation name exactly as in schema
+          },
         },
-      }),
-      prisma.agent.count(),
-    ]);
+
+        // Small subset of payouts (only what's needed)
+        payout: {                     // ← relation name = "payout" (from your schema)
+          where: {
+            status: { in: ['pending', 'success'] },
+          },
+          select: {
+            amount: true,
+            status: true,
+          },
+          orderBy: { createdAt: 'desc' }, // optional
+        },
+      },
+    }),
+
+    prisma.agent.count(),
+  ]);
+
+  // Now TypeScript knows the shape → no more errors
+  const agents = agentsRaw.map((agent) => {
+    const pending = agent.payout
+      .filter((p) => p.status === 'pending')
+      .reduce((sum, p) => sum + (p.amount ?? 0), 0);
+
+    const earnings = agent.payout
+      .filter((p) => p.status === 'success')
+      .reduce((sum, p) => sum + (p.amount ?? 0), 0);
 
     return {
-      agents,
-      pagination: {
-        totalAgents: totalCount,
-        totalPages: Math.ceil(totalCount / pageSize),
-        currentPage: page,
-        itemsPerPage: pageSize,
+      id: agent.id,
+      name: agent.name,
+      email: agent.email,
+      status: agent.status,
+      phone_number: agent.phone_number,
+      gender: agent.gender,
+      address: agent.address,
+      bank_name: agent.bank_name,
+      account_number: agent.account_number,
+      profile_picture: agent.profile_picture,
+      id_card: agent.id_card,
+      slug: agent.slug,
+      createdAt: agent.createdAt,
+      updatedAt: agent.updatedAt,
+
+      totals: {
+        totalBalance: agent.accountBalance ?? 0,
+        totalPending: pending,
+        totalEarning: earnings,
+        totalActiveProperties: agent._count.AgentListing,   // ← correct access
       },
+
+      // Optional: remove this if frontend doesn't need the raw payouts
+      // payout: undefined,
     };
-  }
+  });
+
+  return {
+    agents,
+    pagination: {
+      totalAgents: totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+      currentPage: page,
+      itemsPerPage: pageSize,
+    },
+  };
+}
 
   async getAgentProfiles() {
     const agents = await prisma.agent.findMany();
