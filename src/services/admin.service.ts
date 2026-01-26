@@ -630,6 +630,7 @@ async agentManagement(agentId: string) {
       }),
     ]);
 
+
     // 3️⃣ Totals
     const totals = {
       totalBalance: agent.accountBalance || 0,

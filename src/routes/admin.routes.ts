@@ -38,6 +38,8 @@ router.patch(
   adminController.editAdminProfile
 );
 
+router.get("/agent-management/:agentId", authenticateAdmin, Admin.agentManagement)
+
 router.get(
   "/search-apartment",
   authenticateAdmin,
@@ -55,13 +57,11 @@ router.patch(
 );
 // agent profile 
 router.get("/agent-profile/:agentId", authenticateAdmin, Admin.agenProfileDetails)
-// agent managemnet 
-router.get("/agent-management/:agentId", authenticateAdmin, Admin.agentManagement)
 
 router.delete(
   "/:apartmentId",
   authenticateAdmin, 
-    restrictTo(Role.SUPER_ADMIN),
+    restrictTo(Role.SUPER_ADMIN),   
   apartmentController.deleteApartment
 );   
 

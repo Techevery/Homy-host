@@ -117,8 +117,9 @@ export const listAgents = async (req: Request, res: Response) => {
 export const agentManagement = async (req: Request, res: Response) => {
   try {
     const {agentId} = req.params
-    const management = adminService.agentManagement(agentId)
-    return res.status(200).json(management)
+    const management = await adminService.agentManagement(agentId)
+    res.status(200).json(management)
+    return 
   } catch (error) {
     handleErrorReponse(res, error)
   }
