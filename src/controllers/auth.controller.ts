@@ -7,14 +7,14 @@ import multer from "multer";
 
 export const createAdminProfile = async (req: Request, res: Response) => {
   try {
-    const { name, email, password, address, gender } = req.body;
+    const { name, email, address, gender, phone_number } = req.body;
 
     const admin = await adminService.createAdmin({
       name,
       email,
-      password,
-      address,
+      address, 
       gender,
+      phone_number
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

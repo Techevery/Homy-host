@@ -9,6 +9,7 @@ interface CreateAdminInput {
   password: string;
   address: string;
   gender: string;
+  phone_number: string;   
 }
 
 interface UpdateAdminInput {
@@ -29,7 +30,7 @@ interface CreateApartmentInput {
 }
 
 export const createAdmin = async (input: CreateAdminInput) => {
-  const { name, email, password, address, gender } = input;
+  const { name, email, password, address, gender, phone_number } = input;
 
   const hashedPassword = Helper.hash(password);
 
@@ -40,6 +41,7 @@ export const createAdmin = async (input: CreateAdminInput) => {
       password: hashedPassword,
       address,
       gender,
+      phone_number
     },
   });
 

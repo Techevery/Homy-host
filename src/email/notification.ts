@@ -2,6 +2,113 @@ import { Resend } from  "resend";
 
 const resend = new Resend(process.env.RESEND_KEY);
 
+export function generateSimplePassword(length = 6): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  return Array.from(
+    { length },
+    () => chars[Math.floor(Math.random() * chars.length)]
+  ).join("");
+}
+
+export const sendWelcomeEmail = async (
+  agentEmail: string,
+  agentName: string,
+  password: string,           // ← the plain-text temporary password
+  appName: string = "Homeyhost",
+  loginUrl: string = "https://homeyhost.ng/Admin-login" 
+): Promise<void> => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: process.env.EMAIL_FROM,
+      to: [agentEmail],
+      subject: `Welcome to ${appName} – Your Account is Ready!`,
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+          <title>Welcome to ${appName}</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f4f4f9; color: #333; }
+            .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+            .header { background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 40px 30px; text-align: center; color: white; }
+            .header h1 { margin: 0; font-size: 28px; }
+            .content { padding: 40px 30px; line-height: 1.6; font-size: 16px; }
+            .greeting { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+            .password-box {
+              background: #f8f9fa;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 20px;
+              margin: 24px 0;
+              text-align: center;
+              font-family: 'Courier New', Courier, monospace;
+              font-size: 24px;
+              letter-spacing: 2px;
+              color: #1e293b;
+            }
+            .button {
+              display: inline-block;
+              background: #6366f1;
+              color: white;
+              padding: 14px 32px;
+              margin: 20px 0;
+              border-radius: 8px;
+              text-decoration: none;
+              font-weight: 600;
+              font-size: 16px;
+            }
+            .button:hover { background: #4f46e5; }
+            .footer { background: #f8f9fa; padding: 24px 30px; text-align: center; font-size: 14px; color: #64748b; border-top: 1px solid #e2e8f0; }
+            .highlight { color: #6366f1; font-weight: 600; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Welcome to ${appName}!</h1>
+            </div>
+            
+            <div class="content">
+              <div class="greeting">Hi ${agentName},</div>
+              
+              <p>We're thrilled to have you join the ${appName} community!</p>
+              
+              <p>Your agent account has been successfully created. Here are your login details:</p>
+              
+              <div class="password-box">
+                <strong>Temporary Password:</strong><br>
+                ${password}
+              </div>
+              
+              <p style="text-align: center; margin: 32px 0;">
+                <a href="${loginUrl}" class="button">Log in to Your Account →</a>
+              </p>
+              
+              <p><strong>Important security note:</strong> For your account safety, please <span class="highlight">change your password</span> immediately after your first login (go to Profile → Security → Change Password).</p>
+              
+              <p>If you didn't create this account or have any questions, just reply to this email — we're here to help.</p>
+              
+              <p>Welcome aboard!<br>The ${appName} Team</p>
+            </div>
+            
+            <div class="footer">
+              © ${new Date().getFullYear()} ${appName}. All rights reserved.<br>
+              <small>If you’re having trouble viewing this email, <a href="#">view it in your browser</a>.</small>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+
+  
+  } catch (err) {
+    console.error("Unexpected error sending welcome email:", err);
+  }
+};
+
 export const sendRejectionMail = async (agentEmail: string, agentName: string, reason: string): Promise<void> => {
   try {
     const { data, error } = await resend.emails.send({

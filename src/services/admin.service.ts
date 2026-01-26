@@ -9,19 +9,19 @@ import { differenceInDays, isSameDay, parseISO } from "date-fns";
 import { UpdateApartmentInput } from "../schema/apartment";
 import { AgentStatus } from "@prisma/client";
 import { logger } from "../core/helpers/logger";
-import { sendRejectionMail } from "../email/notification";
+import { generateSimplePassword, sendRejectionMail, sendWelcomeEmail } from "../email/notification";
  
 class AdminService {
   async createAdmin(adminData: { 
     name: string;
     email: string; 
-    password: string;
     address: string;
     gender: string;
+    phone_number: string;
   }) {
     if (!isEmail(adminData.email)) throw new Error("Invalid Email Format");
 
-    const requiredFields = ["name", "email", "password", "address", "gender"];
+    const requiredFields = ["name", "email", "address", "gender"];
 
     const missingFields = requiredFields.filter(
       (field) => !adminData[field as keyof typeof adminData]
@@ -40,7 +40,11 @@ class AdminService {
       throw new Error("Admin already exists");
     }
 
-    const hashedPassword = Helper.hash(adminData.password);
+    const password = generateSimplePassword()
+
+    const hashedPassword = Helper.hash(password);
+    // send email to the agent 
+    await sendWelcomeEmail(adminData.email, adminData.name, password)
 
     return await prisma.admin.create({
       data: {
