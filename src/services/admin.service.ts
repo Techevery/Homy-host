@@ -534,6 +534,127 @@ async listAgents(page: number = 1, pageSize: number = 10) {
     );
   }
 
+async agentManagement(agentId: string) {
+  try {
+    // 1️⃣ Fetch agent profile
+    const agent = await prisma.agent.findUnique({
+      where: { id: agentId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        address: true,
+        phone_number: true,
+        bank_name: true,
+        account_number: true,
+        gender: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        profile_picture: true,
+        id_card: true,
+        slug: true,
+        personalUrl: true,
+        accountBalance: true,
+        nextOfKinAddress: true,
+        nextOfKinEmail: true,
+        nextOfKinName: true,
+        nextOfKinOccupation: true,
+        nextOfKinPhone: true,
+        nextOfKinStatus: true,
+        suspended: true,
+      },
+    });
+
+    if (!agent) {
+      throw new Error("Agent not found");
+    }
+
+    // 2️⃣ Run all aggregates + lists in parallel
+    const [
+      pendingAgg,
+      earningAgg,
+      totalActiveProperties,
+      payouts,
+      properties,
+    ] = await Promise.all([
+      prisma.payout.aggregate({
+        _sum: { amount: true },
+        where: { agentId, status: "pending" },
+      }),
+
+      prisma.payout.aggregate({
+        _sum: { amount: true },
+        where: { agentId, status: "success" },
+      }),
+
+      prisma.agentListing.count({
+        where: { agent_id: agentId },
+      }),
+
+      prisma.payout.findMany({
+        where: { agentId },
+        include: {
+          transaction: {
+            include: {
+              bookingPeriods: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+
+      prisma.agentListing.findMany({
+        where: { agent_id: agentId },
+        include: {
+          apartment: {
+            select: {
+              id: true,
+              name: true,
+              address: true,
+              type: true,
+              servicing: true,
+              bedroom: true,
+              price: true,
+              images: true,
+              video_link: true,
+              agentPercentage: true,
+              amenities: true,
+              isBooked: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+        orderBy: { updated_at: "desc" },
+      }),
+    ]);
+
+    // 3️⃣ Totals
+    const totals = {
+      totalBalance: agent.accountBalance || 0,
+      totalPending: pendingAgg._sum?.amount || 0,
+      totalEarning: earningAgg._sum?.amount || 0,
+      totalActiveProperties,
+    };
+
+    // 4️⃣ Final response
+    return {
+      totals,
+      info: agent,
+      payouts,
+      properties,
+    };
+
+  } catch (error: any) {
+    logger.error(
+      { agentId, error: error.message },
+      "Error fetching agent management data",
+    );
+    throw new Error(error.message || "Failed to fetch agent management data");
+  }
+}
+
   async getAgentProfileById(agentId: string) {
     const agent = await getAgentById(agentId);
 
@@ -544,8 +665,8 @@ async listAgents(page: number = 1, pageSize: number = 10) {
     return {
       agentName: agent.name, 
       agentEmail: agent.email,
-      agentPhone: agent.phone_number,
-      agentURL: personalizedURL,
+      agentPhone: agent.phone_number, 
+      agentURL: personalizedURL, 
     };
   }
 

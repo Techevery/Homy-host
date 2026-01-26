@@ -114,6 +114,16 @@ export const listAgents = async (req: Request, res: Response) => {
   }
 };
 
+export const agentManagement = async (req: Request, res: Response) => {
+  try {
+    const {agentId} = req.params
+    const management = adminService.agentManagement(agentId)
+    return res.status(200).json(management)
+  } catch (error) {
+    handleErrorReponse(res, error)
+  }
+}
+
 export const adminProfile = async (req: Request, res: Response) => {
   try {
     const adminId = (req as any).admin.id;

@@ -27,8 +27,6 @@ router.get(
 router.post("/book", authenticateAdmin, adminController.offlineBoking )
 router.get("/list-agents",authenticateAdmin, adminController.listAgents); 
 
-// agent profile 
-router.get("/agent-profile/:agentId", authenticateAdmin, Admin.agenProfileDetails)
 
 router.get("/agents-profile", authenticateAdmin, Admin.getAgentProfile);
 
@@ -52,13 +50,17 @@ router.get("/stats",  authenticateAdmin, adminController.getDashboardStats);
 router.patch(
   "/suspend-agent",
   authenticateAdmin, 
-    restrictTo(Role.SUPER_ADMIN),
+  restrictTo(Role.SUPER_ADMIN),
   adminController.suspendAgentToggle 
 );
+// agent profile 
+router.get("/agent-profile/:agentId", authenticateAdmin, Admin.agenProfileDetails)
+// agent managemnet 
+router.get("/agent-management/:agentId", authenticateAdmin, Admin.agentManagement)
 
 router.delete(
   "/:apartmentId",
-  authenticateAdmin,  
+  authenticateAdmin, 
     restrictTo(Role.SUPER_ADMIN),
   apartmentController.deleteApartment
 );   
