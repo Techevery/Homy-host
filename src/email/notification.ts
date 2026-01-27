@@ -75,7 +75,7 @@ export const sendWelcomeEmail = async (
               
               <p>We're thrilled to have you join the ${appName} community!</p>
               
-              <p>Your agent account has been successfully created. Here are your login details:</p>
+              <p>Your admin account has been successfully created. Here are your login details:</p>
               
               <div class="password-box">
                 <strong>Temporary Password:</strong><br>

@@ -15,5 +15,8 @@ router.get("/agent-payout", authenticateAgent, agentPayout)
 router.get("/agent/:payoutId", authenticateAgent, agentPayoutById) 
 router.post("/charge", authenticateAdmin, createCharges)
 router.patch("/charge-approve/:chargeId", authenticateAdmin, approveCharges)
+
+// rejected payout should come under payout request 
+// email on admin creation 
  
 export default router

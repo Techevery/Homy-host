@@ -3,7 +3,7 @@ import prisma from "../core/utils/prisma"
 import { uploadImageToSupabase } from "../core/utils/supabase";
 import { confirmPayoutMail, rejectPayoutMail } from "../email/notification";
 
-class WalletService {
+class WalletService {   
    async getPayoutRequest() {
   try {
     const payout = await prisma.payout.findMany({
