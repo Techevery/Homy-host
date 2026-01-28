@@ -1,16 +1,14 @@
 import { Router } from "express";
 import { createBanner, deleteBanner, fetchBanner, getBannerById, updateBanner } from "../controllers/banner.controller";
 import { authenticateAdmin } from "../middlewares/Admin";
+import { restrictTo, Role } from "../middlewares/roles";
 
 const router = Router()
 
-router.post("/create", authenticateAdmin, createBanner)
+router.post("/create", authenticateAdmin, restrictTo(Role.SUPER_ADMIN), createBanner)
 router.get("/", fetchBanner)
-router.patch("/:id", authenticateAdmin, updateBanner)
-router.delete("/:id", authenticateAdmin, deleteBanner)
+router.patch("/:id", authenticateAdmin, restrictTo(Role.SUPER_ADMIN), updateBanner)
+router.delete("/:id", authenticateAdmin, restrictTo(Role.SUPER_ADMIN), deleteBanner)
 router.get("/:id", authenticateAdmin, getBannerById)
  
 export default router            
-
-// discount for property and this would remove the discount from the total amount if it is more than one days
-// generate dicount with code start and and end date with a particular appartment and the amount and this is a one time code 

@@ -4,8 +4,7 @@ import { authenticateAdmin } from "../middlewares/Admin";
 import * as adminController from "../controllers/admin.controller";
 import * as apartmentController from "../controllers/apartment.controller";
 import { restrictTo, Role } from "../middlewares/roles";
-import { createAdminProfile } from "../controllers/auth.controller";
-// import { restrictTo, Role, attachAdminToRequest } from '../middlewares/role.middleware';
+import { createAdminProfile } from "../controllers/auth.controller";// import { restrictTo, Role, attachAdminToRequest } from '../middlewares/role.middleware';
 const router = express.Router();
 
 router.post( 
@@ -17,7 +16,7 @@ router.post(
 
 // create admin profile
 router.post("/create-admin", authenticateAdmin, restrictTo(Role.SUPER_ADMIN), createAdminProfile) 
-router.put("/verify-agent", authenticateAdmin, adminController.verifyAgent);
+router.put("/verify-agent", authenticateAdmin, restrictTo(Role.SUPER_ADMIN), adminController.verifyAgent);
 
 router.get( 
   "/list-apartments",         
