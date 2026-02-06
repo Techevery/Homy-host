@@ -23,14 +23,30 @@ export const createApartment = async (req: Request, res: Response) => {
   upload(req, res, async (err) => {
     try {
       if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          res.status(400).json({
+            message: "File size too large. Maximum allowed file size is 20MB per image.",
+            error: "FILE_SIZE_EXCEEDED"
+          });
+          return;
+        }
+        if (err.code === 'LIMIT_FILE_COUNT') {
+          res.status(400).json({
+            message: "Too many files. Maximum allowed is 10 images.",
+            error: "FILE_COUNT_EXCEEDED"
+          });
+          return;
+        }
         res.status(400).json({
           message: `File upload error: ${err.message}`,
+          error: "FILE_UPLOAD_ERROR"
         });
 
         return;
       } else if (err) {
         res.status(500).json({
-          message: "Unknown file upload error",
+          message: "Unknown file upload error. Please try again with smaller files.",
+          error: "UNKNOWN_UPLOAD_ERROR"
         });
 
         return;
@@ -85,12 +101,31 @@ export const createApartment = async (req: Request, res: Response) => {
 export const updateApartment = async (req: Request, res: Response) => {
   const upload = multer({
     storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 20 * 1024 * 1024, // 20MB per file
+      files: 10,
+    }
   }).array("images", 10);
 
   upload(req, res, async (err) => {
     try {
       if (err instanceof multer.MulterError) {
-        return res.status(400).json({ message: err.message });
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({
+            message: "File size too large. Maximum allowed file size is 20MB per image.",
+            error: "FILE_SIZE_EXCEEDED"
+          });
+        }
+        if (err.code === 'LIMIT_FILE_COUNT') {
+          return res.status(400).json({
+            message: "Too many files. Maximum allowed is 10 images.",
+            error: "FILE_COUNT_EXCEEDED"
+          });
+        }
+        return res.status(400).json({
+          message: `File upload error: ${err.message}`,
+          error: "FILE_UPLOAD_ERROR"
+        });
       }
 
       const adminId = (req as any).admin.id;

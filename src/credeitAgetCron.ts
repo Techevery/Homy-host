@@ -113,7 +113,7 @@ if (agentData) {
             status: 'booked', // Only update if currently booked
           },
           data: {
-            status: 'past booking', // Mark as completed
+            status: 'past booking',
             availability: true, // Make apartment available again
           },
         });  

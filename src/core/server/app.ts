@@ -42,6 +42,23 @@ export const CreateServer = async (): Promise<Express> => {
   app.use(express.json({limit: "50mb"}));
   app.use(express.urlencoded({ limit: "50mb", extended: false }));
 
+  // Custom error handler for payload too large (413)
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (err instanceof SyntaxError && (err as any).status === 413) {
+      return res.status(413).json({
+        message: "Payload too large. Please reduce the file sizes or number of images and try again.",
+        error: "PAYLOAD_TOO_LARGE"
+      });
+    }
+    if (err.type === 'entity.too.large') {
+      return res.status(413).json({
+        message: "Request body too large. Maximum allowed size is 50MB. Please reduce the file sizes or number of images.",
+        error: "PAYLOAD_TOO_LARGE"
+      });
+    }
+    next(err);
+  });
+
   if (process.env.NODE_ENV === "development") {
     app.use(
       morgan(":method :status :url :res[content-length] - :response-time ms", {
