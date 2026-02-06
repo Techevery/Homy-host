@@ -78,6 +78,7 @@ class AdminService {
         address: admin.address,
         gender: admin.gender,
         phonenumber: admin?.phone_number,
+        role: admin.role
       },
     };
   }
