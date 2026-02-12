@@ -731,7 +731,7 @@ async agentManagement(agentId: string) {
     data: { suspended: newStatus },
   });
   
-  return `Agent has been ${newStatus ? "suspended" : "unsuspended"}.`;
+  return newStatus;
   } catch (error) {
     throw new Error("Failed to suspend agent");
   } 

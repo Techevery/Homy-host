@@ -17,12 +17,12 @@ export const suspendAgentToggle = async (
       return; // OK to return early
     }
 
-    const { suspended } = await adminService.toggleAgentSuspension(agentId);
+    const suspended = await adminService.toggleAgentSuspension(agentId);
 
     // No `return` here!
     res.status(200).json({
       message: suspended ? 'Agent suspended' : 'Agent unsuspended',
-      data: { suspended },
+      data: suspended,
     });
   } catch (error) {
     handleErrorReponse(res, error);
