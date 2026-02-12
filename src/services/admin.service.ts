@@ -435,8 +435,8 @@ async listAgents(page: number = 1, pageSize: number = 10) {
         slug: true,
         createdAt: true,
         updatedAt: true,
+        suspended: true,
 
-        // ── required for totals ────────────────────────────────────
         accountBalance: true,
 
         // Count of listings
@@ -722,7 +722,7 @@ async agentManagement(agentId: string) {
      const agent = await prisma.agent.findUnique({ where: { id: agentId } });
   if (!agent) {
     throw new Error("Agent not found");
-  }
+  } 
 
   const newStatus = !agent.suspended;
   

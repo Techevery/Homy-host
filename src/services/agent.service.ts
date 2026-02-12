@@ -496,7 +496,7 @@ async addPropertyToListing(
     const agent = await prisma.agent.findUnique({
       where: { slug },
       select: {
-        id: true,
+        id: true, 
         name: true,
         email: true,
         status: true,
@@ -531,7 +531,7 @@ async addPropertyToListing(
             type: true,
             servicing: true,
             bedroom: true,
-            amenities: true,
+            amenities: true, 
             price: true, // base price
             location: true,
             images: true,
